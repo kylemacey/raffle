@@ -1,3 +1,5 @@
+require 'csv'
+
 class EntriesController < ApplicationController
   before_action :set_event
   before_action :set_entry, only: %i[ show edit update destroy ]
@@ -26,7 +28,7 @@ class EntriesController < ApplicationController
 
     respond_to do |format|
       if @entry.save
-        format.html { redirect_to event_entries_url(@event), notice: "Entry was successfully created." }
+        format.html { redirect_to new_event_entry_url(@event), notice: "Entry created for #{@entry.name}." }
         format.json { render :show, status: :created, location: @entry }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -56,6 +58,24 @@ class EntriesController < ApplicationController
       format.html { redirect_to event_entries_url(@event), notice: "Entry was successfully destroyed." }
       format.json { head :no_content }
     end
+  end
+
+  def import
+    file = params[:csv_upload]
+
+    CSV.foreach(file, headers: true) do |row|
+      qty = row["Lineitem quantity"].to_i
+      variant = row["Lineitem variant"][/(\d+) tickets/, 1].to_i
+      total_qty = qty * variant
+
+      @event.entries.create(
+        name: row["Billing Name"],
+        phone: row["Email"] + " " + row["Billing Phone"],
+        qty: total_qty
+      )
+    end
+
+    redirect_to event_entries_url(@event), notice: "Entries were successfully imported."
   end
 
   private

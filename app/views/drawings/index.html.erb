@@ -4,11 +4,11 @@
 
 <div id="drawings">
   <% @drawings.each do |drawing| %>
-    <%= render drawing %>
     <p>
-      <%= link_to "Show this drawing", drawing %>
+      Drawing #<%= drawing.id %>
+      <%= link_to "Show winners", event_drawing_winners_path(@event, drawing) %>
     </p>
   <% end %>
 </div>
 
-<%= link_to "New drawing", new_drawing_path %>
+<%= link_to "Back to #{@event.name}", @event%>

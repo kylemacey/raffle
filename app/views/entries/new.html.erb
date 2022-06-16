@@ -1,3 +1,5 @@
+<p style="color: green"><%= notice %></p>
+
 <h1>New entry</h1>
 
 <%= render "form", entry: @entry %>
@@ -5,5 +7,5 @@
 <br>
 
 <div>
-  <%= link_to "Back to entries", event_entries_path(@event) %>
+  <%= link_to "Back to all entries", event_entries_path(@event) %>
 </div>

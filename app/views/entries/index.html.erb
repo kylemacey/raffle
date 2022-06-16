@@ -2,6 +2,12 @@
 
 <h1>Entries for <%= @event.name %></h1>
 
+<div>
+  <%= link_to "New entry", new_event_entry_path(@event) %> |
+  <%= link_to "Back to #{@event.name}", @event %> |
+  <%= link_to "Start a Drawing", new_event_drawing_path(@event) %>
+</div>
+
 <div id="entries">
   <table>
     <tr>
@@ -10,12 +16,14 @@
       <th>Quantity</th>
       <th></th>
       <th></th>
+      <th></th>
     </tr>
     <% @entries.each do |entry| %>
       <tr>
         <td><%= entry.name %></td>
         <td><%= entry.phone %></td>
         <td><%= entry.qty %></td>
+        <td><%= entry.created_at.strftime('%b %m %H:%M') %></td>
         <td>
           <%= link_to "Edit", edit_event_entry_path(@event, entry) %>
         </td>
@@ -24,6 +32,35 @@
         </td>
       </tr>
     <% end %>
+  </table>
 </div>
 
-<%= link_to "New entry", new_event_entry_path(@event) %>
+<div>
+  <%= link_to "New entry", new_event_entry_path(@event) %> |
+  <%= link_to "Back to #{@event.name}", @event %> |
+  <%= link_to "Start a Drawing", new_event_drawing_path(@event) %>
+</div>
+
+
+<h2>Import From Squarespace</h2>
+<p>
+  Upload a CSV from Squarespace to automatically create entries from the online purchases.
+</p>
+<p>
+  Warning: Doing this multiple times <strong>will create duplicates</strong>.
+</p>
+
+<h3>How to download the Squarespace CSV</h3>
+<ol>
+  <li>Log in to Squarespace and select the Farley's Friends Website.</li>
+  <li>Go to <em>Commerce</em>, then <em>Orders</em>, the click <strong>Download CSV</strong> at the top right.</li>
+  <li>De-select "Canceled orders"</li>
+  <li>Under "Order Date", select <em>Specific date range</em> and specify Feb 1, 2022 to Jun 21, 2022</li>
+  <li>Under "Product", select <em>Specific product</em> and enter "Raffle". Select "Farley's Friends ForeForFour Raffle Ticket"</li>
+  <li>Click <em>Download</em> at the top right, then  upload that file below.</li>
+</ol>
+
+<%= form_tag import_event_entries_path(@event), multipart: true do |f| %>
+  <%= file_field_tag :csv_upload, accept: ".csv" %>
+  <%= submit_tag "Upload and import" %>
+<% end %>

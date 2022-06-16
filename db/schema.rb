@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_06_16_194823) do
+ActiveRecord::Schema[7.0].define(version: 2022_06_16_204048) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -46,10 +46,13 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_16_194823) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "drawing_id", null: false
+    t.index ["drawing_id"], name: "index_winners_on_drawing_id"
     t.index ["entry_id"], name: "index_winners_on_entry_id"
   end
 
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
+  add_foreign_key "winners", "drawings"
   add_foreign_key "winners", "entries"
 end

@@ -1,0 +1,19 @@
+<h1>Winners for <%= @event.name %> Drawing #<%= @drawing.id %></h1>
+
+<p>
+    <%= link_to "Back to #{@event.name}", @event %>
+</p>
+
+<p>
+    <%= link_to "Download CSV", event_drawing_winners_url(@event, @drawing, format: :csv) %>
+</p>
+
+<% @drawing.winners.includes(:entry).each do |winner| %>
+    <p>
+        <%= winner.entry.name %> | <%= winner.entry.phone %>
+    </p>
+<% end %>
+
+<p>
+    <%= link_to "Download CSV", event_drawing_winners_url(@event, @drawing, format: :csv) %>
+</p>

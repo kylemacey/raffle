@@ -17,7 +17,7 @@
 
   <div>
     <%= form.label :name, style: "display: block" %>
-    <%= form.text_field :name %>
+    <%= form.text_field :name, autofocus: true %>
   </div>
 
   <div>
@@ -27,7 +27,7 @@
 
   <div>
     <%= form.label :qty, style: "display: block" %>
-    <%= form.number_field :qty %>
+    <%= form.number_field :qty, min: 1 %>
   </div>
 
   <div>
