@@ -65,7 +65,7 @@ class EntriesController < ApplicationController
 
     CSV.foreach(file, headers: true) do |row|
       qty = row["Lineitem quantity"].to_i
-      variant = row["Lineitem variant"][/(\d+) tickets/, 1].to_i
+      variant = [row["Lineitem variant"][/(\d+) tickets/, 1].to_i, 1].max
       total_qty = qty * variant
 
       @event.entries.create(
