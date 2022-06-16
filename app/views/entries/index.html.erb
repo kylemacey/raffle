@@ -1,0 +1,29 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Entries for <%= @event.name %></h1>
+
+<div id="entries">
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Contact</th>
+      <th>Quantity</th>
+      <th></th>
+      <th></th>
+    </tr>
+    <% @entries.each do |entry| %>
+      <tr>
+        <td><%= entry.name %></td>
+        <td><%= entry.phone %></td>
+        <td><%= entry.qty %></td>
+        <td>
+          <%= link_to "Edit", edit_event_entry_path(@event, entry) %>
+        </td>
+        <td>
+          <%= button_to "Delete", [@event, entry], method: :delete %>
+        </td>
+      </tr>
+    <% end %>
+</div>
+
+<%= link_to "New entry", new_event_entry_path(@event) %>

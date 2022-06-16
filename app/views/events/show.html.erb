@@ -1,0 +1,28 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @event %>
+
+<div>
+  <p>
+    <em>
+      First, add entries below, then create a drawing to draw winners from the group of entries
+    </em>
+  </p>
+
+  <p>
+    <%= link_to "Add or View Entries", event_entries_path(@event) %>
+  </p>
+  <p>
+    <%= link_to "Start a Drawing", new_event_drawing_path(@event) %>
+  </p>
+  <p>
+    <%= link_to "View Past Drawings", event_drawings_path(@event) %>
+  </p>
+</div>
+
+<div>
+  <%= link_to "Edit this event", edit_event_path(@event) %> |
+  <%= link_to "Back to events", events_path %>
+
+  <%= button_to "Destroy this event", @event, method: :delete %>
+</div>

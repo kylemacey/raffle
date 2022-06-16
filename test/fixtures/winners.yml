@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  entry: one
+  prize: MyString
+  present: false
+  notes: MyText
+
+two:
+  entry: two
+  prize: MyString
+  present: false
+  notes: MyText
