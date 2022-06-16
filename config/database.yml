@@ -84,6 +84,4 @@ test:
 #
 production:
   <<: *default
-  database: raffle_production
-  username: raffle
-  password: <%= ENV["RAFFLE_DATABASE_PASSWORD"] %>
+  url: <%= ENV["DATABASE_URL"] %>
