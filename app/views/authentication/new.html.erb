@@ -1,0 +1,9 @@
+<h1>Sign in</h1>
+
+<p style="color: green"><%= notice %></p>
+<p style="color: red"><%= alert %></p>
+
+<%= form_with url: authentication_create_path do |f| %>
+  <%= f.text_field :pin %>
+  <%= f.submit "Log in" %>
+<% end %>

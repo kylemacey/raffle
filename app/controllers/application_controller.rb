@@ -1,3 +1,5 @@
 class ApplicationController < ActionController::Base
-    http_basic_authenticate_with name: 'kyle', password: 'thomas18'
+  include AuthenticationHelper
+
+  http_basic_authenticate_with name: 'kyle', password: 'thomas18'
 end

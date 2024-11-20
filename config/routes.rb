@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  get 'sign_in', to: 'authentication#new'
+  post 'authentication/create'
+  delete 'authentication', to: 'authentication#destroy'
+  resources :users
   root to: "events#index"
 
   resources :events do
