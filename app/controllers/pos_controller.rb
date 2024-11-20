@@ -1,5 +1,6 @@
 class PosController < ApplicationController
   def main
+    @products = RaffleProduct.all
   end
 
   def checkout

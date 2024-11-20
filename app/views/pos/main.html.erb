@@ -1,2 +1,18 @@
-<h1>Pos#main</h1>
-<p>Find me in app/views/pos/main.html.erb</p>
+<h1>Raffle Point of Sale</h1>
+
+<div id="products">
+  <% @products.each do |product|%>
+    <label class="product touchbutton">
+      <div class="name">
+        <%= product.name %>
+      </div>
+      <div class="tickets">
+        <%= product.tickets %> tickets
+      </div>
+      <div class="price">
+        <%= number_to_currency(product.price / 100.0) %>
+      </div>
+      <%= f.radio_button :tickets, product.tickets %>
+    </label>
+  <% end %>
+</div>
