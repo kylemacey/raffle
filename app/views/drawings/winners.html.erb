@@ -10,7 +10,7 @@
 
 <% @drawing.winners.includes(:entry).each do |winner| %>
     <p>
-        <%= winner.entry.name %> | <%= winner.entry.phone %>
+        <strong><%= winner.prize_number %></strong>: <%= winner.entry.name %> | <%= winner.entry.phone %>
     </p>
 <% end %>
 
