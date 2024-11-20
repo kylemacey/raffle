@@ -11,7 +11,11 @@ module AuthenticationHelper
     !!current_user&.admin?
   end
 
+  def require_authentication!
+    authenticated? || redirect_to(:sign_in_path, notice: "You must sign in first")
+  end
+
   def require_admin!
-    current_user_is_admin? || redirect_to(:root, notice: "Not authorized")
+    current_user_is_admin? || redirect_to(:sign_in_path, notice: "Not authorized")
   end
 end

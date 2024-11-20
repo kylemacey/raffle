@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  get 'pos/main'
+  get 'pos/checkout'
+  post 'pos/create_order'
+  get 'pos/success'
   get 'readers', to: 'readers#list'
   post 'readers/assign'
   get 'sign_in', to: 'authentication#new'
