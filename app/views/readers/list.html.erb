@@ -1,0 +1,18 @@
+<h1>Readers#list</h1>
+
+<% if @readers.any? %>
+    <%= form_with url: readers_assign_path do |f| %>
+        <% @readers.each do |reader| %>
+          <p>
+            <label>
+                <%= f.radio_button :reader_id, reader.id %>
+                <%= reader.label %>
+            </label>
+          </p>
+        <% end %>
+
+        <%= f.submit "Use This Reader" %>
+    <% end %>
+<% else %>
+  <p style="color: orange">There are no connected readers online</p>
+<% end %>

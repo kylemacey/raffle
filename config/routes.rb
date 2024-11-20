@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get 'readers', to: 'readers#list'
+  post 'readers/assign'
   get 'sign_in', to: 'authentication#new'
   post 'authentication/create'
   delete 'authentication', to: 'authentication#destroy'
