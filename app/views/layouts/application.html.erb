@@ -7,6 +7,7 @@
     <%= csp_meta_tag %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
   </head>
 
   <body>
@@ -14,7 +15,11 @@
       <div id="current_user">
         <p>
           Logged in as <%= current_user.name %>
+          <% if current_event %>
+            for <%= current_event.name %>
+          <% end %>
         </p>
+        <%= link_to "Select Event", pos_path %>
         <%= button_to "Sign out", authentication_path, data: {:confirm => 'Are you sure?'}, :method => :delete %>
       </div>
     <% else %>

@@ -13,6 +13,7 @@ class AuthenticationController < ApplicationController
 
   def destroy
     session.delete(:current_user_id)
+    session.delete(:current_reader_id)
     redirect_to :root, notice: "Successfully logged out"
   end
 end

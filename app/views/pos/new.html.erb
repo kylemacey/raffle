@@ -1,0 +1,12 @@
+<h1>Select an Event</h1>
+
+<%= form_with url: pos_create_path, method: :post do |f| %>
+  <div class="form-group">
+    <label for="event_id">Select an Event</label>
+    <%= f.collection_select :event_id, @events, :id, :name, { prompt: "Choose an event" }, { class: "form-control" } %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit "Continue", class: "btn btn-primary" %>
+  </div>
+<% end %>

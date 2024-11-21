@@ -1,15 +1,346 @@
 /*
- * This is a manifest file that'll be compiled into application.css, which will include all the files
- * listed below.
- *
- * Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
- * vendor/assets/stylesheets directory can be referenced here using a relative path.
- *
- * You're free to add application-wide styles to this file and they'll appear at the bottom of the
- * compiled file so the styles you add here take precedence over styles defined in any other CSS
- * files in this directory. Styles in this file should be added after the last require_* statement.
- * It is generally better to create a new file per style scope.
- *
- *= require_tree .
- *= require_self
- */
+* This is a manifest file that'll be compiled into application.css, which will include all the files
+* listed below.
+*
+* Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
+* vendor/assets/stylesheets directory can be referenced here using a relative path.
+*
+* You're free to add application-wide styles to this file and they'll appear at the bottom of the
+* compiled file so the styles you add here take precedence over styles defined in any other CSS
+* files in this directory. Styles in this file should be added after the last require_* statement.
+* It is generally better to create a new file per style scope.
+*
+*= require_tree .
+*= require_self
+*/
+
+/* Set up the base styles */
+html {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  /* Base font size */
+  line-height: 1.5;
+  scroll-behavior: smooth;
+  /* Enable smooth scrolling */
+  background-color: #f8f9fa;
+  /* Light background color */
+  color: #212529;
+  /* Comfortable text color */
+  -webkit-text-size-adjust: 100%;
+  /* Prevent font scaling in mobile browsers */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  /* Inherit box-sizing from html */
+}
+
+/* Make the body responsive and centered */
+body {
+  margin: 0 auto;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  /* Ensure full viewport height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
+}
+
+.formgroup, .payment-option {
+  margin: 1rem 0;
+}
+
+/* General container styling */
+#products {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem auto;
+  max-width: 800px;
+  padding: 0 1rem;
+}
+
+/* Style for each product button */
+.product.touchbutton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  width: calc(50% - 1rem);
+  /* Two buttons per row on larger screens */
+  /* max-width: 180px; */
+  touch-action: manipulation;
+  /* Makes touch interactions smooth */
+}
+
+/* Hover and active states for better interaction */
+.product.touchbutton:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05);
+}
+
+.product.touchbutton:active {
+  background-color: #d0d0d0;
+  transform: scale(0.95);
+}
+
+/* Hide the radio buttons */
+.touchbutton input[type="radio"] {
+  display: none;
+}
+
+/* Highlight the selected button */
+input[type="radio"]:checked+.product.touchbutton {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #0056b3;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .product.touchbutton {
+    width: 100%;
+    /* Full width for small screens */
+    max-width: 100%;
+  }
+}
+
+/* Form Group Styling */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.form-group .form-control {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Checkout Buttons */
+.checkout-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.checkout-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+  width: 100%;
+}
+
+.checkout-button.cash {
+  background-color: #28a745;
+  color: white;
+  border: none;
+}
+
+.checkout-button.cash:hover {
+  background-color: #218838;
+}
+
+.checkout-button.card {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.checkout-button.card:hover {
+  background-color: #0056b3;
+}
+
+/* Reader Warning */
+.reader-warning {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+}
+
+.setup-reader-link {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.setup-reader-link:hover {
+  text-decoration: none;
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Default Hover Style */
+.payment-option:hover {
+  background-color: #f1f1f1;
+  border-color: #aaa;
+}
+
+/* Hide Radio Button */
+.payment-option input[type="radio"] {
+  appearance: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Highlight Selected Option */
+.payment-option:has(input[type="radio"]:checked) {
+  background-color: #007bff;
+  color: #fff;
+  border: 2px solid #0056b3;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Ensure Text is Centered */
+.payment-option div {
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  text-align: center;
+}
+
+/* Reader Warning Styles */
+.reader-warning {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+}
+
+.setup-reader-link {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.setup-reader-link:hover {
+  text-decoration: none;
+}
+
+/* Submit Button */
+.submit-button {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.checkout-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: #28a745;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.checkout-button:hover {
+  background-color: #218838;
+}
+
+/* General layout styles for product options and form container */
+#products-and-form {
+  display: flex;
+  flex-direction: column;
+  /* Default for mobile screens */
+  gap: 2rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Products section */
+#products {
+  flex: 1;
+  display: flex;
+  /* flex-direction: column; */
+  gap: 1rem;
+}
+
+/* Checkout form styles */
+#checkout-form {
+  flex: 1;
+  background-color: #f8f9fa;
+  /* Light background for contrast */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Media query for wider screens */
+@media (min-width: 768px) {
+  #products-and-form {
+    flex-direction: row;
+    /* Align products and form side by side */
+    align-items: flex-start;
+  }
+
+  #products {
+    flex: 2;
+    /* Products section takes more space */
+  }
+
+  #checkout-form {
+    flex: 1;
+    /* Form section takes less space */
+    max-width: 400px;
+    /* Optional: Limit the width of the form */
+  }
+}

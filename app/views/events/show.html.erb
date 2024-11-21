@@ -18,6 +18,9 @@
   <p>
     <%= link_to "View Past Drawings", event_drawings_path(@event) %>
   </p>
+  <p>
+    <%= button_to "Open POS", pos_create_path(event_id: @event.id), method: :post %>
+  </p>
 </div>
 
 <div>

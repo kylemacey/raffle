@@ -1,18 +1,66 @@
-<h1>Raffle Point of Sale</h1>
+<div id="products-and-form">
+  <!-- Product options -->
+  <div id="products">
+    <% @products.each do |product| %>
+      <label class="product touchbutton">
+        <div class="name">
+          <%= product.name %>
+        </div>
+        <div class="tickets">
+          <%= product.tickets %> tickets
+        </div>
+        <div class="price">
+          <%= number_to_currency(product.price / 100.0) %>
+        </div>
+        <%= radio_button_tag :product_tickets, product.tickets %>
+      </label>
+    <% end %>
+  </div>
 
-<div id="products">
-  <% @products.each do |product|%>
-    <label class="product touchbutton">
-      <div class="name">
-        <%= product.name %>
+  <!-- Checkout form -->
+  <div id="checkout-form">
+    <%= form_with url: pos_checkout_path do |f| %>
+      <div class="formgroup">
+        Number of Tickets: <br />
+        <%= f.number_field :tickets, id: "custom_tickets", data: { controller: "pos", action: "input->pos#requestTurboStream", url: pos_custom_price_path } %>
       </div>
-      <div class="tickets">
-        <%= product.tickets %> tickets
+
+      <div class="formgroup">
+        <div class="price">
+            <%= turbo_frame_tag "custom_price" do %>
+              <%= render partial: "custom_price", locals: { price: 0 } %>
+            <% end %>
+          </div>
       </div>
-      <div class="price">
-        <%= number_to_currency(product.price / 100.0) %>
+
+      <div class="formgroup">
+        <label>
+          Name: <%= f.text_field :name %>
+        </label>
       </div>
-      <%= f.radio_button :tickets, product.tickets %>
-    </label>
-  <% end %>
+      <div class="formgroup">
+        <label>
+          Email: <%= f.email_field :email %>
+        </label>
+      </div>
+
+      <h3>Select Payment Method</h3>
+      <label class="touchbutton payment-option">
+        <%= f.radio_button :payment_method, "cash", id: "payment_method_cash", checked: true %>
+        <div>Cash</div>
+      </label>
+      <% if current_reader %>
+        <label class="touchbutton payment-option">
+          <%= f.radio_button :payment_method, "card", id: "payment_method_card" %>
+          <div>Card</div>
+        </label>
+      <% else %>
+        <p>
+          No card reader connected. <%= link_to "Connect one now", readers_path %>
+        </p>
+      <% end %>
+
+      <%= f.submit "Check Out", class: "checkout-button" %>
+    <% end %>
+  </div>
 </div>

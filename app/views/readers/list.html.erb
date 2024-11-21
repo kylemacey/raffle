@@ -7,6 +7,9 @@
             <label>
                 <%= f.radio_button :reader_id, reader.id %>
                 <%= reader.label %>
+                <% if reader.id == current_reader&.id %>
+                  (Current Reader)
+                <% end %>
             </label>
           </p>
         <% end %>
@@ -16,3 +19,7 @@
 <% else %>
   <p style="color: orange">There are no connected readers online</p>
 <% end %>
+
+<p>
+  <%= link_to "Go to POS", pos_path %>
+</p>
