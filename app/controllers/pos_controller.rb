@@ -28,6 +28,12 @@ class PosController < ApplicationController
         event: current_event,
       )
 
+      Payment.create!(
+        entry: entry,
+        payment_method_type: "cash",
+        amount: RaffleProduct.custom_price(params[:tickets].to_i),
+      )
+
       redirect_to pos_success_path(entry_id: entry.id)
     end
 

@@ -18,10 +18,14 @@ class WebhooksController < ApplicationController
 
     # Handle the event
     case event['type']
-    when 'payment_intent.succeeded', 'payment_intent.amount_capturable_updated'
-      handle_payment_success(event['data']['object'])
-    when 'payment_intent.payment_failed'
-      handle_payment_failure(event['data']['object'])
+    when 'terminal.reader.action_succeeded'
+      reader = event['data']['object']
+      payment_intent = Stripe::PaymentIntent.retrieve(reader["action"]["process_payment_intent"]["payment_intent"])
+      handle_payment_success(payment_intent)
+    when 'terminal.reader.action_failed'
+      reader = event['data']['object']
+      payment_intent = Stripe::PaymentIntent.retrieve(reader["action"]["process_payment_intent"]["payment_intent"])
+      handle_payment_failure(payment_intent)
     else
       Rails.logger.info "Unhandled event type: #{event['type']}"
     end
@@ -48,13 +52,19 @@ class WebhooksController < ApplicationController
       ActiveRecord::Base.connection_pool.with_connection do
         if payment_intent['status'] == 'requires_capture'
           metadata = payment_intent['metadata']
-          Entry.create!(
+          entry = Entry.create!(
             event_id: metadata[:event],
             name: metadata[:name],
-            phone: metadata[:name],
+            phone: metadata[:email],
             qty: metadata[:qty],
           )
           Stripe::PaymentIntent.capture(payment_intent_id)
+          Payment.create!(
+            entry: entry,
+            payment_method_type: "card",
+            amount: payment_intent['amount'],
+            payment_intent_id: payment_intent_id
+          )
         end
       end
     end

@@ -6,7 +6,7 @@ class EntriesController < ApplicationController
 
   # GET /entries or /entries.json
   def index
-    @entries = @event.entries.all
+    @entries = @event.entries.includes(:payment).all
   end
 
   # GET /entries/1 or /entries/1.json

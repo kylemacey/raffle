@@ -14,6 +14,7 @@
       <th>Name</th>
       <th>Contact</th>
       <th>Quantity</th>
+      <th>Stripe Payment</th>
       <th></th>
       <th></th>
       <th></th>
@@ -23,6 +24,7 @@
         <td><%= entry.name %></td>
         <td><%= entry.phone %></td>
         <td><%= entry.qty %></td>
+        <td><%= entry_payment_stripe_url(entry) %></td>
         <td><%= entry.created_at.strftime('%b %m %H:%M') %></td>
         <td>
           <%= link_to "Edit", edit_event_entry_path(@event, entry) %>

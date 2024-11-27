@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_11_20_174358) do
+ActiveRecord::Schema[7.0].define(version: 2024_11_27_205537) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,17 @@ ActiveRecord::Schema[7.0].define(version: 2024_11_20_174358) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "payments", force: :cascade do |t|
+    t.string "payment_method_type"
+    t.string "amount"
+    t.string "payment_intent_id"
+    t.bigint "entry_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entry_id"], name: "index_payments_on_entry_id"
+    t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "pin"
@@ -64,6 +75,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_11_20_174358) do
 
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
+  add_foreign_key "payments", "entries"
   add_foreign_key "winners", "drawings"
   add_foreign_key "winners", "entries"
 end
