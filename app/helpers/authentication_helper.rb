@@ -16,6 +16,6 @@ module AuthenticationHelper
   end
 
   def require_admin!
-    current_user_is_admin? || redirect_to(sign_in_path, notice: "Not authorized")
+    current_user_is_admin? || redirect_to(pos_main_path, notice: "Not authorized")
   end
 end

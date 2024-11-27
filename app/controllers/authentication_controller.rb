@@ -5,7 +5,11 @@ class AuthenticationController < ApplicationController
   def create
     if @user = User.find_by(pin: params[:pin])
       session[:current_user_id] = @user.id
-      redirect_to :root, notice: "Successfully logged in"
+      if @user.admin?
+        redirect_to :root, notice: "Successfully logged in"
+      else
+        redirect_to pos_main_path, notice: "Successfully logged in"
+      end
     else
       redirect_to sign_in_path, alert: "Incorrect PIN"
     end
