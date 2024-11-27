@@ -1,6 +1,8 @@
 <h1>Payment Processing</h1>
 
 <turbo-frame id="payment_status_<%= @payment_intent.id %>">
-  Hello World
+  Complete the transaction on the reader <em><% current_reader.label %></em>.
   <%= turbo_stream_from "payment_status_#{@payment_intent.id}" %>
 </turbo-frame>
+
+<p><%= button_to "Return to POS", readers_cancel_action_path, method: :delete %></p>
