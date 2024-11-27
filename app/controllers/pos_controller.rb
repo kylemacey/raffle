@@ -2,6 +2,8 @@ class PosController < ApplicationController
   include PosHelper
   include ReadersHelper
 
+  before_action :require_authentication!
+
   def new
     @events = Event.all
   end
