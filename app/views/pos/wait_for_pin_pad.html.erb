@@ -1,0 +1,6 @@
+<h1>Payment Processing</h1>
+
+<turbo-frame id="payment_status_<%= @payment_intent.id %>">
+  Hello World
+  <%= turbo_stream_from "payment_status_#{@payment_intent.id}" %>
+</turbo-frame>

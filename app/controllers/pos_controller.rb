@@ -32,18 +32,42 @@ class PosController < ApplicationController
     end
 
     if params[:payment_method] == "card"
-      CollectPaymentService.call(
-        amount: RaffleProduct.custom_price(params[:tickets].to_i),
+      payment_service = CollectPaymentService.new(
         customer: {
           name: params[:name],
           email: params[:email],
         },
         reader: current_reader,
+      )
+
+      payment_service.collect_payment(
+        RaffleProduct.custom_price(params[:tickets].to_i),
         metadata: {
-          event: current_event.name,
+          event: current_event.id,
+          name: params[:name],
+          email: params[:email],
+          qty: params[:tickets],
           agent: current_user.name,
         }
       )
+
+      if payment_service.success?
+        redirect_to(
+          controller: :pos,
+          action: :wait_for_pin_pad,
+          payment_intent_id: payment_service.payment_intent.id
+        )
+
+      end
+    end
+  end
+
+  def wait_for_pin_pad
+    @payment_intent = Stripe::PaymentIntent.retrieve(params[:payment_intent_id])
+
+    respond_to do |format|
+      format.html # Render the initial HTML view
+      format.turbo_stream # Respond with a Turbo Stream if requested
     end
   end
 

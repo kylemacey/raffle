@@ -1,20 +1,15 @@
 class CollectPaymentService
-  attr_reader :amount, :customer, :reader, :metadata
-
-  def self.call(**params)
-    new(**params).call
-  end
-
-  def initialize(amount:, customer: {}, reader:, metadata: nil)
-    @amount, @reader, @metadata = amount, reader, metadata
+  attr_reader :customer, :reader, :payment_intent
+  def initialize(customer: {}, reader:)
+    @reader = reader
 
     @customer = customer.with_indifferent_access.slice(:name, :email)
   end
 
-  def call
+  def collect_payment(amount, metadata: {})
     stripe_customer = find_or_create_customer
 
-    payment_intent = Stripe::PaymentIntent.create(
+    @payment_intent = Stripe::PaymentIntent.create(
       amount: amount,
       currency: 'usd',
       payment_method_types: ['card_present'],
@@ -23,7 +18,16 @@ class CollectPaymentService
       metadata: metadata,
     )
 
-    reader.process_payment_intent({payment_intent: payment_intent})
+    reader.process_payment_intent({
+      payment_intent: payment_intent,
+      process_config: {
+        enable_customer_cancellation: true,
+      }
+    })
+  end
+
+  def success?
+    payment_intent.present?
   end
 
 private

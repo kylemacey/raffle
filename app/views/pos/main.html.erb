@@ -19,7 +19,7 @@
 
   <!-- Checkout form -->
   <div id="checkout-form">
-    <%= form_with url: pos_checkout_path do |f| %>
+    <%= form_with url: pos_checkout_path, data: { turbo: false } do |f| %>
       <div class="formgroup">
         Number of Tickets: <br />
         <%= f.number_field :tickets, id: "custom_tickets", data: { controller: "pos", action: "input->pos#requestTurboStream", url: pos_custom_price_path } %>

@@ -1,0 +1,14 @@
+<% if status == 'succeeded' %>
+  <div>
+    <h2>Payment Successful!</h2>
+  </div>
+<% elsif status == 'failed' %>
+  <div>
+    <h2>Payment Failed</h2>
+    <p>Please try again.</p>
+  </div>
+<% else %>
+  <div>
+    <p>Processing Payment...</p>
+  </div>
+<% end %>

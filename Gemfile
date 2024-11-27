@@ -44,6 +44,8 @@ gem "bootsnap", require: false
 
 gem "stripe"
 
+gem "dotenv"
+
 # Use Sass to process CSS
 # gem "sassc-rails"
 
