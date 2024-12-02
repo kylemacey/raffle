@@ -14,6 +14,7 @@ class PosController < ApplicationController
   end
 
   def main
+    redirect_to pos_path unless current_event
     @products = RaffleProduct.all
   end
 
