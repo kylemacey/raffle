@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html data-bs-theme="dark">
   <head>
-    <title>Raffle</title>
+    <title>Farley Raffle</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -11,23 +11,30 @@
   </head>
 
   <body>
-    <% if authenticated? %>
-      <div id="current_user">
+    <div class="container-fluid">
+      <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+          <%= link_to "Farley Raffle", pos_path, class: "navbar-brand" %>
+        </div>
+      </nav>
+      <% if authenticated? %>
+        <div id="current_user">
+          <p>
+            Logged in as <%= current_user.name %>
+            <% if current_event %>
+              for <%= current_event.name %>
+            <% end %>
+          </p>
+          <%= link_to "Select Event", pos_path %>
+          <%= button_to "Sign out", authentication_path, data: {:confirm => 'Are you sure?'}, :method => :delete %>
+        </div>
+      <% else %>
         <p>
-          Logged in as <%= current_user.name %>
-          <% if current_event %>
-            for <%= current_event.name %>
-          <% end %>
+          <%= link_to "Sign in", sign_in_path %>
         </p>
-        <%= link_to "Select Event", pos_path %>
-        <%= button_to "Sign out", authentication_path, data: {:confirm => 'Are you sure?'}, :method => :delete %>
-      </div>
-    <% else %>
-      <p>
-        <%= link_to "Sign in", sign_in_path %>
-      </p>
-    <% end %>
+      <% end %>
 
-    <%= yield %>
+      <%= yield %>
+
   </body>
 </html>
