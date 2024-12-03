@@ -5,4 +5,4 @@
   <%= turbo_stream_from "payment_status_#{@payment_intent.id}" %>
 </turbo-frame>
 
-<p><%= button_to "Return to POS", readers_cancel_action_path, method: :delete %></p>
+<p><%= button_to "Cancel Payment", readers_cancel_action_path, method: :delete, class: "btn btn-danger" %></p>

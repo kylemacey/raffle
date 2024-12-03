@@ -44,25 +44,24 @@
       <%= f.text_field :email, class: "form-control", required: true %>
 
       <h3 class="mt-3">Select Payment Method</h3>
-      <div class="row">
-          <%= f.radio_button :payment_method, "cash", class: "btn-check", checked: true %>
-          <%= f.label :payment_method_cash, "Cash" %>
-        </label>
+      <div class="row mb-1 justify-content-center">
+        <%= f.radio_button :payment_method, "cash", class: "btn-check", required: true %>
+        <%= f.label :payment_method_cash, "Cash", class: "col-8 btn btn-lg bg-success-subtle" %>
+      </div>
+      <div class="row mb-4 justify-content-center">
         <% if current_reader %>
-          <label class="touchbutton payment-option col">
-            <%= f.radio_button :payment_method, "card", id: "payment_method_card" %>
-            <div>Card</div>
-          </label>
+          <%= f.radio_button :payment_method, "card", class: "btn-check", required: true %>
+          <%= f.label :payment_method_card, "Card", class: "col-8 btn btn-lg bg-primary-subtle" %>
         <% else %>
           <p>
             No card reader connected. <%= link_to "Connect one now", readers_path %>
           </p>
         <% end %>
-
-
       </div>
 
-      <%= f.submit "Check Out", class: "btn btn-success" %>
+      <div class="row justify-content-end">
+        <%= f.submit "Check Out", class: "btn btn-lg btn-success" %>
+      </div>
     <% end %>
   </div>
 </div>
