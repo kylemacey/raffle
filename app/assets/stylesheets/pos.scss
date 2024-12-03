@@ -1,0 +1,32 @@
+.touchbutton {
+  padding: 1em 2em;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bs-primary-bg-subtle);
+  border-radius: var(--bs-border-radius-xxl);
+  border-width: var(--bs-border-width);
+  border-style: var(--bs-border-style);
+  border-color: var(--bs-border-color);
+  margin: 0 0 1em 1em;
+
+  input[type=radio] {
+    display: none;
+  }
+}
+
+#pos {
+  .product {
+    .name {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .price {
+      font-size: 1.4em;
+    }
+  }
+
+  #total {
+    font-size: 1.4em;
+    font-weight: bold;
+  }
+}
