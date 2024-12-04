@@ -1,0 +1,5 @@
+<%= form_with(model: [@event, @drawing, @winner], data: { turbo_frame: "winner-status", controller: "winners" }, method: :patch) do |form| %>
+    <%= form.check_box :claimed, checked: @winner.claimed, data: { action: "change->winners#remoteSubmit" } %>
+    <label>Claimed</label>
+<% end %>
+

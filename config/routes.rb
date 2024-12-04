@@ -20,7 +20,11 @@ Rails.application.routes.draw do
 
   resources :events do
     resources :drawings do
-      get :winners
+      resources :winners do
+        collection do
+          get 'by_prize_number'
+        end
+      end
     end
     resources :entries do
       post :import, on: :collection

@@ -11,5 +11,6 @@ application.debug = false
 window.Stimulus   = application
 
 application.register("pos", PosController);
+application.register("winners", WinnersController);
 
 export { application }

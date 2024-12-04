@@ -1,3 +1,5 @@
+<p style="color: green"><%= notice %></p>
+
 <h1>Winners for <%= @event.name %> Drawing #<%= @drawing.id %></h1>
 
 <p>
@@ -10,7 +12,7 @@
 
 <% @drawing.winners.includes(:entry).each do |winner| %>
     <p>
-        <strong><%= winner.prize_number %></strong>: <%= winner.entry.name %> | <%= winner.entry.phone %>
+        <strong><%= link_to winner.prize_number, [@event, @drawing, winner] %></strong>: <%= winner.entry.name %> | <%= winner.entry.phone %>
     </p>
 <% end %>
 

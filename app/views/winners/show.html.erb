@@ -1,0 +1,29 @@
+<p style="color: green"><%= notice %></p>
+
+<div class="text-center mb-3">
+<h1><%= @winner.entry.name %></h1>
+<div id="winner-status">
+  <%= render partial: "winner_status", locals: { winner: @winner } %>
+</div>
+</div>
+
+<div id="winner-page" class="row justify-content-center" >
+  <div class="col-3">
+    <%= form_with url: by_prize_number_event_drawing_winners_path, method: :get do |f| %>
+      <div class="input-group">
+        <% if previous_winner = prev_winner(@drawing, @winner) %>
+          <%= link_to "Prev", [@event, @drawing, previous_winner], class: "btn btn-primary" %>
+        <% else %>
+          <%= link_to "Prev", nil, class: "btn btn-primary disabled" %>
+        <% end %>
+        <%= f.text_field :prize_number, value: @winner.prize_number, class: "form-control text-center" %>
+        <%# lazily avoiding a naming conflict %>
+        <% if nextish_winner = next_winner(@drawing, @winner) %>
+          <%= link_to "Next", [@event, @drawing, nextish_winner], class: "btn btn-primary" %>
+        <% else %>
+          <%= link_to "Next", nil, class: "btn btn-primary disabled" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
