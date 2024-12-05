@@ -6,6 +6,28 @@ class WinnersController < ApplicationController
   # GET /winners or /winners.json
   def index
     @winners = @drawing.winners
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = "attachment; filename=#{@event.name} Drawing #{@drawing.id} winners.csv"
+
+        doc = CSV.generate do |csv|
+          csv << ["Name", "Contact", "Prize Number", "Claimed"]
+          @winners.includes(:entry).each do |winner|
+            csv << [
+              winner.entry.name,
+              winner.entry.phone,
+              winner.prize_number,
+              winner.claimed?
+            ]
+          end
+        end
+
+        render plain: doc
+      end
+    end
   end
 
   # GET /winners/1 or /winners/1.json
