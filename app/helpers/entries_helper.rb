@@ -1,7 +1,7 @@
 module EntriesHelper
   def entry_payment_stripe_url(entry)
     return unless payment = entry&.payment
-    return unless payment.payment_method_type == "card"
+    return unless payment.payment_intent_id.present?
     if Rails.env.production?
       url = "https://dashboard.stripe.com/payments/#{payment.payment_intent_id}"
     else

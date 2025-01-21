@@ -68,10 +68,17 @@ class EntriesController < ApplicationController
       variant = [row["Lineitem variant"][/(\d+) tickets/, 1].to_i, 1].max
       total_qty = qty * variant
 
-      @event.entries.create(
+      entry = @event.entries.create(
         name: row["Billing Name"],
         phone: row["Email"] + " " + row["Billing Phone"],
         qty: total_qty
+      )
+
+      Payment.create(
+        entry: entry,
+        payment_method_type: "squarespace",
+        amount: (row["Total"].to_f * 100).to_i,
+        payment_intent_id: row["Payment Reference"],
       )
     end
 
