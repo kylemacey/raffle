@@ -6,7 +6,7 @@ class RocStarsController < ApplicationController
     @prices = RocStarPrice.all
 
     respond_to do |format|
-      format.json { @prices.to_json }
+      format.json { render json: @prices }
     end
   end
 
