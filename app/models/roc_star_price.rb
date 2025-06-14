@@ -1,0 +1,2 @@
+class RocStarPrice < ApplicationRecord
+end

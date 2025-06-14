@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @roc_star_price %>
+
+<div>
+  <%= link_to "Edit this roc star price", edit_roc_star_price_path(@roc_star_price) %> |
+  <%= link_to "Back to roc star prices", roc_star_prices_path %>
+
+  <%= button_to "Destroy this roc star price", @roc_star_price, method: :delete %>
+</div>
