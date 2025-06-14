@@ -5,8 +5,13 @@
   </p>
 
   <p>
-    <strong>Product:</strong>
-    <%= roc_star_price.product_id %>
+    <strong>Stripe Product ID:</strong>
+    <%= roc_star_price.stripe_product_id %>
+  </p>
+
+  <p>
+    <strong>Stripe Price ID:</strong>
+    <%= roc_star_price.stripe_price_id %>
   </p>
 
   <p>
@@ -16,7 +21,7 @@
 
   <p>
     <strong>Interval:</strong>
-    <%= roc_star_price.interval %>
+    <%= roc_star_price.interval.titleize %>
   </p>
 
   <p>

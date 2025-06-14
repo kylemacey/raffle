@@ -18,7 +18,8 @@ class RocStarPricesTest < ApplicationSystemTestCase
     fill_in "Description", with: @roc_star_price.description
     fill_in "Interval", with: @roc_star_price.interval
     fill_in "Name", with: @roc_star_price.name
-    fill_in "Product", with: @roc_star_price.product_id
+    fill_in "Stripe Product ID", with: @roc_star_price.stripe_product_id
+    fill_in "Stripe Price ID", with: @roc_star_price.stripe_price_id
     click_on "Create Roc star price"
 
     assert_text "Roc star price was successfully created"
@@ -33,7 +34,8 @@ class RocStarPricesTest < ApplicationSystemTestCase
     fill_in "Description", with: @roc_star_price.description
     fill_in "Interval", with: @roc_star_price.interval
     fill_in "Name", with: @roc_star_price.name
-    fill_in "Product", with: @roc_star_price.product_id
+    fill_in "Stripe Product ID", with: @roc_star_price.stripe_product_id
+    fill_in "Stripe Price ID", with: @roc_star_price.stripe_price_id
     click_on "Update Roc star price"
 
     assert_text "Roc star price was successfully updated"

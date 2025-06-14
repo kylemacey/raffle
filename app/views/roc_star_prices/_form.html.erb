@@ -17,8 +17,13 @@
   </div>
 
   <div>
-    <%= form.label :product_id, style: "display: block" %>
-    <%= form.text_field :product_id %>
+    <%= form.label :stripe_product_id, "Stripe Product ID", style: "display: block" %>
+    <%= form.text_field :stripe_product_id %>
+  </div>
+
+  <div>
+    <%= form.label :stripe_price_id, "Stripe Price ID", style: "display: block" %>
+    <%= form.text_field :stripe_price_id %>
   </div>
 
   <div>
@@ -28,7 +33,7 @@
 
   <div>
     <%= form.label :interval, style: "display: block" %>
-    <%= form.text_field :interval %>
+    <%= form.select :interval, options_for_select([['Month', 'month'], ['Year', 'year']], roc_star_price.interval) %>
   </div>
 
   <div>

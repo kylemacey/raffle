@@ -53,12 +53,14 @@ ActiveRecord::Schema[7.0].define(version: 2025_06_14_210816) do
 
   create_table "roc_star_prices", force: :cascade do |t|
     t.string "name"
-    t.string "product_id"
+    t.string "stripe_product_id"
     t.integer "amount"
     t.string "interval"
     t.string "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "stripe_price_id"
+    t.index ["stripe_price_id"], name: "index_roc_star_prices_on_stripe_price_id"
   end
 
   create_table "users", force: :cascade do |t|

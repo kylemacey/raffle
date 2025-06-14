@@ -15,6 +15,15 @@ Rails.application.routes.draw do
   post 'authentication/create'
   delete 'authentication', to: 'authentication#destroy'
   resources :users
+
+  # RocStarsController custom actions
+  resources :roc_stars, only: [] do
+    collection do
+      get :prices
+      post :create_checkout_session
+    end
+  end
+
   root to: "events#index"
 
   post 'webhooks/stripe'

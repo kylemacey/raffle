@@ -17,7 +17,7 @@ class RocStarPricesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create roc_star_price" do
     assert_difference("RocStarPrice.count") do
-      post roc_star_prices_url, params: { roc_star_price: { amount: @roc_star_price.amount, description: @roc_star_price.description, interval: @roc_star_price.interval, name: @roc_star_price.name, product_id: @roc_star_price.product_id } }
+      post roc_star_prices_url, params: { roc_star_price: { amount: @roc_star_price.amount, description: @roc_star_price.description, interval: @roc_star_price.interval, name: @roc_star_price.name, stripe_product_id: @roc_star_price.stripe_product_id, stripe_price_id: @roc_star_price.stripe_price_id } }
     end
 
     assert_redirected_to roc_star_price_url(RocStarPrice.last)
@@ -34,7 +34,7 @@ class RocStarPricesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update roc_star_price" do
-    patch roc_star_price_url(@roc_star_price), params: { roc_star_price: { amount: @roc_star_price.amount, description: @roc_star_price.description, interval: @roc_star_price.interval, name: @roc_star_price.name, product_id: @roc_star_price.product_id } }
+    patch roc_star_price_url(@roc_star_price), params: { roc_star_price: { amount: @roc_star_price.amount, description: @roc_star_price.description, interval: @roc_star_price.interval, name: @roc_star_price.name, stripe_product_id: @roc_star_price.stripe_product_id, stripe_price_id: @roc_star_price.stripe_price_id } }
     assert_redirected_to roc_star_price_url(@roc_star_price)
   end
 

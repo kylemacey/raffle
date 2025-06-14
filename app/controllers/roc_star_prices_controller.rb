@@ -65,6 +65,6 @@ class RocStarPricesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def roc_star_price_params
-      params.require(:roc_star_price).permit(:name, :product_id, :amount, :interval, :description)
+      params.require(:roc_star_price).permit(:name, :stripe_product_id, :stripe_price_id, :amount, :interval, :description)
     end
 end

@@ -2,14 +2,16 @@
 
 one:
   name: MyString
-  product_id: MyString
+  stripe_product_id: MyString
+  stripe_price_id: MyString
   amount: 1
-  interval: MyString
+  interval: month
   description: MyString
 
 two:
   name: MyString
-  product_id: MyString
+  stripe_product_id: MyString
+  stripe_price_id: MyString
   amount: 1
-  interval: MyString
+  interval: month
   description: MyString
