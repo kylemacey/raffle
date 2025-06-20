@@ -1,4 +1,4 @@
-<%= form_with(model: winner) do |form| %>
+<%= form_with(model: [@event, @drawing, winner]) do |form| %>
   <% if winner.errors.any? %>
     <div style="color: red">
       <h2><%= pluralize(winner.errors.count, "error") %> prohibited this winner from being saved:</h2>

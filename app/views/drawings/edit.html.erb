@@ -5,6 +5,6 @@
 <br>
 
 <div>
-  <%= link_to "Show this drawing", @drawing %> |
+  <%= link_to "Show this drawing", event_drawing_path(@event, @drawing) %> |
   <%= link_to "Back to drawings", event_drawings_path(@event) %>
 </div>

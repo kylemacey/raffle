@@ -3,8 +3,8 @@
 <%= render @drawing %>
 
 <div>
-  <%= link_to "Edit this drawing", edit_drawing_path(@drawing) %> |
+  <%= link_to "Edit this drawing", edit_event_drawing_path(@event, @drawing) %> |
   <%= link_to "Back to drawings", event_drawings_path(@event) %>
 
-  <%= button_to "Destroy this drawing", @drawing, method: :delete %>
+  <%= button_to "Destroy this drawing", event_drawing_path(@event, @drawing), method: :delete %>
 </div>

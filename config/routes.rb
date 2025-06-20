@@ -8,8 +8,8 @@ Rails.application.routes.draw do
   get 'pos/wait_for_pin_pad/:payment_intent_id', to: 'pos#wait_for_pin_pad'
   post 'pos/create_order'
   get 'pos/success/:entry_id', to: 'pos#success', as: :pos_success
-  get 'readers', to: 'readers#list'
-  post 'readers/assign'
+  get 'readers', to: 'readers#list', as: :readers_list
+  post 'readers/assign', as: :readers_assign
   delete 'readers/cancel_action'
   get 'sign_in', to: 'authentication#new'
   post 'authentication/create'
@@ -21,6 +21,9 @@ Rails.application.routes.draw do
     collection do
       get :prices
       post :create_checkout_session
+      get :new_session
+      get :success
+      get :cancel
     end
   end
 
