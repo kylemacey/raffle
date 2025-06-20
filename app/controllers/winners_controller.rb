@@ -52,27 +52,14 @@ class WinnersController < ApplicationController
   def edit
   end
 
-  # POST /winners or /winners.json
-  def create
-    @winner = Winner.new(winner_params)
 
-    respond_to do |format|
-      if @winner.save
-        format.html { redirect_to winner_url(@winner), notice: "Winner was successfully created." }
-        format.json { render :show, status: :created, location: @winner }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @winner.errors, status: :unprocessable_entity }
-      end
-    end
-  end
 
   # PATCH/PUT /winners/1 or /winners/1.json
   def update
     respond_to do |format|
       if @winner.update(winner_params)
-        format.html { redirect_to winner_url(@winner), notice: "Winner was successfully updated." }
-        format.json { render :show, status: :ok, location: @winner }
+        format.html { redirect_to event_drawing_winner_url(@event, @drawing, @winner), notice: "Winner was successfully updated." }
+        format.json { render :show, status: :ok, location: event_drawing_winner_url(@event, @drawing, @winner) }
         format.turbo_stream
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -86,7 +73,7 @@ class WinnersController < ApplicationController
     @winner.destroy
 
     respond_to do |format|
-      format.html { redirect_to winners_url, notice: "Winner was successfully destroyed." }
+      format.html { redirect_to event_drawing_winners_url(@event, @drawing), notice: "Winner was successfully destroyed." }
       format.json { head :no_content }
     end
   end

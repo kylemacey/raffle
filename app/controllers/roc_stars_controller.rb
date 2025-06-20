@@ -3,8 +3,6 @@ class RocStarsController < ApplicationController
   before_action :set_all_prices
 
   def prices
-    @prices = RocStarPrice.all
-
     respond_to do |format|
       format.json { render json: @prices }
     end
@@ -20,10 +18,25 @@ class RocStarsController < ApplicationController
     end
   end
 
+  def new_session
+    response.headers.delete "X-Frame-Options"
+    render layout: 'iframe'
+  end
+
+  def success
+    # Renders app/views/roc_stars/success.html.erb
+    redirect_to "https://farleysfriends.org/roc-star-success"
+  end
+
+  def cancel
+    # Renders app/views/roc_stars/cancel.html.erb
+    redirect_to "https://farleysfriends.org/roc-stars"
+  end
+
   private
 
   def set_all_prices
-    @all_prices = RocStarPrice.all
+    @prices = RocStarPrice.all
   end
 
   def checkout_params

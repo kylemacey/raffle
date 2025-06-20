@@ -1,4 +1,5 @@
 class Event < ApplicationRecord
-  has_many :entries
-  has_many :drawings
+  has_many :entries, dependent: :destroy
+  has_many :drawings, dependent: :destroy
+  belongs_to :user
 end

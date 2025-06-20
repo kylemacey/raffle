@@ -1,5 +1,5 @@
 class CreateCheckoutSessionService
-  attr_reader :params, :error, :response, :customer, :price
+  attr_reader :params, :error, :response, :customer
 
   def initialize(params, request:)
     @params = params
@@ -7,19 +7,18 @@ class CreateCheckoutSessionService
     @error = nil
     @response = nil
     @customer = nil
-    @price = nil
   end
 
   def create_checkout_session
     return false unless valid_params?
 
-    @price = find_price
-    return false unless price
+    exact_price, closest_price = find_prices
+    return false if closest_price.nil?
 
     @customer = find_or_create_customer
     return false unless customer
 
-    create_session
+    create_session(exact_price, closest_price)
     true
   rescue Stripe::StripeError => e
     @error = e.message
@@ -44,23 +43,26 @@ class CreateCheckoutSessionService
     true
   end
 
-  def find_price
-    # First try to find an exact match
-    price = RocStarPrice.find_by(amount: @amount, interval: @interval_type)
-    return price if price
-
-    # If no exact match, find the closest lower price
-    price = RocStarPrice.where(interval: @interval_type)
-                        .where('amount <= ?', @amount)
-                        .order(amount: :desc)
-                        .first
-
-    unless price
-      @error = "No suitable price found"
-      return nil
+  def find_prices
+    all_prices_for_interval = RocStarPrice.where(interval: @interval_type).to_a
+    exact_price = all_prices_for_interval.find { |p| p.amount == @amount }
+    closest_price = if exact_price
+      exact_price
+    else
+      all_prices_for_interval.select { |p| p.amount <= @amount }.max_by(&:amount)
     end
 
-    price
+    if closest_price.nil?
+      min_price = all_prices_for_interval.min_by(&:amount)
+      @error = if min_price
+                 "Amount must be at least #{number_to_currency(min_price.amount / 100.0)}."
+               else
+                 "No suitable price found for this interval."
+               end
+      return nil, nil
+    end
+
+    [exact_price, closest_price]
   end
 
   def find_or_create_customer
@@ -68,42 +70,49 @@ class CreateCheckoutSessionService
 
     customer = Stripe::Customer.list(email: params[:email], limit: 1).data.first
 
-    unless customer
-      customer = Stripe::Customer.create(
-        email: params[:email],
-        name: params[:name]
-      )
-    end
-
-    customer
+    customer || Stripe::Customer.create(
+      email: params[:email],
+      name: params[:name]
+    )
   rescue Stripe::StripeError => e
     @error = "Failed to create/find customer: #{e.message}"
     nil
   end
 
-  def create_session
+  def create_session(exact_price, closest_price)
     session = Stripe::Checkout::Session.create(
       customer: customer.id,
       payment_method_types: ['card'],
-      line_items: [build_line_item],
+      line_items: [build_line_item(exact_price, closest_price)],
       mode: 'subscription',
-      success_url: "#{@request.base_url}/success",
-      cancel_url: "#{@request.base_url}/cancel"
+      success_url: "#{@request.base_url}/roc_stars/success",
+      cancel_url: "#{@request.base_url}/roc_stars/cancel"
     )
 
     @response = {
       session_id: session.id,
       checkout_url: session.url
     }
-  rescue Stripe::StripeError => e
-    @error = "Failed to create checkout session: #{e.message}"
-    nil
   end
 
-  def build_line_item
-    {
-      price: price.stripe_price_id,
-      quantity: 1
-    }
+  def build_line_item(exact_price, closest_price)
+    if exact_price
+      { price: exact_price.stripe_price_id, quantity: 1 }
+    else
+      {
+        price_data: {
+          currency: 'usd',
+          product: closest_price.stripe_product_id,
+          unit_amount: @amount,
+          recurring: { interval: @interval_type, interval_count: 1 }
+        },
+        quantity: 1
+      }
+    end
+  end
+
+  # Helper to use in error messages
+  def number_to_currency(number)
+    ActiveSupport::NumberHelper.number_to_currency(number)
   end
 end

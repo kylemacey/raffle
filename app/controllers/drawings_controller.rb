@@ -36,25 +36,13 @@ class DrawingsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /drawings/1 or /drawings/1.json
-  def update
-    respond_to do |format|
-      if @drawing.update(drawing_params)
-        format.html { redirect_to drawing_url(@drawing), notice: "Drawing was successfully updated." }
-        format.json { render :show, status: :ok, location: @drawing }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @drawing.errors, status: :unprocessable_entity }
-      end
-    end
-  end
 
   # DELETE /drawings/1 or /drawings/1.json
   def destroy
     @drawing.destroy
 
     respond_to do |format|
-      format.html { redirect_to drawings_url, notice: "Drawing was successfully destroyed." }
+      format.html { redirect_to event_drawings_url(@event), notice: "Drawing was successfully destroyed." }
       format.json { head :no_content }
     end
   end
