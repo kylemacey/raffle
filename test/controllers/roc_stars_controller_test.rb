@@ -10,4 +10,14 @@ class RocStarsControllerTest < ActionDispatch::IntegrationTest
     get roc_stars_create_checkout_session:post_url
     assert_response :success
   end
+
+  test "should get new" do
+    get new_session_roc_stars_url
+    assert_response :success
+  end
+
+  test "should create checkout session" do
+    post create_checkout_session_roc_stars_url, params: { plan: 'monthly' }
+    assert_response :success
+  end
 end

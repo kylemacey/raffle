@@ -2,22 +2,22 @@ require "test_helper"
 
 class PosControllerTest < ActionDispatch::IntegrationTest
   test "should get main" do
-    get pos_main_url
+    get pos_main_path
     assert_response :success
   end
 
   test "should get checkout" do
-    get pos_checkout_url
-    assert_response :success
+    post pos_checkout_path
+    assert_response :redirect
   end
 
-  test "should get create_order:post" do
-    get pos_create_order:post_url
+  test "should get create_order" do
+    post pos_create_order_path
     assert_response :success
   end
 
   test "should get success" do
-    get pos_success_url
+    get pos_success_path(entry_id: 1)
     assert_response :success
   end
 end

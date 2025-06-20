@@ -3,6 +3,8 @@ require "application_system_test_case"
 class EventsTest < ApplicationSystemTestCase
   setup do
     @event = events(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "visiting the index" do
@@ -10,31 +12,33 @@ class EventsTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Events"
   end
 
-  test "should create event" do
+  test "creating a Event" do
     visit events_url
     click_on "New event"
 
-    fill_in "Name", with: @event.name
+    fill_in "Name", with: "New Event"
     click_on "Create Event"
 
     assert_text "Event was successfully created"
     click_on "Back"
   end
 
-  test "should update Event" do
-    visit event_url(@event)
-    click_on "Edit this event", match: :first
+  test "updating a Event" do
+    visit events_url
+    click_on "Edit", match: :first
 
-    fill_in "Name", with: @event.name
+    fill_in "Name", with: "Updated Event"
     click_on "Update Event"
 
     assert_text "Event was successfully updated"
     click_on "Back"
   end
 
-  test "should destroy Event" do
-    visit event_url(@event)
-    click_on "Destroy this event", match: :first
+  test "destroying a Event" do
+    visit events_url
+    page.accept_confirm do
+      click_on "Destroy", match: :first
+    end
 
     assert_text "Event was successfully destroyed"
   end

@@ -10,4 +10,7 @@ class ActiveSupport::TestCase
   fixtures :all
 
   # Add more helper methods to be used by all tests here...
+  def sign_in(user)
+    post authentication_create_url, params: { pin: user.pin }
+  end
 end

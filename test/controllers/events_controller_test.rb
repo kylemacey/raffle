@@ -3,6 +3,8 @@ require "test_helper"
 class EventsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @event = events(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "should get index" do
@@ -17,7 +19,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create event" do
     assert_difference("Event.count") do
-      post events_url, params: { event: { name: @event.name } }
+      post events_url, params: { event: { name: @event.name, user_id: @admin.id } }
     end
 
     assert_redirected_to event_url(Event.last)

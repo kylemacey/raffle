@@ -3,6 +3,8 @@ require "application_system_test_case"
 class UsersTest < ApplicationSystemTestCase
   setup do
     @user = users(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "visiting the index" do
