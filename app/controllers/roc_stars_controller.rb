@@ -1,5 +1,6 @@
 class RocStarsController < ApplicationController
   skip_before_action :verify_authenticity_token
+  skip_before_action :http_basic_authenticate_with, raise: false
   before_action :set_all_prices
 
   def prices
