@@ -54,7 +54,7 @@
           <%= f.label :payment_method_card, "Card", class: "col-8 btn btn-lg bg-primary-subtle" %>
         <% else %>
           <p>
-            No card reader connected. <%= link_to "Connect one now", readers_path %>
+            No card reader connected. <%= link_to "Connect one now", readers_list_path %>
           </p>
         <% end %>
       </div>
