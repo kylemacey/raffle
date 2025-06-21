@@ -26,12 +26,12 @@ class RocStarsController < ApplicationController
 
   def success
     # Renders app/views/roc_stars/success.html.erb
-    redirect_to "https://farleysfriends.org/roc-star-success"
+    redirect_to "https://farleysfriends.org/roc-star-success", allow_other_host: true
   end
 
   def cancel
     # Renders app/views/roc_stars/cancel.html.erb
-    redirect_to "https://farleysfriends.org/roc-stars"
+    redirect_to "https://farleysfriends.org/roc-stars", allow_other_host: true
   end
 
   private
