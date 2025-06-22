@@ -1,3 +1,3 @@
 class Payment < ApplicationRecord
-  belongs_to :entry
+  belongs_to :order, optional: true
 end

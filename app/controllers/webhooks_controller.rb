@@ -36,11 +36,25 @@ class WebhooksController < ApplicationController
   private
 
   def handle_payment_success(payment_intent)
-    # Extract the Payment Intent ID
-    payment_intent_id = payment_intent['id']
-    Rails.logger.info "Payment succeeded for #{payment_intent_id}"
+    payment_intent_id = payment_intent.id
+    metadata = payment_intent.metadata
+    order_id = metadata['order_id']
 
-    # Broadcast success to the Turbo Stream
+    # Log an error and return if the order_id is missing from the metadata
+    unless order_id
+      Rails.logger.error "Webhook Error: No order_id present in metadata for PaymentIntent #{payment_intent_id}"
+      return
+    end
+
+    # Log an error and return if the order can't be found
+    unless Order.exists?(order_id)
+      Rails.logger.error "Webhook Error: Could not find Order with ID #{order_id} for PaymentIntent #{payment_intent_id}"
+      return
+    end
+
+    Rails.logger.info "Webhook: Payment succeeded for Order ##{order_id}, preparing to broadcast and process."
+
+    # Broadcast success to the Turbo Stream immediately
     Turbo::StreamsChannel.broadcast_replace_to(
       "payment_status_#{payment_intent_id}",
       target: "payment_status_#{payment_intent_id}",
@@ -48,23 +62,25 @@ class WebhooksController < ApplicationController
       locals: { status: "succeeded" }
     )
 
+    # Process the order in a background thread to avoid webhook timeouts
     Thread.new do
       ActiveRecord::Base.connection_pool.with_connection do
-        if payment_intent['status'] == 'requires_capture'
-          metadata = payment_intent['metadata']
-          entry = Entry.create!(
-            event_id: metadata[:event],
-            name: metadata[:name],
-            phone: metadata[:email],
-            qty: metadata[:qty],
-          )
+        order = Order.find(order_id) # Find the order again within the thread
+
+        # Use a lock to prevent race conditions on the payment record
+        order.with_lock do
+          if order.payment.nil?
           Stripe::PaymentIntent.capture(payment_intent_id)
-          Payment.create!(
-            entry: entry,
-            payment_method_type: "card",
-            amount: payment_intent['amount'],
+            order.create_payment!(
+              payment_method_type: 'card',
+              amount: payment_intent.amount,
             payment_intent_id: payment_intent_id
           )
+            order.process_after_payment
+            Rails.logger.info "Webhook (Thread): Successfully processed Order ##{order_id}"
+          else
+            Rails.logger.warn "Webhook (Thread): Order ##{order_id} already has a payment. Skipping."
+          end
         end
       end
     end

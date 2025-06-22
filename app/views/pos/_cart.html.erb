@@ -1,0 +1,56 @@
+<div class="card" data-controller="cart">
+  <div class="card-header">
+    <h4 class="card-title mb-0">Shopping Cart</h4>
+  </div>
+  <div class="card-body">
+    <div id="cart-items">
+      <!-- Cart items will be populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<%= form_with url: pos_checkout_path, data: { turbo: false }, id: "checkout-form" do |f| %>
+  <div class="card mt-4">
+    <div class="card-header">
+      <h4 class="card-title mb-0">Customer & Payment</h4>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <%= f.label :name, class: "form-label" %>
+        <%= f.text_field :name, class: "form-control", required: true %>
+      </div>
+      <div class="mb-3">
+        <%= f.label :email, class: "form-label" %>
+        <%= f.text_field :email, class: "form-control", required: true %>
+      </div>
+
+      <h5 class="mt-4">Select Payment Method</h5>
+      <div class="d-grid gap-2">
+        <%= f.radio_button :payment_method, "cash", class: "btn-check", required: true, id: 'payment_method_cash_checkout' %>
+        <%= f.label :payment_method_cash_checkout, "Cash", class: "btn btn-lg btn-outline-success" %>
+
+        <% if current_reader %>
+          <%= f.radio_button :payment_method, "card", class: "btn-check", required: true, id: 'payment_method_card_checkout' %>
+          <%= f.label :payment_method_card_checkout, "Card", class: "btn btn-lg btn-outline-primary" %>
+        <% else %>
+          <p class="text-center text-warning mt-2">
+            No card reader connected. <%= link_to "Connect one now", readers_list_path %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+    <div class="card-footer">
+      <%= f.submit "Complete Sale", class: "btn btn-lg btn-success w-100", data: { cart_target: "checkoutButton" }, disabled: true %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+// Initialize cart with product data from server
+document.addEventListener('DOMContentLoaded', function() {
+  const products = <%= raw PosProduct.active.to_json(only: [:id, :name, :price]) %>;
+
+  // Store products globally for cart controller to access
+  window.posProducts = products;
+});
+</script>

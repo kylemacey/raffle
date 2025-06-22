@@ -10,9 +10,11 @@ Rails.application.routes.draw do
   get 'pos/main'
   get 'pos/custom_price'
   post 'pos/checkout'
-  get 'pos/wait_for_pin_pad/:payment_intent_id', to: 'pos#wait_for_pin_pad'
+  get 'pos/wait_for_pin_pad/:payment_intent_id', to: 'pos#wait_for_pin_pad', as: :pos_wait_for_pin_pad
+  post 'pos/simulate_payment/:payment_intent_id', to: 'pos#simulate_payment', as: :simulate_payment
+  post 'pos/simulate_decline/:payment_intent_id', to: 'pos#simulate_decline', as: :simulate_decline
   post 'pos/create_order'
-  get 'pos/success/:entry_id', to: 'pos#success', as: :pos_success
+  get 'pos/success/:order_id', to: 'pos#success', as: :pos_success
   get 'readers', to: 'readers#list', as: :readers_list
   post 'readers/assign', as: :readers_assign
   post 'readers/create_simulated', as: :readers_create_simulated

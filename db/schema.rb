@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_06_22_161421) do
+ActiveRecord::Schema[7.0].define(version: 2025_06_22_173546) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,10 +68,12 @@ ActiveRecord::Schema[7.0].define(version: 2025_06_22_161421) do
     t.string "payment_method_type"
     t.string "amount"
     t.string "payment_intent_id"
-    t.bigint "entry_id", null: false
+    t.bigint "entry_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "order_id"
     t.index ["entry_id"], name: "index_payments_on_entry_id"
+    t.index ["order_id"], name: "index_payments_on_order_id"
     t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
   end
 
@@ -82,12 +84,10 @@ ActiveRecord::Schema[7.0].define(version: 2025_06_22_161421) do
     t.string "stripe_price_id"
     t.string "product_type"
     t.boolean "active"
-    t.bigint "event_id", null: false
     t.jsonb "configuration"
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_pos_products_on_event_id"
   end
 
   create_table "roc_star_prices", force: :cascade do |t|
@@ -131,7 +131,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_06_22_161421) do
   add_foreign_key "orders", "events"
   add_foreign_key "orders", "users"
   add_foreign_key "payments", "entries"
-  add_foreign_key "pos_products", "events"
+  add_foreign_key "payments", "orders"
   add_foreign_key "winners", "drawings"
   add_foreign_key "winners", "entries"
 end

@@ -7,7 +7,6 @@ class CreatePosProducts < ActiveRecord::Migration[7.0]
       t.string :stripe_price_id
       t.string :product_type
       t.boolean :active
-      t.references :event, null: false, foreign_key: true
       t.jsonb :configuration
       t.text :description
 

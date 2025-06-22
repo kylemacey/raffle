@@ -1,67 +1,31 @@
-<div id="pos" class="row">
+<div id="pos" class="row" data-controller="cart">
   <!-- Product options -->
-  <div id="products" class="col">
-    <% @products.each_slice(2) do |slice| %>
-      <div class="row">
-        <% slice.each do |product| %>
-          <label class="product touchbutton col">
-            <div class="name">
-              <%= product.name %>
+  <div id="products" class="col-md-6">
+    <div class="row">
+      <% @products.each_slice(2) do |slice| %>
+        <div class="col-md-6">
+          <% slice.each do |product| %>
+            <div class="product touchbutton mb-3">
+              <div class="name">
+                <%= product.name %>
+              </div>
+              <div class="price">
+                <%= number_to_currency(product.price / 100.0) %>
+              </div>
+              <button type="button" class="btn btn-sm btn-primary mt-2"
+                      data-product-id="<%= product.id %>"
+                      data-action="click->cart#addToCart">
+                Add to Cart
+              </button>
             </div>
-            <div class="tickets">
-              <%= product.tickets %> tickets
-            </div>
-            <div class="price">
-              <%= number_to_currency(product.price / 100.0) %>
-            </div>
-            <%= radio_button_tag :product_tickets, product.tickets %>
-          </label>
-        <% end %>
-      </div>
-    <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
   </div>
 
-  <!-- Checkout form -->
-  <div id="checkout-form" class="col">
-    <%= form_with url: pos_checkout_path, data: { turbo: false } do |f| %>
-      <div class="mb-3">
-        <%= f.label :tickets, "Number of tickets", class: "form-label" %>
-        <%= f.number_field :tickets, id: "custom_tickets", class: "form-control w-25", data: { controller: "pos", action: "input->pos#requestTurboStream", url: pos_custom_price_path } %>
-      </div>
-
-      <div class="formgroup">
-        <div id="total" class="price">
-            <%= turbo_frame_tag "custom_price" do %>
-              <%= render partial: "custom_price", locals: { price: 0 } %>
-            <% end %>
-          </div>
-      </div>
-
-      <%= f.label :name, class: "form-label" %>
-      <%= f.text_field :name, class: "form-control", required: true %>
-
-      <%= f.label :email, class: "form-label" %>
-      <%= f.text_field :email, class: "form-control", required: true %>
-
-      <h3 class="mt-3">Select Payment Method</h3>
-      <div class="row mb-1 justify-content-center">
-        <%= f.radio_button :payment_method, "cash", class: "btn-check", required: true %>
-        <%= f.label :payment_method_cash, "Cash", class: "col-8 btn btn-lg bg-success-subtle" %>
-      </div>
-      <div class="row mb-4 justify-content-center">
-        <% if current_reader %>
-          <%= f.radio_button :payment_method, "card", class: "btn-check", required: true %>
-          <%= f.label :payment_method_card, "Card", class: "col-8 btn btn-lg bg-primary-subtle" %>
-        <% else %>
-          <p>
-            No card reader connected. <%= link_to "Connect one now", readers_list_path %>
-          </p>
-        <% end %>
-      </div>
-
-      <div class="row justify-content-end">
-        <%= f.submit "Check Out", class: "btn btn-lg btn-success" %>
-      </div>
-    <% end %>
+  <!-- Cart and Checkout form -->
+  <div id="checkout-form" class="col-md-6">
+    <%= render partial: 'pos/cart' %>
   </div>
 </div>
