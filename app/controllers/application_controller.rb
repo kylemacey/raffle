@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   include AuthenticationHelper
 
   before_action :require_basic_auth
+  before_action :set_current_user
 
   private
 

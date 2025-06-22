@@ -2,6 +2,7 @@ module AuthenticationHelper
   def current_user
     @current_user ||= User.find_by(id: session[:current_user_id])
   end
+  alias_method :set_current_user, :current_user
 
   def authenticated?
     !!current_user

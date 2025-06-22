@@ -41,7 +41,7 @@
               <%= link_to "Card Readers", readers_list_path, class: "nav-link" %>
             </li>
 
-            <% if @current_user&.admin? %>
+            <% if current_user_is_admin? %>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Admin</a>
                 <ul class="dropdown-menu">
