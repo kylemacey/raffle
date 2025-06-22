@@ -57,7 +57,18 @@ class PosController < ApplicationController
     end
 
     if params[:payment_method] == 'cash'
-      order.process_after_payment
+      # Use the new OrderProcessingService for cash payments
+      result = OrderProcessingService.process_order(order)
+
+      if result[:success]
+        Rails.logger.info "Cash payment: Successfully processed Order ##{order.id} with #{result[:processed].count} items"
+      else
+        Rails.logger.error "Cash payment: Order ##{order.id} processing completed with #{result[:failed].count} failures"
+        result[:failed].each do |failure|
+          Rails.logger.error "  - Item #{failure[:item].id} (#{failure[:item].pos_product.name}): #{failure[:error].message}"
+        end
+      end
+
       redirect_to pos_success_path(order_id: order.id)
 
     elsif params[:payment_method] == 'card'

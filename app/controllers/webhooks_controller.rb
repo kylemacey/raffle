@@ -70,14 +70,24 @@ class WebhooksController < ApplicationController
         # Use a lock to prevent race conditions on the payment record
         order.with_lock do
           if order.payment.nil?
-          Stripe::PaymentIntent.capture(payment_intent_id)
+            Stripe::PaymentIntent.capture(payment_intent_id)
             order.create_payment!(
               payment_method_type: 'card',
               amount: payment_intent.amount,
-            payment_intent_id: payment_intent_id
-          )
-            order.process_after_payment
-            Rails.logger.info "Webhook (Thread): Successfully processed Order ##{order_id}"
+              payment_intent_id: payment_intent_id
+            )
+
+            # Use the new OrderProcessingService
+            result = OrderProcessingService.process_order(order)
+
+            if result[:success]
+              Rails.logger.info "Webhook (Thread): Successfully processed Order ##{order_id} with #{result[:processed].count} items"
+            else
+              Rails.logger.error "Webhook (Thread): Order ##{order_id} processing completed with #{result[:failed].count} failures"
+              result[:failed].each do |failure|
+                Rails.logger.error "  - Item #{failure[:item].id} (#{failure[:item].pos_product.name}): #{failure[:error].message}"
+              end
+            end
           else
             Rails.logger.warn "Webhook (Thread): Order ##{order_id} already has a payment. Skipping."
           end
