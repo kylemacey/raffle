@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  customer_name: MyString
+  customer_email: MyString
+  total_amount: 1
+  event: one
+  user: one
+  payment_method_type: MyString
+
+two:
+  customer_name: MyString
+  customer_email: MyString
+  total_amount: 1
+  event: two
+  user: two
+  payment_method_type: MyString

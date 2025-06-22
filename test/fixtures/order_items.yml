@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  order: one
+  pos_product: one
+  quantity: 1
+  unit_price: 1
+
+two:
+  order: two
+  pos_product: two
+  quantity: 1
+  unit_price: 1
