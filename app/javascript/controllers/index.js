@@ -1,9 +1,10 @@
 import { Application } from "@hotwired/stimulus"
 
-import WinnersController from "controllers/winners_controller";
+import WinnersController from "./winners_controller";
 import PosProductFormController from "controllers/pos_product_form_controller";
 import CartController from "controllers/cart_controller";
-import RedirectController from "controllers/redirect_controller";
+import RedirectController from "./redirect_controller";
+import CustomerSearchController from "./customer_search_controller"
 
 const application = Application.start()
 
@@ -15,5 +16,6 @@ application.register("winners", WinnersController);
 application.register("pos-product-form", PosProductFormController);
 application.register("cart", CartController);
 application.register("redirect", RedirectController);
+application.register("customer-search", CustomerSearchController)
 
 export { application }

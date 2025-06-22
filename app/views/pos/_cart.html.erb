@@ -17,14 +17,24 @@
     <div class="card-header">
       <h4 class="card-title mb-0">Customer & Payment</h4>
     </div>
-    <div class="card-body">
-      <div class="mb-3">
+    <div class="card-body" data-controller="customer-search">
+      <div class="mb-3 position-relative">
         <%= f.label :name, class: "form-label" %>
-        <%= f.text_field :name, class: "form-control", required: true %>
+        <%= f.text_field :name, class: "form-control", required: true,
+              "data-customer-search-target": "name",
+              "data-action": "input->customer-search#handleInput keydown->customer-search#handleKeys",
+              autocomplete: "off",
+              data: { "1p-ignore": true } %>
+        <div class="list-group position-absolute w-100 d-none"
+             data-customer-search-target="results"
+             style="z-index: 1000;"></div>
       </div>
       <div class="mb-3">
         <%= f.label :email, class: "form-label" %>
-        <%= f.text_field :email, class: "form-control", required: true %>
+        <%= f.text_field :email, class: "form-control", required: true,
+              "data-customer-search-target": "email",
+              autocomplete: "off",
+              data: { "1p-ignore": true } %>
       </div>
 
       <h5 class="mt-4">Select Payment Method</h5>

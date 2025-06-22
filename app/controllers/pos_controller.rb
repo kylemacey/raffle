@@ -184,6 +184,25 @@ class PosController < ApplicationController
     end
   end
 
+  def search_customers
+    query = params[:query]
+    if query.blank?
+      render json: []
+      return
+    end
+
+    begin
+      customers = Stripe::Customer.search(
+        query: %{name~"#{query}" OR email~"#{query}"},
+        limit: 10
+      )
+      render json: customers.data.map { |c| { id: c.id, name: c.name, email: c.email } }
+    rescue Stripe::StripeError => e
+      Rails.logger.error "Stripe customer search error: #{e.message}"
+      render json: { error: "Failed to search customers" }, status: :internal_server_error
+    end
+  end
+
   private
 
   def load_cart_from_params
