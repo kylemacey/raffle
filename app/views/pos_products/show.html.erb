@@ -1,0 +1,13 @@
+<h1>POS Product Details</h1>
+
+<p><strong>Name:</strong> <%= @pos_product.name %></p>
+<p><strong>Price:</strong> <%= number_to_currency(@pos_product.price / 100.0) %></p>
+<p><strong>Type:</strong> <%= @pos_product.product_type.present? ? PosProducts::Factory.human_readable_types[@pos_product.product_type] : 'None' %></p>
+<p><strong>Active:</strong> <%= @pos_product.active ? 'Yes' : 'No' %></p>
+<p><strong>Description:</strong> <%= @pos_product.description %></p>
+<p><strong>Stripe Product ID:</strong> <%= @pos_product.stripe_product_id %></p>
+<p><strong>Stripe Price ID:</strong> <%= @pos_product.stripe_price_id %></p>
+<p><strong>Configuration:</strong> <%= @pos_product.configuration.to_json %></p>
+
+<%= link_to 'Edit', edit_pos_product_path(@pos_product), class: 'btn btn-warning' %>
+<%= link_to 'Back', pos_products_path, class: 'btn btn-secondary' %>
