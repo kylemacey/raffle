@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   get 'pos/success/:entry_id', to: 'pos#success', as: :pos_success
   get 'readers', to: 'readers#list', as: :readers_list
   post 'readers/assign', as: :readers_assign
+  post 'readers/create_simulated', as: :readers_create_simulated
   delete 'readers/cancel_action'
   get 'sign_in', to: 'authentication#new'
   post 'authentication/create'
