@@ -112,21 +112,23 @@ export default class extends Controller {
 
         html += `
           <tr>
-            <td>
+            <td class="align-middle">
               ${product.name}<br>
               <small class="text-muted">$${(product.price / 100.0).toFixed(2)}</small>
             </td>
-            <td style="width: 90px;">
+            <td class="align-middle" style="width: 90px;">
               <input type="number" value="${quantity}" min="0" class="form-control form-control-sm"
                      data-product-id="${productId}" data-action="input->cart#updateQuantity">
             </td>
-            <td class="text-end" style="width: 120px;">
+            <td class="text-end align-middle" style="width: 120px;">
               $${(itemTotal / 100.0).toFixed(2)}
             </td>
-            <td class="text-center" style="width: 50px;">
-              <button type="button" class="btn btn-sm btn-outline-danger border-0"
+            <td class="text-end align-middle" style="width: 60px;">
+              <button type="button" class="btn btn-danger"
                       data-product-id="${productId}" data-action="click->cart#removeFromCart"
-                      title="Remove item">×</button>
+                      title="Remove item">
+                &times;
+              </button>
             </td>
           </tr>
         `

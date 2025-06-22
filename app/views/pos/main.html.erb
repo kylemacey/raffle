@@ -5,7 +5,10 @@
       <% @products.each_slice(2) do |slice| %>
         <div class="col-md-6">
           <% slice.each do |product| %>
-            <div class="product touchbutton mb-3">
+            <div class="product touchbutton mb-3"
+                 data-product-id="<%= product.id %>"
+                 data-action="click->cart#addToCart"
+                 style="cursor: pointer;">
               <div class="name">
                 <%= product.name %>
               </div>
@@ -17,11 +20,6 @@
               <div class="price">
                 <%= number_to_currency(product.price / 100.0) %>
               </div>
-              <button type="button" class="btn btn-sm btn-primary mt-2"
-                      data-product-id="<%= product.id %>"
-                      data-action="click->cart#addToCart">
-                Add to Cart
-              </button>
             </div>
           <% end %>
         </div>
