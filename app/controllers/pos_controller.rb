@@ -82,11 +82,13 @@ class PosController < ApplicationController
         metadata: {
           order_id: order.id,
           event_id: current_event.id,
-          agent: current_user.name
+          agent: current_user.name,
+          order_url: order_url(order.id)
         }
       )
 
       if payment_service.success?
+        Rails.logger.info "Created payment intent for Order ##{order.id} with order URL: #{order_url(order.id)}"
         redirect_to(
           controller: :pos,
           action: :wait_for_pin_pad,

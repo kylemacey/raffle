@@ -70,6 +70,10 @@ module StripeHelper
     end
   end
 
+  def order_url(order_id)
+    "#{request.base_url}/orders/#{order_id}"
+  end
+
   private
 
   def stripe_test_mode?
