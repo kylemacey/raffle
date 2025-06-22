@@ -1,14 +1,14 @@
 <div id="pos" class="row" data-controller="cart">
   <!-- Product options -->
   <div id="products" class="col-md-6">
-    <div class="row">
-      <% @products.each_slice(2) do |slice| %>
-        <div class="col-md-6">
-          <% slice.each do |product| %>
+    <% @products.each_slice(2) do |slice| %>
+      <div class="row">
+        <% slice.each do |product| %>
+          <div class="col-md-6">
             <div class="product touchbutton mb-3"
-                 data-product-id="<%= product.id %>"
-                 data-action="click->cart#addToCart"
-                 style="cursor: pointer;">
+                  data-product-id="<%= product.id %>"
+                  data-action="click->cart#addToCart"
+                  style="cursor: pointer;">
               <div class="name">
                 <%= product.name %>
               </div>
@@ -21,10 +21,10 @@
                 <%= number_to_currency(product.price / 100.0) %>
               </div>
             </div>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <!-- Cart and Checkout form -->
