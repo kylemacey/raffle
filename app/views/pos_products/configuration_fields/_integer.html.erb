@@ -1,0 +1,8 @@
+<%= label_tag "pos_product[configuration][#{field[:name]}]", field[:label], class: 'form-label' %>
+<%= number_field_tag "pos_product[configuration][#{field[:name]}]",
+                    field[:default],
+                    class: 'form-control',
+                    required: field[:required] %>
+<% if field[:description].present? %>
+  <div class="form-text"><%= field[:description] %></div>
+<% end %>

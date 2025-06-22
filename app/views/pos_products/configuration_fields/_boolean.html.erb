@@ -1,0 +1,11 @@
+<div class="form-check">
+  <%= check_box_tag "pos_product[configuration][#{field[:name]}]",
+                   '1',
+                   field[:default],
+                   class: 'form-check-input',
+                   required: field[:required] %>
+  <%= label_tag "pos_product[configuration][#{field[:name]}]", field[:label], class: 'form-check-label' %>
+  <% if field[:description].present? %>
+    <div class="form-text"><%= field[:description] %></div>
+  <% end %>
+</div>

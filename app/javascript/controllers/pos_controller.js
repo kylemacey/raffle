@@ -4,48 +4,51 @@ export default class extends Controller {
   connect() {
     // Automatically called when the controller is connected to the page
     this.initRadioListeners();
+    this.updateTotal();
   }
 
-  requestTurboStream(event) {
-    // Extract the tickets value from the input field
-    const tickets = event.currentTarget.value;
+  updateTotal() {
+    const selectedProduct = this.getSelectedProduct();
+    const quantity = parseInt(document.getElementById("quantity").value) || 0;
 
-    // Dynamically build the URL with the tickets value
-    const url = `${event.currentTarget.dataset.url}?tickets=${tickets}`;
+    if (selectedProduct && quantity > 0) {
+      const total = (selectedProduct.price * quantity) / 100; // Convert cents to dollars
+      document.getElementById("total-amount").textContent = `$${total.toFixed(2)}`;
+    } else {
+      document.getElementById("total-amount").textContent = "$0.00";
+    }
+  }
 
-    fetch(url, {
-      headers: { Accept: "text/vnd.turbo-stream.html" },
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-        } else {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-      })
-      .then((turboStream) => {
-        Turbo.renderStreamMessage(turboStream);
-      })
-      .catch((error) => {
-        console.error("Error fetching Turbo Stream:", error);
-      });
+  getSelectedProduct() {
+    const selectedRadio = document.querySelector('input[name="product_id"]:checked');
+    if (!selectedRadio) return null;
+
+    const productId = selectedRadio.value;
+    const productElement = selectedRadio.closest('.product');
+
+    // Extract price from the product element
+    const priceText = productElement.querySelector('.price').textContent;
+    const price = parseFloat(priceText.replace(/[^0-9.]/g, '')) * 100; // Convert to cents
+
+    return { id: productId, price: price };
   }
 
   initRadioListeners() {
-    // Select all radio buttons with name 'product_tickets'
-    const radioButtons = document.querySelectorAll('input[type="radio"][name="product_tickets"]');
-    const customTicketsInput = document.getElementById("custom_tickets");
+    // Select all radio buttons with name 'product_id'
+    const radioButtons = document.querySelectorAll('input[type="radio"][name="product_id"]');
+    const quantityInput = document.getElementById("quantity");
 
-    if (customTicketsInput) {
+    if (quantityInput) {
       // Add event listener to each radio button
       radioButtons.forEach((radio) => {
-        radio.addEventListener("change", (event) => {
-          const selectedValue = event.target.value;
-
-          // Update the custom tickets input field
-          customTicketsInput.value = selectedValue;
-          customTicketsInput.dispatchEvent(new Event("input", { bubbles: true }));
+        radio.addEventListener("change", () => {
+          this.updateTotal();
         });
+      });
+
+      // Add event listener to quantity input
+      quantityInput.addEventListener("input", () => {
+        this.updateTotal();
       });
     }
   }

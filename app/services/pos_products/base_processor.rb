@@ -11,6 +11,11 @@ module PosProducts
       raise NotImplementedError, "#{self.class} must implement #process"
     end
 
+    # Override this method in subclasses to define configuration schema
+    def self.configuration_schema
+      []
+    end
+
     # Helper method to get configuration values
     def config
       pos_product.configuration || {}

@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
-  resources :pos_products
+  resources :pos_products do
+    collection do
+      get :configuration_fields
+    end
+  end
   resources :roc_star_prices
   get 'pos', to: 'pos#new'
   post 'pos/create'

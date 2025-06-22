@@ -8,6 +8,7 @@
       <th>Name</th>
       <th>Price</th>
       <th>Type</th>
+      <th>Stripe Product</th>
       <th>Active</th>
       <th>Actions</th>
     </tr>
@@ -18,6 +19,15 @@
         <td><%= product.name %></td>
         <td><%= number_to_currency(product.price / 100.0) %></td>
         <td><%= product.product_type.present? ? PosProducts::Factory.human_readable_types[product.product_type] : 'None' %></td>
+        <td>
+          <% if product.stripe_product_id.present? %>
+            <% stripe_base_url = "https://dashboard.stripe.com" %>
+            <% path = Rails.env.production? ? "/products/" : "/test/products/" %>
+            <%= link_to product.stripe_product_id, "#{stripe_base_url}#{path}#{product.stripe_product_id}", target: "_blank" %>
+          <% else %>
+            N/A
+          <% end %>
+        </td>
         <td><%= product.active ? 'Yes' : 'No' %></td>
         <td>
           <%= link_to 'Show', pos_product_path(product), class: 'btn btn-sm btn-info' %>

@@ -37,12 +37,28 @@ class PosProductsController < ApplicationController
     redirect_to pos_products_url, notice: 'POS Product was successfully destroyed.'
   end
 
+  def configuration_fields
+    product_type = params[:product_type]
+
+    if product_type.present?
+      processor_class = PosProducts::Factory.processor_for(product_type)
+      if processor_class
+        schema = processor_class.configuration_schema
+        render partial: 'configuration_fields', locals: { schema: schema }
+      else
+        render partial: 'configuration_fields', locals: { schema: [] }
+      end
+    else
+      render partial: 'configuration_fields', locals: { schema: [] }
+    end
+  end
+
   private
     def set_pos_product
       @pos_product = PosProduct.find(params[:id])
     end
 
     def pos_product_params
-      params.require(:pos_product).permit(:name, :price, :stripe_product_id, :stripe_price_id, :product_type, :active, :description, configuration: {})
+      params.require(:pos_product).permit(:name, :formatted_price, :stripe_product_id, :stripe_price_id, :product_type, :active, :description, configuration: {})
     end
 end

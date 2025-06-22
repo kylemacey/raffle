@@ -1,0 +1,8 @@
+<%= label_tag "pos_product[configuration][#{field[:name]}]", field[:label], class: 'form-label' %>
+<%= select_tag "pos_product[configuration][#{field[:name]}]",
+               options_for_select(field[:options].map { |opt| [opt[:label], opt[:value]] }, field[:default]),
+               class: 'form-select',
+               required: field[:required] %>
+<% if field[:description].present? %>
+  <div class="form-text"><%= field[:description] %></div>
+<% end %>
