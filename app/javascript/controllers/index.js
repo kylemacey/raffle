@@ -12,5 +12,8 @@ application.register("pos-product-form", PosProductFormController)
 import RedirectController from "controllers/redirect_controller"
 application.register("redirect", RedirectController)
 
+import SortableController from "controllers/sortable_controller"
+application.register("sortable", SortableController)
+
 import WinnersController from "controllers/winners_controller"
 application.register("winners", WinnersController)

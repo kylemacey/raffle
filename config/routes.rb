@@ -66,6 +66,7 @@ Rails.application.routes.draw do
 
   # Product and Price Management.
   resources :pos_products do
+    patch :reorder, on: :collection
     get :configuration_fields, on: :collection
   end
   resources :roc_star_prices

@@ -37,6 +37,27 @@ class PosProductsController < ApplicationController
     redirect_to pos_products_url, notice: 'POS Product was successfully destroyed.'
   end
 
+  def reorder
+    product_to_move = PosProduct.find(params[:id])
+    new_priority = params[:priority].to_i
+
+    # Get all products except the one being moved
+    other_products = PosProduct.where.not(id: product_to_move.id).order(:priority)
+
+    # Create an array of all products in their new order
+    all_products = other_products.to_a
+    all_products.insert(new_priority, product_to_move)
+
+    # Re-assign priority based on the new order
+    PosProduct.transaction do
+      all_products.each_with_index do |product, index|
+        product.update_column(:priority, index)
+      end
+    end
+
+    head :ok
+  end
+
   def configuration_fields
     product_type = params[:product_type]
 

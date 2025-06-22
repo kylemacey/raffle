@@ -2,38 +2,44 @@
 
 <%= link_to 'New POS Product', new_pos_product_path, class: 'btn btn-primary mb-3' %>
 
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Price</th>
-      <th>Type</th>
-      <th>Stripe Product</th>
-      <th>Active</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @pos_products.each do |product| %>
+<div data-controller="sortable" data-sortable-url="/pos_products/reorder">
+  <table class="table table-bordered">
+    <thead>
       <tr>
-        <td><%= product.name %></td>
-        <td><%= number_to_currency(product.price / 100.0) %></td>
-        <td><%= product.product_type.present? ? PosProducts::Factory.human_readable_types[product.product_type] : 'None' %></td>
-        <td>
-          <% if product.stripe_product_id.present? %>
-            <%= stripe_product_url(product.stripe_product_id,
-                link_text: product.stripe_product_id) %>
-          <% else %>
-            N/A
-          <% end %>
-        </td>
-        <td><%= product.active ? 'Yes' : 'No' %></td>
-        <td>
-          <%= link_to 'Show', pos_product_path(product), class: 'btn btn-sm btn-info' %>
-          <%= link_to 'Edit', edit_pos_product_path(product), class: 'btn btn-sm btn-warning' %>
-          <%= link_to 'Delete', pos_product_path(product), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-sm btn-danger' %>
-        </td>
+        <th style="width: 5%;"></th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Type</th>
+        <th>Stripe Product</th>
+        <th>Active</th>
+        <th>Actions</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody data-sortable-target="list">
+      <% @pos_products.order(:priority).each do |product| %>
+        <tr data-id="<%= product.id %>">
+          <td class="text-center align-middle" style="cursor: grab;" data-sortable-handle>
+            <i class="fas fa-bars"></i>
+          </td>
+          <td class="align-middle"><%= product.name %></td>
+          <td class="align-middle"><%= number_to_currency(product.price.to_f / 100.0) %></td>
+          <td class="align-middle"><%= product.product_type.present? ? PosProducts::Factory.human_readable_types[product.product_type] : 'None' %></td>
+          <td class="align-middle">
+            <% if product.stripe_product_id.present? %>
+              <%= stripe_product_url(product.stripe_product_id,
+                  link_text: product.stripe_product_id) %>
+            <% else %>
+              N/A
+            <% end %>
+          </td>
+          <td class="align-middle"><%= product.active ? 'Yes' : 'No' %></td>
+          <td class="align-middle">
+            <%= link_to 'Show', pos_product_path(product), class: 'btn btn-sm btn-info' %>
+            <%= link_to 'Edit', edit_pos_product_path(product), class: 'btn btn-sm btn-warning' %>
+            <%= link_to 'Delete', pos_product_path(product), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-sm btn-danger' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
