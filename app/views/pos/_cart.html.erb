@@ -1,6 +1,9 @@
 <div class="card" data-controller="cart">
-  <div class="card-header">
+  <div class="card-header d-flex justify-content-between align-items-center">
     <h4 class="card-title mb-0">Shopping Cart</h4>
+    <button type="button" class="btn btn-sm btn-outline-danger" data-action="click->cart#clearCart">
+      Clear Cart
+    </button>
   </div>
   <div class="card-body">
     <div id="cart-items">
@@ -46,11 +49,6 @@
 <% end %>
 
 <script>
-// Initialize cart with product data from server
-document.addEventListener('DOMContentLoaded', function() {
-  const products = <%= raw PosProduct.active.to_json(only: [:id, :name, :price]) %>;
-
-  // Store products globally for cart controller to access
-  window.posProducts = products;
-});
+// Set up product data immediately
+window.posProducts = <%= raw PosProduct.active.to_json(only: [:id, :name, :price]) %>;
 </script>

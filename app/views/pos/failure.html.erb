@@ -1,0 +1,43 @@
+<div>
+  <h2>Payment Failed</h2>
+
+  <div class="alert alert-danger">
+    <h4 class="alert-heading">Payment Processing Error</h4>
+    <p>We were unable to process your payment. This could be due to:</p>
+    <ul>
+      <li>Insufficient funds</li>
+      <li>Card declined by your bank</li>
+      <li>Network connectivity issues</li>
+      <li>Card reader communication problems</li>
+    </ul>
+  </div>
+
+  <div class="card my-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0">What would you like to do?</h5>
+    </div>
+    <div class="card-body">
+      <div class="d-grid gap-3">
+        <%= link_to "Try Payment Again", pos_main_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "Return to POS", pos_main_path, class: "btn btn-outline-secondary" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h6 class="card-title mb-0">Order Details</h6>
+    </div>
+    <div class="card-body">
+      <p><strong>Order ID:</strong> <%= @order.id %></p>
+      <p><strong>Customer:</strong> <%= @order.customer_name %> (<%= @order.customer_email %>)</p>
+      <p><strong>Total:</strong> <%= number_to_currency(@order.total_amount / 100.0) %></p>
+      <% if @payment_intent %>
+        <p><strong>Payment Status:</strong> <span class="badge bg-danger"><%= @payment_intent.status %></span></p>
+        <% if @payment_intent.last_payment_error %>
+          <p><strong>Error:</strong> <%= @payment_intent.last_payment_error.message %></p>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

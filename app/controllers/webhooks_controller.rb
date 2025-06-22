@@ -54,12 +54,12 @@ class WebhooksController < ApplicationController
 
     Rails.logger.info "Webhook: Payment succeeded for Order ##{order_id}, preparing to broadcast and process."
 
-    # Broadcast success to the Turbo Stream immediately
+    # Broadcast redirect to success page
     Turbo::StreamsChannel.broadcast_replace_to(
       "payment_status_#{payment_intent_id}",
-      target: "payment_status_#{payment_intent_id}",
-      partial: "payments/status",
-      locals: { status: "succeeded" }
+      target: "redirect_target",
+      partial: "pos/redirect",
+      locals: { url: pos_success_path(order_id: order_id) }
     )
 
     # Process the order in a background thread to avoid webhook timeouts
@@ -98,15 +98,18 @@ class WebhooksController < ApplicationController
 
   def handle_payment_failure(payment_intent)
     # Extract the Payment Intent ID
-    payment_intent_id = payment_intent['id']
+    payment_intent_id = payment_intent.id
+    metadata = payment_intent.metadata
+    order_id = metadata['order_id']
+
     Rails.logger.info "Payment failed for #{payment_intent_id}"
 
-    # Broadcast failure to the Turbo Stream
+    # Broadcast redirect to failure page
     Turbo::StreamsChannel.broadcast_replace_to(
       "payment_status_#{payment_intent_id}",
-      target: "payment_status_#{payment_intent_id}",
-      partial: "payments/status",
-      locals: { status: "failed" }
+      target: "redirect_target",
+      partial: "pos/redirect",
+      locals: { url: pos_failure_path(order_id: order_id) }
     )
   end
 end

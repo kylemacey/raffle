@@ -69,7 +69,7 @@ class PosController < ApplicationController
         end
       end
 
-      redirect_to pos_success_path(order_id: order.id)
+      redirect_to pos_success_path(order_id: order.id, cart_cleared: true)
 
     elsif params[:payment_method] == 'card'
       payment_service = CollectPaymentService.new(
@@ -116,6 +116,16 @@ class PosController < ApplicationController
     @order = Order.find(params[:order_id])
   end
 
+  def failure
+    @order = Order.find(params[:order_id])
+    @payment_intent = Stripe::PaymentIntent.retrieve(@order.payment.payment_intent_id) if @order.payment&.payment_intent_id
+  rescue ActiveRecord::RecordNotFound
+    redirect_to pos_main_path, alert: 'Order not found.'
+  rescue Stripe::StripeError => e
+    Rails.logger.error "Error retrieving payment intent: #{e.message}"
+    redirect_to pos_main_path, alert: 'Payment information not found.'
+  end
+
   # Turbo Action
   def custom_price
     tickets = params[:tickets].to_i
@@ -152,7 +162,10 @@ class PosController < ApplicationController
       begin
         Stripe::Terminal::Reader::TestHelpers.present_payment_method(
           current_reader.id,
-          { card_present: { number: '4000000000000002' } }
+          {
+            card_present: { number: '4000000000000002'},
+            type: "card_present",
+          }
         )
       rescue Stripe::StripeError => e
         flash[:alert] = "Error simulating decline: #{e.message}"

@@ -25,3 +25,8 @@
 
   <p><%= link_to "Return to POS", pos_main_path, class: "btn btn-primary" %></p>
 </div>
+
+<script>
+// Clear the cart after successful checkout (for both cash and card payments)
+localStorage.removeItem('pos_cart');
+</script>

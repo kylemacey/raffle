@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   post 'pos/simulate_decline/:payment_intent_id', to: 'pos#simulate_decline', as: :simulate_decline
   post 'pos/create_order'
   get 'pos/success/:order_id', to: 'pos#success', as: :pos_success
+  get 'pos/failure/:order_id', to: 'pos#failure', as: :pos_failure
   get 'readers', to: 'readers#list', as: :readers_list
   post 'readers/assign', as: :readers_assign
   post 'readers/create_simulated', as: :readers_create_simulated

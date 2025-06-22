@@ -6,7 +6,7 @@ export default class extends Controller {
   connect() {
     this.loadCart()
     this.updateDisplay()
-    this.renderCart()
+    this.waitForProductsAndRender()
 
     // Set up form submit handler
     const checkoutForm = document.getElementById('checkout-form');
@@ -74,6 +74,18 @@ export default class extends Controller {
   loadCart() {
     // This will be called by the server to populate initial data
     // The cart items are rendered server-side with data attributes
+  }
+
+  waitForProductsAndRender() {
+    // Wait for products to be available, then render
+    const checkProducts = () => {
+      if (window.posProducts) {
+        this.renderCart()
+      } else {
+        setTimeout(checkProducts, 10)
+      }
+    }
+    checkProducts()
   }
 
   renderCart() {
