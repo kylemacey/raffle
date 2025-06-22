@@ -9,6 +9,11 @@
               <div class="name">
                 <%= product.name %>
               </div>
+              <% if product.description.present? %>
+                <div class="description" style="font-size: 0.85em; color: #666; margin-bottom: 0.5rem;">
+                  <%= product.description %>
+                </div>
+              <% end %>
               <div class="price">
                 <%= number_to_currency(product.price / 100.0) %>
               </div>
