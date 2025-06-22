@@ -21,9 +21,8 @@
         <td><%= product.product_type.present? ? PosProducts::Factory.human_readable_types[product.product_type] : 'None' %></td>
         <td>
           <% if product.stripe_product_id.present? %>
-            <% stripe_base_url = "https://dashboard.stripe.com" %>
-            <% path = Rails.env.production? ? "/products/" : "/test/products/" %>
-            <%= link_to product.stripe_product_id, "#{stripe_base_url}#{path}#{product.stripe_product_id}", target: "_blank" %>
+            <%= stripe_product_url(product.stripe_product_id,
+                link_text: product.stripe_product_id) %>
           <% else %>
             N/A
           <% end %>

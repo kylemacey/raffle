@@ -1,10 +1,13 @@
 Rails.application.routes.draw do
+  get 'orders/index'
+  get 'orders/show'
   resources :pos_products do
     collection do
       get :configuration_fields
     end
   end
   resources :roc_star_prices
+  resources :orders, only: [:index, :show]
   get 'pos', to: 'pos#new'
   post 'pos/create'
   get 'pos/main'

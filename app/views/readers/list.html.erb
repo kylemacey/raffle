@@ -16,7 +16,7 @@
         <% end %>
       <% else %>
         <p>No Stripe Terminal Locations found.</p>
-        <p>Please create a location in your <a href="https://dashboard.stripe.com/test/terminal/locations" target="_blank">Stripe Dashboard</a> first.</p>
+        <p>Please create a location in your <%= stripe_terminal_location_url(nil, link_text: "Stripe Dashboard") %> first.</p>
       <% end %>
     </div>
   </div>

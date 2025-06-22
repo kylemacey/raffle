@@ -1,0 +1,120 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Order #<%= @order.id %></h1>
+  <%= link_to "Back to Orders", orders_path, class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <!-- Order Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Order Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Customer Name:</strong> <%= @order.customer_name %></p>
+            <p><strong>Customer Email:</strong> <%= @order.customer_email %></p>
+            <p><strong>Event:</strong> <%= @order.event&.name %></p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Order Date:</strong> <%= @order.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+            <p><strong>Total Amount:</strong> <span class="h5 text-primary"><%= number_to_currency(@order.total_amount / 100.0) %></span></p>
+            <p><strong>Status:</strong>
+              <% if @order.payment %>
+                <span class="badge bg-success">Paid</span>
+              <% else %>
+                <span class="badge bg-warning">Pending</span>
+              <% end %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Order Items</h5>
+      </div>
+      <div class="card-body">
+        <% if @order.order_items.any? %>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @order.order_items.each do |item| %>
+                  <tr>
+                    <td>
+                      <strong><%= item.pos_product.name %></strong>
+                      <% if item.pos_product.description.present? %>
+                        <br><small class="text-muted"><%= item.pos_product.description %></small>
+                      <% end %>
+                    </td>
+                    <td><%= item.quantity %></td>
+                    <td><%= number_to_currency(item.unit_price / 100.0) %></td>
+                    <td><%= number_to_currency((item.quantity * item.unit_price) / 100.0) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-muted">No items found for this order.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <!-- Payment Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Payment Information</h5>
+      </div>
+      <div class="card-body">
+        <% if @order.payment %>
+          <p><strong>Payment ID:</strong> <%= @order.payment.id %></p>
+          <p><strong>Amount:</strong> <%= number_to_currency(@order.payment.amount.to_f / 100.0) %></p>
+          <p><strong>Payment Date:</strong> <%= @order.payment.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+
+          <% if @order.payment.payment_intent_id.present? %>
+            <p><strong>Stripe Payment Intent:</strong>
+              <code><%= @order.payment.payment_intent_id %></code>
+            </p>
+            <%= stripe_payment_url(@order.payment.payment_intent_id,
+                link_text: "View on Stripe Dashboard",
+                class: "btn btn-primary w-100") %>
+          <% end %>
+        <% else %>
+          <p class="text-muted">No payment information available.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Customer Information</h5>
+      </div>
+      <div class="card-body">
+        <p><strong>Customer Name:</strong> <%= @order.customer_name %></p>
+        <p><strong>Customer Email:</strong> <%= @order.customer_email %></p>
+        <% if @order.user %>
+          <hr>
+          <p><strong>Agent:</strong> <%= @order.user.name %></p>
+          <% if @order.user.admin? %>
+            <p><strong>Agent Role:</strong> <span class="badge bg-info">Admin</span></p>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
