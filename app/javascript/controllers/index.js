@@ -1,21 +1,16 @@
-import { Application } from "@hotwired/stimulus"
+import { application } from "controllers/application"
 
-import WinnersController from "./winners_controller";
-import PosProductFormController from "controllers/pos_product_form_controller";
-import CartController from "controllers/cart_controller";
-import RedirectController from "./redirect_controller";
-import CustomerSearchController from "./customer_search_controller"
+import CartController from "controllers/cart_controller"
+application.register("cart", CartController)
 
-const application = Application.start()
-
-// Configure Stimulus development experience
-application.debug = false
-window.Stimulus = application
-
-application.register("winners", WinnersController);
-application.register("pos-product-form", PosProductFormController);
-application.register("cart", CartController);
-application.register("redirect", RedirectController);
+import CustomerSearchController from "controllers/customer_search_controller"
 application.register("customer-search", CustomerSearchController)
 
-export { application }
+import PosProductFormController from "controllers/pos_product_form_controller"
+application.register("pos-product-form", PosProductFormController)
+
+import RedirectController from "controllers/redirect_controller"
+application.register("redirect", RedirectController)
+
+import WinnersController from "controllers/winners_controller"
+application.register("winners", WinnersController)

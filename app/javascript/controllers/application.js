@@ -10,7 +10,7 @@ const application = Application.start()
 application.debug = false
 window.Stimulus   = application
 
-application.register("pos", PosController);
-application.register("winners", WinnersController);
+// application.register("pos", PosController);
+// application.register("winners", WinnersController);
 
 export { application }
