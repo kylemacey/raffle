@@ -67,7 +67,9 @@
           </td>
           <td><%= order.created_at.strftime("%B %d, %Y at %I:%M %p") %></td>
           <td>
-            <%= link_to "View Details", order_path(order), class: "btn btn-sm btn-outline-primary" %>
+            <div class="d-flex">
+              <%= link_to "View Details", order_path(order), class: "btn btn-sm btn-outline-primary" %>
+            </div>
           </td>
         </tr>
       <% end %>

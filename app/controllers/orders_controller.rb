@@ -17,6 +17,17 @@ class OrdersController < ApplicationController
   def show
   end
 
+  def destroy
+    unless current_user_is_admin?
+      redirect_to orders_path, alert: "You are not authorized to perform this action."
+      return
+    end
+
+    @order = Order.find(params[:id])
+    @order.destroy
+    redirect_to orders_path, notice: "Order ##{@order.id} was successfully deleted."
+  end
+
   private
 
   def set_order

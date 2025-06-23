@@ -26,7 +26,7 @@ Rails.application.routes.draw do
   get 'pos/failure/:order_id', to: 'pos#failure', as: :pos_failure
   post 'pos/create_order'
 
-  resources :orders, only: [:index, :show]
+  resources :orders, only: [:index, :show, :destroy]
 
   # == CARD READERS & TERMINAL ==
   # Routes for managing and interacting with Stripe Terminal readers.
