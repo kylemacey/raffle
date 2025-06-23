@@ -12,4 +12,10 @@ class ApplicationController < ActionController::Base
       http_basic_authenticate_or_request_with name: http_name, password: http_password
     end
   end
+
+  protected
+
+  def use_full_width_container
+    @full_width_container = true
+  end
 end

@@ -4,6 +4,7 @@ class PosController < ApplicationController
 
   before_action :require_authentication!
   before_action :load_cart_from_params, only: [:checkout]
+  before_action :use_full_width_container
 
   def new
     @events = Event.all
@@ -15,8 +16,8 @@ class PosController < ApplicationController
   end
 
   def main
-    redirect_to pos_path unless current_event
-    @products = PosProduct.active
+    @products = PosProduct.where(active: true).order(:priority)
+    @event = current_event
   end
 
   def checkout
