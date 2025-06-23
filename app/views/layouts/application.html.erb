@@ -34,7 +34,10 @@
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Events</a>
               <ul class="dropdown-menu">
-                <% Event.all.each do |event| %>
+                <% grouped_events = grouped_events_for_dropdown %>
+
+                <%# Past Year Events %>
+                <% grouped_events[:past_year].each do |event| %>
                   <li>
                     <% if event == current_event %>
                       <%= link_to event.name, event, class: "dropdown-item active" %>
@@ -42,6 +45,29 @@
                       <%= link_to event.name, event, class: "dropdown-item" %>
                     <% end %>
                   </li>
+                <% end %>
+
+                <%# Divider and Older Events section %>
+                <% if grouped_events[:show_older_events_section] %>
+                  <%# Show divider only if there were recent events AND there are older events %>
+                  <% if grouped_events[:past_year].any? %>
+                    <li><hr class="dropdown-divider"></li>
+                  <% end %>
+
+                  <%# Older five events %>
+                  <% grouped_events[:older_five].each do |event| %>
+                    <li>
+                      <% if event == current_event %>
+                        <%= link_to event.name, event, class: "dropdown-item active" %>
+                      <% else %>
+                        <%= link_to event.name, event, class: "dropdown-item" %>
+                      <% end %>
+                    </li>
+                  <% end %>
+
+                  <%# Divider and "All Events" link %>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><%= link_to "All Events", events_path, class: "dropdown-item" %></li>
                 <% end %>
               </ul>
             </li>
