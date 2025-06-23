@@ -10,6 +10,31 @@ class EventsController < ApplicationController
 
   # GET /events/1 or /events/1.json
   def show
+    @stats = {
+      total_entries: @event.entries.sum(:qty),
+      total_orders: @event.orders.joins(:payment).count,
+      gross_volume: @event.orders.joins(:payment).sum(:total_amount)
+    }
+
+    # Calculate Heavy Hitters
+    if @stats[:total_entries] > 0
+      @heavy_hitters = @event.entries
+                             .group(:name)
+                             .order('sum_qty desc')
+                             .sum(:qty)
+                             .first(5)
+                             .map do |name, qty|
+                               {
+                                 name: name,
+                                 qty: qty,
+                                 percentage: (qty.to_f / @stats[:total_entries] * 100).round(2)
+                               }
+                             end
+    else
+      @heavy_hitters = []
+    end
+
+    @drawings = @event.drawings.includes(:winners).order(created_at: :desc)
   end
 
   # GET /events/new
