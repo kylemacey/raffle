@@ -38,6 +38,11 @@
     .price {
       font-size: 1.4em;
     }
+
+    &.subscription {
+      background-color: #035a34;
+      border-color: #002e14;
+    }
   }
 
   #total {
@@ -65,4 +70,37 @@
       transform: scale(0.95);
     }
   }
+}
+
+[data-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tooltip]::before,
+[data-tooltip]::after {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  margin-bottom: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  text-align: center;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  background: #343a40;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+  opacity: 1;
 }

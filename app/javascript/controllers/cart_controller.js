@@ -1,12 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["items", "total", "checkoutButton"]
+  static targets = ["items", "total", "checkoutButton", "cashPaymentMethod", "cardPaymentMethod", "cashPaymentLabelWrapper"]
 
   connect() {
     this.loadCart()
     this.updateDisplay()
-    this.waitForProductsAndRender()
 
     // Set up form submit handler
     const checkoutForm = document.getElementById('checkout-form');
@@ -16,8 +15,20 @@ export default class extends Controller {
   }
 
   addToCart(event) {
-    const productId = event.currentTarget.dataset.productId
+    const productEl = event.currentTarget
+    const productId = productEl.dataset.productId
+    const isSubscription = productEl.dataset.isSubscription === 'true'
     const cart = this.getCart()
+
+    if (isSubscription) {
+      if (this.cartHasSubscription(cart)) {
+        alert("Only one subscription may be purchased per order.")
+        return;
+      }
+      if (cart[productId]) { // If it's already in the cart, don't increase quantity
+        return;
+      }
+    }
 
     if (cart[productId]) {
       cart[productId] += 1
@@ -26,8 +37,8 @@ export default class extends Controller {
     }
 
     this.saveCart(cart)
-    this.updateDisplay()
     this.renderCart()
+    this.updateDisplay()
   }
 
   updateQuantity(event) {
@@ -35,15 +46,20 @@ export default class extends Controller {
     const quantity = parseInt(event.currentTarget.value) || 0
     const cart = this.getCart()
 
-    if (quantity > 0) {
+    const productEl = document.querySelector(`[data-product-id='${productId}']`)
+    if (productEl && productEl.dataset.isSubscription === 'true' && quantity > 1) {
+      alert("Only one subscription may be purchased per order.")
+      event.currentTarget.value = 1
+      cart[productId] = 1
+    } else if (quantity > 0) {
       cart[productId] = quantity
     } else {
       delete cart[productId]
     }
 
     this.saveCart(cart)
-    this.updateDisplay()
     this.renderCart()
+    this.updateDisplay()
   }
 
   removeFromCart(event) {
@@ -52,14 +68,14 @@ export default class extends Controller {
 
     delete cart[productId]
     this.saveCart(cart)
-    this.updateDisplay()
     this.renderCart()
+    this.updateDisplay()
   }
 
   clearCart() {
     localStorage.removeItem('pos_cart')
-    this.updateDisplay()
     this.renderCart()
+    this.updateDisplay()
   }
 
   getCart() {
@@ -72,43 +88,43 @@ export default class extends Controller {
   }
 
   loadCart() {
-    // This will be called by the server to populate initial data
-    // The cart items are rendered server-side with data attributes
-  }
-
-  waitForProductsAndRender() {
-    // Wait for products to be available, then render
-    const checkProducts = () => {
-      if (window.posProducts) {
-        this.renderCart()
-      } else {
-        setTimeout(checkProducts, 10)
-      }
-    }
-    checkProducts()
+    this.renderCart()
   }
 
   renderCart() {
     const cart = this.getCart()
-    const products = window.posProducts || []
     const cartItemsContainer = document.getElementById('cart-items')
 
     if (!cartItemsContainer) return
 
     if (Object.keys(cart).length === 0) {
       cartItemsContainer.innerHTML = '<p class="card-text text-center text-muted">Your cart is empty.</p>'
+      this.updateTotal(0)
+      this.updatePaymentOptions()
       return
     }
 
     let html = '<table class="table table-sm"><tbody>'
     let total = 0
+    let requiresCard = false
 
     Object.keys(cart).forEach(productId => {
-      const product = products.find(p => p.id.toString() === productId)
-      if (product) {
+      const productEl = document.querySelector(`[data-product-id='${productId}']`)
+      if (productEl) {
+        const product = {
+          id: productId,
+          name: productEl.dataset.productName,
+          price: parseInt(productEl.dataset.productPrice),
+          isSubscription: productEl.dataset.isSubscription === 'true'
+        }
+
         const quantity = cart[productId]
         const itemTotal = product.price * quantity
         total += itemTotal
+
+        if (product.isSubscription) {
+          requiresCard = true
+        }
 
         html += `
           <tr>
@@ -136,13 +152,37 @@ export default class extends Controller {
     })
 
     html += '</tbody></table>'
-    html += '<hr>'
-    html += '<div class="d-flex justify-content-between align-items-center">'
-    html += '<h5 class="mb-0">Total:</h5>'
-    html += `<h5 class="mb-0">$${(total / 100.0).toFixed(2)}</h5>`
-    html += '</div>'
-
     cartItemsContainer.innerHTML = html
+
+    this.updateTotal(total)
+    this.updatePaymentOptions(requiresCard)
+  }
+
+  updateTotal(total) {
+    const totalContainer = document.getElementById('cart-total')
+    if (totalContainer) {
+      totalContainer.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Total:</h5>
+          <h5 class="mb-0">$${(total / 100.0).toFixed(2)}</h5>
+        </div>
+      `
+    }
+  }
+
+  updatePaymentOptions(requiresCard = false) {
+    if (!this.hasCashPaymentMethodTarget || !this.hasCashPaymentLabelWrapperTarget) return;
+
+    const wrapper = this.cashPaymentLabelWrapperTarget;
+
+    if (requiresCard) {
+      this.cashPaymentMethodTarget.disabled = true
+      this.cardPaymentMethodTarget.checked = true
+      wrapper.setAttribute('data-tooltip', "Roc Star purchases can't be made with cash")
+    } else {
+      this.cashPaymentMethodTarget.disabled = false
+      wrapper.removeAttribute('data-tooltip')
+    }
   }
 
   updateDisplay() {
@@ -172,5 +212,15 @@ export default class extends Controller {
 
     const checkoutForm = event.target
     checkoutForm.appendChild(cartInput)
+  }
+
+  cartHasSubscription(cart) {
+    for (const productId in cart) {
+      const productEl = document.querySelector(`[data-product-id='${productId}']`)
+      if (productEl && productEl.dataset.isSubscription === 'true') {
+        return true
+      }
+    }
+    return false
   }
 }

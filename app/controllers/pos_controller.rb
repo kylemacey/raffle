@@ -74,22 +74,14 @@ class PosController < ApplicationController
 
     elsif params[:payment_method] == 'card'
       payment_service = CollectPaymentService.new(
-        customer: { name: params[:name], email: params[:email] },
+        order: order,
         reader: current_reader
       )
 
-      payment_service.collect_payment(
-        @cart_total,
-        metadata: {
-          order_id: order.id,
-          event_id: current_event.id,
-          agent: current_user.name,
-          order_url: order_url(order.id)
-        }
-      )
+      payment_service.collect_payment
 
       if payment_service.success?
-        Rails.logger.info "Created payment intent for Order ##{order.id} with order URL: #{order_url(order.id)}"
+        Rails.logger.info "Created payment intent for Order ##{order.id}"
         redirect_to(
           controller: :pos,
           action: :wait_for_pin_pad,

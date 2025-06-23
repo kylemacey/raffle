@@ -5,8 +5,12 @@
       <div class="row">
         <% slice.each do |product| %>
           <div class="col-md-6">
-            <div class="product touchbutton mb-3"
+            <div class="product touchbutton mb-3 <%= 'subscription' if product.subscription? %>"
                   data-product-id="<%= product.id %>"
+                  data-product-name="<%= product.name %>"
+                  data-product-price="<%= product.price %>"
+                  data-requires-card="<%= product.requires_card_payment? %>"
+                  data-is-subscription="<%= product.subscription? %>"
                   data-action="click->cart#addToCart"
                   data-match-height-target="item"
                   style="cursor: pointer;">

@@ -79,20 +79,58 @@ class WebhooksController < ApplicationController
 
             # Use the new OrderProcessingService
             result = OrderProcessingService.process_order(order)
+            log_order_processing_result(order, result)
 
-            if result[:success]
-              Rails.logger.info "Webhook (Thread): Successfully processed Order ##{order_id} with #{result[:processed].count} items"
-            else
-              Rails.logger.error "Webhook (Thread): Order ##{order_id} processing completed with #{result[:failed].count} failures"
-              result[:failed].each do |failure|
-                Rails.logger.error "  - Item #{failure[:item].id} (#{failure[:item].pos_product.name}): #{failure[:error].message}"
-              end
-            end
+            # After processing one-time items, create the subscription if needed
+            create_subscription_if_present(order, payment_intent)
           else
             Rails.logger.warn "Webhook (Thread): Order ##{order_id} already has a payment. Skipping."
           end
         end
       end
+    end
+  end
+
+  def log_order_processing_result(order, result)
+    if result[:success]
+      Rails.logger.info "Webhook (Thread): Successfully processed Order ##{order.id} with #{result[:processed].count} items"
+    else
+      Rails.logger.error "Webhook (Thread): Order ##{order.id} processing completed with #{result[:failed].count} failures"
+      result[:failed].each do |failure|
+        Rails.logger.error "  - Item #{failure[:item].id} (#{failure[:item].pos_product.name}): #{failure[:error].message}"
+      end
+    end
+  end
+
+  def create_subscription_if_present(order, payment_intent)
+    subscription_item = order.order_items.find { |item| item.pos_product.product_type == 'subscription' }
+    return unless subscription_item
+
+    begin
+      charge = Stripe::Charge.retrieve(payment_intent.latest_charge)
+      generated_card_pm_id = charge.payment_method_details.card_present.generated_card
+      customer_id = payment_intent.customer
+
+      unless generated_card_pm_id
+        Rails.logger.error "Webhook (Thread): Could not find a generated card for Order ##{order.id}."
+        return
+      end
+
+      # Attach the payment method to the customer and set it as the default for invoices
+      Stripe::PaymentMethod.attach(generated_card_pm_id, { customer: customer_id })
+      Stripe::Customer.update(customer_id, { invoice_settings: { default_payment_method: generated_card_pm_id }})
+
+      # Create the subscription
+      subscription = Stripe::Subscription.create({
+        customer: customer_id,
+        items: [{ price: subscription_item.pos_product.stripe_price_id }],
+        metadata: { order_id: order.id }
+      })
+
+      Rails.logger.info "Webhook (Thread): Successfully created Subscription #{subscription.id} for Order ##{order.id}"
+
+    rescue Stripe::StripeError => e
+      Rails.logger.error "Webhook (Thread): Failed to create subscription for Order ##{order.id}. Error: #{e.message}"
     end
   end
 

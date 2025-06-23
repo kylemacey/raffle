@@ -8,4 +8,8 @@ class Order < ApplicationRecord
   validates :customer_name, presence: true
   validates :customer_email, presence: true
   validates :total_amount, presence: true, numericality: { greater_than: 0 }
+
+  def customer_details
+    { name: customer_name, email: customer_email }
+  end
 end

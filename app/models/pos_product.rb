@@ -20,4 +20,12 @@ class PosProduct < ApplicationRecord
       self.price = (amount.to_s.gsub(/[\$,]/, '').to_f * 100).to_i
     end
   end
+
+  def subscription?
+    product_type == 'subscription'
+  end
+
+  def requires_card_payment?
+    subscription?
+  end
 end
