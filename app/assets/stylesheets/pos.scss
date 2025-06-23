@@ -42,6 +42,10 @@
     &.subscription {
       background-color: #035a34;
       border-color: #002e14;
+
+      .description {
+        color: #9c74f8 !important;
+      }
     }
   }
 
