@@ -204,14 +204,37 @@ export default class extends Controller {
 
   // Called before checkout to prepare cart data
   prepareCheckout(event) {
-    const cart = this.getCart()
-    const cartInput = document.createElement('input')
-    cartInput.type = 'hidden'
-    cartInput.name = 'cart_data'
-    cartInput.value = JSON.stringify(cart)
+    const cart = this.getCart();
+    let hasSubscription = false;
+    let hasOneTimeItem = false;
 
-    const checkoutForm = event.target
-    checkoutForm.appendChild(cartInput)
+    for (const productId in cart) {
+      const productEl = document.querySelector(`[data-product-id='${productId}']`);
+      if (productEl) {
+        if (productEl.dataset.isSubscription === 'true') {
+          hasSubscription = true;
+        } else {
+          hasOneTimeItem = true;
+        }
+      }
+    }
+
+    if (hasSubscription && !hasOneTimeItem) {
+      event.preventDefault();
+      alert(
+        "Due to a technical limitation, Roc Star sign-ups must be combined with another purchase.\n\n" +
+        "Please add a mulligan or putt for prizes ticket to continue, or instruct the customer to sign up online at https://farleysfriends.org/roc-stars."
+      );
+      return;
+    }
+
+    const cartInput = document.createElement('input');
+    cartInput.type = 'hidden';
+    cartInput.name = 'cart_data';
+    cartInput.value = JSON.stringify(cart);
+
+    const checkoutForm = event.target;
+    checkoutForm.appendChild(cartInput);
   }
 
   cartHasSubscription(cart) {
