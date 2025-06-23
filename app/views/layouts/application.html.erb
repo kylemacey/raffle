@@ -7,8 +7,12 @@
     <!-- iOS Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Farley's Friends Raffle">
+    <meta name="apple-mobile-web-app-title" content="Farley Raffle">
     <%= favicon_link_tag 'favicon.svg', rel: 'apple-touch-icon', type: 'image/svg+xml' %>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4338CA">
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>

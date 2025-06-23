@@ -1,0 +1,16 @@
+{
+  "short_name": "Farley's Friends Raffle",
+  "name": "Farley's Friends Raffle",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/pos/main",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#4338CA",
+  "background_color": "#ffffff"
+}
