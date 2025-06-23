@@ -17,3 +17,6 @@ application.register("sortable", SortableController)
 
 import WinnersController from "controllers/winners_controller"
 application.register("winners", WinnersController)
+
+import MatchHeightController from "controllers/match_height_controller"
+application.register("match-height", MatchHeightController)

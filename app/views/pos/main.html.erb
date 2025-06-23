@@ -1,6 +1,6 @@
 <div id="pos" class="row" data-controller="cart">
   <!-- Product options -->
-  <div id="products" class="col-md-6">
+  <div id="products" class="col-md-6" data-controller="match-height">
     <% @products.each_slice(2) do |slice| %>
       <div class="row">
         <% slice.each do |product| %>
@@ -8,6 +8,7 @@
             <div class="product touchbutton mb-3"
                   data-product-id="<%= product.id %>"
                   data-action="click->cart#addToCart"
+                  data-match-height-target="item"
                   style="cursor: pointer;">
               <div class="name">
                 <%= product.name %>
