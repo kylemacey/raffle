@@ -1,0 +1,47 @@
+<%= form_with(model: roc_star_price) do |form| %>
+  <% if roc_star_price.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(roc_star_price.errors.count, "error") %> prohibited this roc_star_price from being saved:</h2>
+
+      <ul>
+        <% roc_star_price.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :name, style: "display: block" %>
+    <%= form.text_field :name %>
+  </div>
+
+  <div>
+    <%= form.label :stripe_product_id, "Stripe Product ID", style: "display: block" %>
+    <%= form.text_field :stripe_product_id %>
+  </div>
+
+  <div>
+    <%= form.label :stripe_price_id, "Stripe Price ID", style: "display: block" %>
+    <%= form.text_field :stripe_price_id %>
+  </div>
+
+  <div>
+    <%= form.label :amount, style: "display: block" %>
+    <%= form.number_field :amount %>
+  </div>
+
+  <div>
+    <%= form.label :interval, style: "display: block" %>
+    <%= form.select :interval, options_for_select([['Month', 'month'], ['Year', 'year']], roc_star_price.interval) %>
+  </div>
+
+  <div>
+    <%= form.label :description, style: "display: block" %>
+    <%= form.text_field :description %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

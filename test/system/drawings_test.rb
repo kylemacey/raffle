@@ -3,6 +3,8 @@ require "application_system_test_case"
 class DrawingsTest < ApplicationSystemTestCase
   setup do
     @drawing = drawings(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "visiting the index" do
@@ -14,7 +16,7 @@ class DrawingsTest < ApplicationSystemTestCase
     visit drawings_url
     click_on "New drawing"
 
-    fill_in "Event", with: @drawing.event_id
+    select events(:one).name, from: "Event"
     fill_in "Slug", with: @drawing.slug
     click_on "Create Drawing"
 
@@ -26,7 +28,7 @@ class DrawingsTest < ApplicationSystemTestCase
     visit drawing_url(@drawing)
     click_on "Edit this drawing", match: :first
 
-    fill_in "Event", with: @drawing.event_id
+    select events(:one).name, from: "Event"
     fill_in "Slug", with: @drawing.slug
     click_on "Update Drawing"
 

@@ -1,0 +1,218 @@
+<%
+  @monthly_plans = @prices.select { |p| p.interval == 'month' }.sort_by(&:amount)
+  @annual_plans = @prices.select { |p| p.interval == 'year' }.sort_by(&:amount)
+
+  @min_monthly = @monthly_plans.first&.amount || 0
+  @min_annual = @annual_plans.first&.amount || 0
+%>
+
+<div class="container mt-4">
+  <h2 class="mb-4">Become a Roc Star</h2>
+
+  <form id="checkout-form">
+    <ul class="nav nav-pills nav-fill mb-3" id="interval-pills" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="monthly-tab" data-bs-toggle="pill" data-bs-target="#monthly-plans" type="button" role="tab" aria-controls="monthly-plans" aria-selected="true">Monthly</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="annual-tab" data-bs-toggle="pill" data-bs-target="#annual-plans" type="button" role="tab" aria-controls="annual-plans" aria-selected="false">Annual</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="pills-tabContent">
+      <div class="tab-pane fade show active" id="monthly-plans" role="tabpanel" aria-labelledby="monthly-tab">
+        <% @monthly_plans.each do |price| %>
+          <div class="price-card border rounded p-3 mb-2" style="cursor: pointer;" data-amount="<%= price.amount %>">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="price_options" id="price_<%= price.id %>" data-interval="<%= price.interval %>">
+              <label class="form-check-label w-100" for="price_<%= price.id %>">
+                <strong><%= price.name %> - <%= number_to_currency(price.amount / 100.0) %>/<%= price.interval %></strong>
+                <br>
+                <small class="text-muted"><%= price.description %></small>
+              </label>
+            </div>
+          </div>
+        <% end %>
+        <div class="price-card border rounded p-3 mb-2" style="cursor: pointer;" data-custom="true" data-interval="month">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="price_options" id="price_custom_month">
+            <label class="form-check-label w-100" for="price_custom_month">
+              <strong>Custom Amount (Monthly)</strong>
+              <div class="input-group mt-2">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control custom-amount-input" placeholder="<%= @min_monthly / 100 %>" min="<%= @min_monthly / 100 %>" step="1">
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="annual-plans" role="tabpanel" aria-labelledby="annual-tab">
+        <% @annual_plans.each do |price| %>
+          <div class="price-card border rounded p-3 mb-2" style="cursor: pointer;" data-amount="<%= price.amount %>">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="price_options" id="price_<%= price.id %>" data-interval="<%= price.interval %>">
+              <label class="form-check-label w-100" for="price_<%= price.id %>">
+                <strong><%= price.name %> - <%= number_to_currency(price.amount / 100.0) %>/<%= price.interval %></strong>
+                <br>
+                <small class="text-muted"><%= price.description %></small>
+              </label>
+            </div>
+          </div>
+        <% end %>
+        <div class="price-card border rounded p-3 mb-2" style="cursor: pointer;" data-custom="true" data-interval="year">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="price_options" id="price_custom_year">
+            <label class="form-check-label w-100" for="price_custom_year">
+              <strong>Custom Amount (Annual)</strong>
+              <div class="input-group mt-2">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control custom-amount-input" placeholder="<%= @min_annual / 100 %>" min="<%= @min_annual / 100 %>" step="1">
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name</label>
+      <input type="text" class="form-control" id="name" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email address</label>
+      <input type="email" class="form-control" id="email" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Proceed to Checkout</button>
+  </form>
+
+  <div id="error-message" class="alert alert-danger mt-3 d-none" role="alert"></div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const priceCards = document.querySelectorAll('.price-card');
+
+    function updateSelection(selectedCard) {
+      priceCards.forEach(card => {
+        card.classList.remove('border-primary', 'border-2');
+      });
+      selectedCard.classList.add('border-primary', 'border-2');
+
+      const radio = selectedCard.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+
+      if (selectedCard.dataset.custom) {
+        selectedCard.querySelector('.custom-amount-input').focus();
+      }
+    }
+
+    priceCards.forEach(card => {
+      card.addEventListener('click', () => updateSelection(card));
+    });
+
+    const pills = document.querySelectorAll('#interval-pills .nav-link');
+    pills.forEach(pill => {
+      pill.addEventListener('shown.bs.tab', event => {
+        const targetPane = document.querySelector(event.target.getAttribute('data-bs-target'));
+        const firstCard = targetPane.querySelector('.price-card');
+        if (firstCard) updateSelection(firstCard);
+      });
+    });
+
+    // Set initial state
+    const initialActivePane = document.querySelector('.tab-pane.active');
+    if (initialActivePane) {
+      const firstCard = initialActivePane.querySelector('.price-card');
+      if (firstCard) updateSelection(firstCard);
+    }
+
+    // --- Form submission logic ---
+    document.getElementById('checkout-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const form = event.target;
+      const submitButton = form.querySelector('button[type="submit"]');
+      const errorMessageDiv = document.getElementById('error-message');
+
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+      errorMessageDiv.classList.add('d-none');
+
+      const selectedRadio = document.querySelector('input[name="price_options"]:checked');
+      if (!selectedRadio) {
+          errorMessageDiv.textContent = 'Please select a plan.';
+          errorMessageDiv.classList.remove('d-none');
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Proceed to Checkout';
+          return;
+      }
+
+      const selectedCard = selectedRadio.closest('.price-card');
+      let amount;
+      if (selectedCard.dataset.custom) {
+        const customInput = selectedCard.querySelector('.custom-amount-input');
+        const minAmount = parseInt(customInput.min, 10);
+        const customAmount = parseInt(customInput.value, 10);
+
+        if (isNaN(customAmount) || customAmount < minAmount) {
+          errorMessageDiv.textContent = `Please enter an amount of at least $${minAmount}.`;
+          errorMessageDiv.classList.remove('d-none');
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Proceed to Checkout';
+          return;
+        }
+        amount = customAmount * 100; // Convert to cents
+      } else {
+        amount = selectedCard.dataset.amount;
+      }
+
+      const interval = selectedCard.dataset.interval || selectedRadio.dataset.interval;
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+
+      try {
+        const response = await fetch('/roc_stars/create_checkout_session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify({
+            amount: parseInt(amount, 10),
+            interval_type: interval,
+            name: name,
+            email: email
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          window.top.location.href = data.checkout_url;
+        } else {
+          throw new Error(data.error || 'An unknown error occurred.');
+        }
+      } catch (error) {
+        errorMessageDiv.textContent = error.message;
+        errorMessageDiv.classList.remove('d-none');
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Proceed to Checkout';
+      }
+    });
+
+    // --- Iframe height communication ---
+    const sendHeight = () => {
+      const height = document.documentElement.scrollHeight;
+      window.parent.postMessage({ frameHeight: height }, '*');
+    };
+
+    const resizeObserver = new ResizeObserver(sendHeight);
+    resizeObserver.observe(document.body);
+    document.querySelectorAll('#interval-pills .nav-link').forEach(pill => {
+      pill.addEventListener('shown.bs.tab', sendHeight);
+    });
+    sendHeight();
+  });
+</script>

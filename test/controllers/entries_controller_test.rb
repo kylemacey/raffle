@@ -3,46 +3,49 @@ require "test_helper"
 class EntriesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @entry = entries(:one)
+    @event = events(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "should get index" do
-    get entries_url
+    get event_entries_url(@event)
     assert_response :success
   end
 
   test "should get new" do
-    get new_entry_url
+    get new_event_entry_url(@event)
     assert_response :success
   end
 
   test "should create entry" do
     assert_difference("Entry.count") do
-      post entries_url, params: { entry: { event_id: @entry.event_id, name: @entry.name, phone: @entry.phone, qty: @entry.qty } }
+      post event_entries_url(@event), params: { entry: { name: @entry.name, phone: @entry.phone, qty: @entry.qty } }
     end
 
-    assert_redirected_to entry_url(Entry.last)
+    assert_redirected_to new_event_entry_url(@event)
   end
 
   test "should show entry" do
-    get entry_url(@entry)
+    get event_entry_url(@event, @entry)
     assert_response :success
   end
 
   test "should get edit" do
-    get edit_entry_url(@entry)
+    get edit_event_entry_url(@event, @entry)
     assert_response :success
   end
 
   test "should update entry" do
-    patch entry_url(@entry), params: { entry: { event_id: @entry.event_id, name: @entry.name, phone: @entry.phone, qty: @entry.qty } }
-    assert_redirected_to entry_url(@entry)
+    patch event_entry_url(@event, @entry), params: { entry: { name: @entry.name, phone: @entry.phone, qty: @entry.qty } }
+    assert_redirected_to event_entries_url(@event)
   end
 
   test "should destroy entry" do
     assert_difference("Entry.count", -1) do
-      delete entry_url(@entry)
+      delete event_entry_url(@event, @entry)
     end
 
-    assert_redirected_to entries_url
+    assert_redirected_to event_entries_url(@event)
   end
 end

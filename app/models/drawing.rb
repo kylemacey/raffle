@@ -2,5 +2,6 @@ class Drawing < ApplicationRecord
   attr_accessor :qty, :can_win_again
 
   belongs_to :event
-  has_many :winners
+  has_many :winners, dependent: :destroy
+  has_many :entries, through: :event
 end

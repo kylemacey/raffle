@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+monthly_10:
+  name: Monthly Plan $10
+  stripe_product_id: prod_monthly_123
+  stripe_price_id: price_monthly_10
+  amount: 1000
+  interval: month
+  description: A $10/month subscription
+
+yearly_100:
+  name: Yearly Plan $100
+  stripe_product_id: prod_yearly_123
+  stripe_price_id: price_yearly_100
+  amount: 10000
+  interval: year
+  description: A $100/year subscription

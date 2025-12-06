@@ -1,0 +1,14 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Roc star prices</h1>
+
+<div id="roc_star_prices">
+  <% @roc_star_prices.each do |roc_star_price| %>
+    <%= render roc_star_price %>
+    <p>
+      <%= link_to "Show this roc star price", roc_star_price %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New roc star price", new_roc_star_price_path %>

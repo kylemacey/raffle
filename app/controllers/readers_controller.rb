@@ -7,7 +7,7 @@ class ReadersController < ApplicationController
 
   def assign
     session[:current_reader_id] = params[:reader_id]
-    redirect_to readers_path
+    redirect_to readers_list_path
   end
 
   def cancel_action

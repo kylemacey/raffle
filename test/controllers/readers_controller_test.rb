@@ -7,7 +7,7 @@ class ReadersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get assign" do
-    get readers_assign_url
-    assert_response :success
+    post readers_assign_url, params: { reader_id: 'tmr_123' }
+    assert_response :redirect
   end
 end

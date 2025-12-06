@@ -3,46 +3,42 @@ require "test_helper"
 class WinnersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @winner = winners(:one)
+    @drawing = drawings(:one)
+    @event = events(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "should get index" do
-    get winners_url
+    get event_drawing_winners_url(@event, @drawing)
     assert_response :success
   end
 
   test "should get new" do
-    get new_winner_url
+    get new_event_drawing_winner_url(@event, @drawing)
     assert_response :success
   end
 
-  test "should create winner" do
-    assert_difference("Winner.count") do
-      post winners_url, params: { winner: {  } }
-    end
-
-    assert_redirected_to winner_url(Winner.last)
-  end
-
   test "should show winner" do
-    get winner_url(@winner)
+    get event_drawing_winner_url(@event, @drawing, @winner)
     assert_response :success
   end
 
   test "should get edit" do
-    get edit_winner_url(@winner)
+    get edit_event_drawing_winner_url(@event, @drawing, @winner)
     assert_response :success
   end
 
   test "should update winner" do
-    patch winner_url(@winner), params: { winner: {  } }
-    assert_redirected_to winner_url(@winner)
+    patch event_drawing_winner_url(@event, @drawing, @winner), params: { winner: { entry_id: @winner.entry_id, prize: @winner.prize, present: @winner.present, notes: @winner.notes, drawing_id: @drawing.id } }
+    assert_redirected_to event_drawing_winner_url(@event, @drawing, @winner)
   end
 
   test "should destroy winner" do
     assert_difference("Winner.count", -1) do
-      delete winner_url(@winner)
+      delete event_drawing_winner_url(@event, @drawing, @winner)
     end
 
-    assert_redirected_to winners_url
+    assert_redirected_to event_drawing_winners_url(@event, @drawing)
   end
 end

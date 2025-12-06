@@ -3,11 +3,11 @@
 one:
   name: MyString
   phone: MyString
-  qty: MyString
+  qty: 1
   event: one
 
 two:
   name: MyString
   phone: MyString
-  qty: MyString
+  qty: 1
   event: two

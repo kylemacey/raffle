@@ -1,13 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  type: 
-  amount: MyString
-  payment_intent_id: MyString
+  payment_method_type: card
+  amount: 2000
+  payment_intent_id: pi_12345
   entry: one
 
 two:
-  type: 
-  amount: MyString
-  payment_intent_id: MyString
+  payment_method_type: cash
+  amount: 5000
+  payment_intent_id: nil
   entry: two

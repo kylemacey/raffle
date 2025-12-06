@@ -3,6 +3,8 @@ require "application_system_test_case"
 class EntriesTest < ApplicationSystemTestCase
   setup do
     @entry = entries(:one)
+    @admin = users(:admin)
+    sign_in(@admin)
   end
 
   test "visiting the index" do
@@ -14,7 +16,7 @@ class EntriesTest < ApplicationSystemTestCase
     visit entries_url
     click_on "New entry"
 
-    fill_in "Event", with: @entry.event_id
+    select events(:one).name, from: "Event"
     fill_in "Name", with: @entry.name
     fill_in "Phone", with: @entry.phone
     fill_in "Qty", with: @entry.qty
@@ -28,7 +30,7 @@ class EntriesTest < ApplicationSystemTestCase
     visit entry_url(@entry)
     click_on "Edit this entry", match: :first
 
-    fill_in "Event", with: @entry.event_id
+    select events(:one).name, from: "Event"
     fill_in "Name", with: @entry.name
     fill_in "Phone", with: @entry.phone
     fill_in "Qty", with: @entry.qty

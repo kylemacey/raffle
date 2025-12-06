@@ -2,12 +2,14 @@
 
 one:
   entry: one
-  prize: MyString
+  prize: "Grand Prize"
   present: false
-  notes: MyText
+  notes: "Not present at time of drawing"
+  drawing: one
 
 two:
   entry: two
-  prize: MyString
-  present: false
-  notes: MyText
+  prize: "Second Prize"
+  present: true
+  notes: "Claimed prize immediately"
+  drawing: two

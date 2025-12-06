@@ -9,3 +9,8 @@ two:
   name: MyString
   pin: MyString
   admin: false
+
+admin:
+  name: Admin User
+  pin: "1234"
+  admin: true

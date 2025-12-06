@@ -70,4 +70,8 @@ Rails.application.configure do
 
   # config.action_cable.url = "ws://localhost:28080"
   # config.action_cable.allowed_request_origins = %r{http://localhost.*}
+  config.web_console.permissions = '192.168.0.0/16'
+
+  # Allow all ngrok subdomains in development
+  config.hosts << /.+\.ngrok(-free)?\.app/
 end

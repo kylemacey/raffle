@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_11_27_205537) do
+ActiveRecord::Schema[7.0].define(version: 2025_06_14_210816) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -49,6 +49,18 @@ ActiveRecord::Schema[7.0].define(version: 2024_11_27_205537) do
     t.datetime "updated_at", null: false
     t.index ["entry_id"], name: "index_payments_on_entry_id"
     t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
+  end
+
+  create_table "roc_star_prices", force: :cascade do |t|
+    t.string "name"
+    t.string "stripe_product_id"
+    t.integer "amount"
+    t.string "interval"
+    t.string "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "stripe_price_id"
+    t.index ["stripe_price_id"], name: "index_roc_star_prices_on_stripe_price_id"
   end
 
   create_table "users", force: :cascade do |t|
