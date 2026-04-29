@@ -1,6 +1,8 @@
 class ReadersController < ApplicationController
   include ReadersHelper
 
+  before_action :require_authentication!
+
   def list
     @readers = Stripe::Terminal::Reader.list(status: :online)
     if Rails.env.development?

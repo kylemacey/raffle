@@ -16,6 +16,17 @@ class PosControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
   end
 
+  test "card checkout without reader redirects to reader selection" do
+    post pos_checkout_path, params: {
+      name: "Test Customer",
+      email: "test@example.com",
+      payment_method: "card",
+      cart_data: { pos_products(:one).id => 1 }.to_json
+    }
+
+    assert_redirected_to readers_list_path
+  end
+
   test "should get create_order" do
     post pos_create_order_path
     assert_response :success

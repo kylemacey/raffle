@@ -26,6 +26,11 @@ class PosController < ApplicationController
       return
     end
 
+    if params[:payment_method] == 'card' && current_reader.blank?
+      redirect_to readers_list_path, alert: 'Select a card reader before checking out with card.'
+      return
+    end
+
     order = nil
     begin
       ActiveRecord::Base.transaction do

@@ -1,5 +1,7 @@
 module ReadersHelper
   def current_reader
+    return nil if session[:current_reader_id].blank?
+
     @current_reader ||= begin
       reader = Stripe::Terminal::Reader.retrieve(session[:current_reader_id])
       if !reader.deleted? && reader.status == "online"
@@ -13,7 +15,7 @@ module ReadersHelper
   end
 
   def clear_reader
-    session.delete(session[:current_reader_id])
+    session.delete(:current_reader_id)
     nil
   end
 end

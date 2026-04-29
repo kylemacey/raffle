@@ -5,7 +5,7 @@ one:
   customer_email: MyString
   total_amount: 1
   event: one
-  user: one
+  user: admin
   payment_method_type: MyString
 
 two:
@@ -13,5 +13,5 @@ two:
   customer_email: MyString
   total_amount: 1
   event: two
-  user: two
+  user: admin
   payment_method_type: MyString

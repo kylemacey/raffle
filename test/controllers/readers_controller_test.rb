@@ -1,13 +1,21 @@
 require "test_helper"
 
 class ReadersControllerTest < ActionDispatch::IntegrationTest
-  test "should get list" do
-    get readers_list_url
-    assert_response :success
+  setup do
+    sign_in(users(:one))
   end
 
-  test "should get assign" do
+  test "should get list" do
+    Stripe::Terminal::Reader.stub(:list, []) do
+      Stripe::Terminal::Location.stub(:list, []) do
+        get readers_list_url
+        assert_response :success
+      end
+    end
+  end
+
+  test "should assign reader" do
     post readers_assign_url, params: { reader_id: 'tmr_123' }
-    assert_response :redirect
+    assert_redirected_to readers_list_path
   end
 end

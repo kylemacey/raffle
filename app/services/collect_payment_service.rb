@@ -7,6 +7,8 @@ class CollectPaymentService
   end
 
   def collect_payment
+    return if reader.blank?
+
     stripe_customer = find_or_create_customer
 
     params = {
