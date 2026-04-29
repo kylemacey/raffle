@@ -1,8 +1,8 @@
 # RBAC Scaffold
 
-The app is moving from a single `users.admin` Boolean toward database-backed
-role-based access control. This document describes the first scaffold. It does
-not claim that authorization is enforced everywhere yet.
+The app uses database-backed role-based access control for internal operator
+authorization. The legacy `users.admin` Boolean remains only as migration source
+data for assigning existing admins to `platform_admin`.
 
 For the product reasoning behind these roles, see [Personas](personas.md).
 
@@ -16,19 +16,18 @@ Current state:
 - Existing `users.admin = true` users are backfilled into `platform_admin`
   (`SuperAdmin` in the UI).
 - User management can assign roles.
-- Existing authorization helpers still read `users.admin`.
+- Controller and view authorization checks read RBAC permissions.
+- Navigation and action links are filtered by the same permission helpers.
 
 Not implemented yet:
 
-- Controller or view checks against role permissions.
-- Route-level navigation filtering.
 - Impersonation.
 - Audit logging.
 - Export controls.
 - Per-event scoping.
 
-The compatibility goal is to let the new role model land safely before replacing
-the old checks.
+The compatibility goal is to preserve the legacy admin backfill path while new
+checks use permissions directly.
 
 ## Data Model
 
@@ -253,13 +252,13 @@ their operator access belongs in RBAC.
 
 ## Migration Plan
 
-1. Land this scaffold with no behavior change to controller checks.
-2. Keep `users.admin` as the compatibility flag while role assignments are added.
-3. Backfill every legacy admin user into `platform_admin` / SuperAdmin.
-4. Add policy/helper methods that check permissions.
+1. Land this scaffold with no behavior change to controller checks. Done.
+2. Keep `users.admin` as the compatibility flag while role assignments are added. Done.
+3. Backfill every legacy admin user into `platform_admin` / SuperAdmin. Done.
+4. Add policy/helper methods that check permissions. Done.
 5. Replace each `current_user_is_admin?` or `require_admin!` usage with the
-   narrow permission needed by that route.
-6. Hide navigation based on the same permissions.
+   narrow permission needed by that route. Done.
+6. Hide navigation based on the same permissions. Done.
 7. Add role impersonation for platform admins so each persona can be reviewed in
    browser testing.
 8. Remove or freeze direct use of `users.admin` after all checks move to RBAC.
