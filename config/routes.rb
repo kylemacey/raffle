@@ -21,7 +21,7 @@ Rails.application.routes.draw do
   get 'pos/custom_price'
   post 'pos/checkout'
   get 'pos/search_customers'
-  get 'pos/wait_for_pin_pad/:payment_intent_id', to: 'pos#wait_for_pin_pad', as: :pos_wait_for_pin_pad
+  get 'pos/wait_for_pin_pad/:intent_id', to: 'pos#wait_for_pin_pad', as: :pos_wait_for_pin_pad
   get 'pos/success/:order_id', to: 'pos#success', as: :pos_success
   get 'pos/failure/:order_id', to: 'pos#failure', as: :pos_failure
   post 'pos/create_order'
@@ -36,8 +36,8 @@ Rails.application.routes.draw do
   delete 'readers/cancel_action'
 
   # == SIMULATED PAYMENTS (Development Only) ==
-  post 'pos/simulate_payment/:payment_intent_id', to: 'pos#simulate_payment', as: :simulate_payment
-  post 'pos/simulate_decline/:payment_intent_id', to: 'pos#simulate_decline', as: :simulate_decline
+  post 'pos/simulate_payment/:intent_id', to: 'pos#simulate_payment', as: :simulate_payment
+  post 'pos/simulate_decline/:intent_id', to: 'pos#simulate_decline', as: :simulate_decline
 
   # == WEBHOOKS ==
   # Incoming webhooks from external services like Stripe.
