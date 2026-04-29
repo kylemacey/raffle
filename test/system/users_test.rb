@@ -16,7 +16,6 @@ class UsersTest < ApplicationSystemTestCase
     visit users_url
     click_on "New user"
 
-    check "Admin" if @user.admin
     fill_in "Name", with: @user.name
     fill_in "Pin", with: @user.pin
     click_on "Create User"
@@ -29,7 +28,6 @@ class UsersTest < ApplicationSystemTestCase
     visit user_url(@user)
     click_on "Edit this user", match: :first
 
-    check "Admin" if @user.admin
     fill_in "Name", with: @user.name
     fill_in "Pin", with: @user.pin
     click_on "Update User"

@@ -4,6 +4,22 @@ platform_admin_events_view:
   role: platform_admin
   permission: events_view
 
+platform_admin_events_manage:
+  role: platform_admin
+  permission: events_manage
+
+platform_admin_entries_manage:
+  role: platform_admin
+  permission: entries_manage
+
+platform_admin_drawings_manage:
+  role: platform_admin
+  permission: drawings_manage
+
+platform_admin_winners_manage:
+  role: platform_admin
+  permission: winners_manage
+
 platform_admin_pos_sell:
   role: platform_admin
   permission: pos_sell
@@ -16,21 +32,29 @@ platform_admin_orders_view_own:
   role: platform_admin
   permission: orders_view_own
 
-platform_admin_card_readers_connect:
-  role: platform_admin
-  permission: card_readers_connect
-
 platform_admin_orders_view_event:
   role: platform_admin
   permission: orders_view_event
+
+platform_admin_orders_view_all:
+  role: platform_admin
+  permission: orders_view_all
+
+platform_admin_orders_delete:
+  role: platform_admin
+  permission: orders_delete
 
 platform_admin_refunds_issue:
   role: platform_admin
   permission: refunds_issue
 
-platform_admin_drawings_manage:
+platform_admin_card_readers_connect:
   role: platform_admin
-  permission: drawings_manage
+  permission: card_readers_connect
+
+platform_admin_card_readers_manage:
+  role: platform_admin
+  permission: card_readers_manage
 
 platform_admin_users_manage:
   role: platform_admin
@@ -40,13 +64,21 @@ platform_admin_roles_assign:
   role: platform_admin
   permission: roles_assign
 
+platform_admin_super_admin_assign:
+  role: platform_admin
+  permission: super_admin_assign
+
+platform_admin_pos_products_manage:
+  role: platform_admin
+  permission: pos_products_manage
+
+platform_admin_roc_star_prices_manage:
+  role: platform_admin
+  permission: roc_star_prices_manage
+
 platform_admin_reports_view_fundraising:
   role: platform_admin
   permission: reports_view_fundraising
-
-platform_admin_subscriptions_view:
-  role: platform_admin
-  permission: subscriptions_view
 
 platform_admin_reports_view_pii:
   role: platform_admin
@@ -56,9 +88,13 @@ platform_admin_reports_download:
   role: platform_admin
   permission: reports_download
 
-platform_admin_super_admin_assign:
+platform_admin_subscriptions_view:
   role: platform_admin
-  permission: super_admin_assign
+  permission: subscriptions_view
+
+platform_admin_impersonate:
+  role: platform_admin
+  permission: platform_impersonate
 
 platform_admin_break_glass:
   role: platform_admin
@@ -88,6 +124,18 @@ event_lead_events_view:
   role: event_lead
   permission: events_view
 
+event_lead_entries_manage:
+  role: event_lead
+  permission: entries_manage
+
+event_lead_drawings_manage:
+  role: event_lead
+  permission: drawings_manage
+
+event_lead_winners_manage:
+  role: event_lead
+  permission: winners_manage
+
 event_lead_pos_sell:
   role: event_lead
   permission: pos_sell
@@ -100,10 +148,6 @@ event_lead_orders_view_own:
   role: event_lead
   permission: orders_view_own
 
-event_lead_card_readers_connect:
-  role: event_lead
-  permission: card_readers_connect
-
 event_lead_orders_view_event:
   role: event_lead
   permission: orders_view_event
@@ -112,53 +156,13 @@ event_lead_refunds_issue:
   role: event_lead
   permission: refunds_issue
 
-event_lead_drawings_manage:
+event_lead_card_readers_connect:
   role: event_lead
-  permission: drawings_manage
+  permission: card_readers_connect
 
 event_lead_reports_view_fundraising:
   role: event_lead
   permission: reports_view_fundraising
-
-config_admin_events_view:
-  role: config_admin
-  permission: events_view
-
-config_admin_pos_sell:
-  role: config_admin
-  permission: pos_sell
-
-config_admin_orders_view_event:
-  role: config_admin
-  permission: orders_view_event
-
-config_admin_refunds_issue:
-  role: config_admin
-  permission: refunds_issue
-
-config_admin_drawings_manage:
-  role: config_admin
-  permission: drawings_manage
-
-config_admin_reports_view_fundraising:
-  role: config_admin
-  permission: reports_view_fundraising
-
-config_admin_subscriptions_view:
-  role: config_admin
-  permission: subscriptions_view
-
-config_admin_reports_download:
-  role: config_admin
-  permission: reports_download
-
-config_admin_users_manage:
-  role: config_admin
-  permission: users_manage
-
-config_admin_roles_assign:
-  role: config_admin
-  permission: roles_assign
 
 board_reporter_events_view:
   role: board_reporter
@@ -179,3 +183,87 @@ board_reporter_reports_view_pii:
 board_reporter_reports_download:
   role: board_reporter
   permission: reports_download
+
+config_admin_events_view:
+  role: config_admin
+  permission: events_view
+
+config_admin_events_manage:
+  role: config_admin
+  permission: events_manage
+
+config_admin_entries_manage:
+  role: config_admin
+  permission: entries_manage
+
+config_admin_drawings_manage:
+  role: config_admin
+  permission: drawings_manage
+
+config_admin_winners_manage:
+  role: config_admin
+  permission: winners_manage
+
+config_admin_pos_sell:
+  role: config_admin
+  permission: pos_sell
+
+config_admin_customers_search:
+  role: config_admin
+  permission: customers_search
+
+config_admin_orders_view_own:
+  role: config_admin
+  permission: orders_view_own
+
+config_admin_orders_view_event:
+  role: config_admin
+  permission: orders_view_event
+
+config_admin_orders_view_all:
+  role: config_admin
+  permission: orders_view_all
+
+config_admin_refunds_issue:
+  role: config_admin
+  permission: refunds_issue
+
+config_admin_card_readers_connect:
+  role: config_admin
+  permission: card_readers_connect
+
+config_admin_card_readers_manage:
+  role: config_admin
+  permission: card_readers_manage
+
+config_admin_users_manage:
+  role: config_admin
+  permission: users_manage
+
+config_admin_roles_assign:
+  role: config_admin
+  permission: roles_assign
+
+config_admin_pos_products_manage:
+  role: config_admin
+  permission: pos_products_manage
+
+config_admin_roc_star_prices_manage:
+  role: config_admin
+  permission: roc_star_prices_manage
+
+config_admin_reports_view_fundraising:
+  role: config_admin
+  permission: reports_view_fundraising
+
+config_admin_reports_view_pii:
+  role: config_admin
+  permission: reports_view_pii
+
+config_admin_reports_download:
+  role: config_admin
+  permission: reports_download
+
+config_admin_subscriptions_view:
+  role: config_admin
+  permission: subscriptions_view

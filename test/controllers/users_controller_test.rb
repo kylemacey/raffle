@@ -19,7 +19,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "should create user" do
     assert_difference("User.count") do
-      post users_url, params: { user: { admin: false, name: "New Cashier", pin: "8899", role_ids: [roles(:cashier).id] } }
+      post users_url, params: { user: { name: "New Cashier", pin: "8899", role_ids: [roles(:cashier).id] } }
     end
 
     user = User.last
@@ -38,7 +38,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update user" do
-    patch user_url(@user), params: { user: { admin: @user.admin, name: @user.name, pin: @user.pin, role_ids: [roles(:event_lead).id] } }
+    patch user_url(@user), params: { user: { name: @user.name, pin: @user.pin, role_ids: [roles(:event_lead).id] } }
     assert_redirected_to user_url(@user)
     assert @user.reload.has_role?("event_lead")
     assert_not @user.has_role?("cashier")
@@ -52,5 +52,25 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to users_url
+  end
+
+  test "config admin cannot assign platform admin role" do
+    config_admin = User.create!(name: "Config Admin", pin: "6677")
+    config_admin.roles << roles(:config_admin)
+    sign_in(config_admin)
+
+    assert_no_difference("User.count") do
+      post users_url, params: { user: { name: "Break Glass", pin: "7766", role_ids: [roles(:platform_admin).id] } }
+    end
+
+    assert_response :forbidden
+  end
+
+  test "platform admin can assign platform admin role" do
+    assert_difference("User.count") do
+      post users_url, params: { user: { name: "Break Glass", pin: "7766", role_ids: [roles(:platform_admin).id] } }
+    end
+
+    assert User.last.has_role?("platform_admin")
   end
 end
