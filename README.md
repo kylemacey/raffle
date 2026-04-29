@@ -1,24 +1,20 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This Rails app supports Farley's Friends raffle, event POS, and RocStar
+fundraising workflows.
 
-Things you may want to cover:
+## Product Direction
 
-* Ruby version
+The current persona and access-control work is documented in:
 
-* System dependencies
+- [Personas](docs/personas.md)
+- [RBAC Scaffold](docs/rbac.md)
 
-* Configuration
+These documents should guide feature decisions, user stories, interface design,
+and future authorization work.
 
-* Database creation
+## Development Notes
 
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+The app is still transitioning away from a single `users.admin` Boolean. New
+RBAC tables and user-role assignment scaffolding exist, but legacy admin checks
+are intentionally left in place until route-by-route permission checks are added.
