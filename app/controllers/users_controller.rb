@@ -1,10 +1,11 @@
 class UsersController < ApplicationController
   before_action :set_user, only: %i[ show edit update destroy ]
+  before_action :set_roles, only: %i[ new edit create update ]
   before_action :require_admin!
 
   # GET /users or /users.json
   def index
-    @users = User.all
+    @users = User.includes(roles: :permissions).order(:name, :id)
   end
 
   # GET /users/1 or /users/1.json
@@ -61,11 +62,15 @@ class UsersController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_user
-      @user = User.find(params[:id])
+      @user = User.includes(roles: :permissions).find(params[:id])
+    end
+
+    def set_roles
+      @roles = Role.includes(:permissions).ordered
     end
 
     # Only allow a list of trusted parameters through.
     def user_params
-      params.require(:user).permit(:name, :pin, :admin)
+      params.require(:user).permit(:name, :pin, :admin, role_ids: [])
     end
 end

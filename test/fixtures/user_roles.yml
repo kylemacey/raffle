@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+admin_platform_admin:
+  user: admin
+  role: platform_admin
+
+one_cashier:
+  user: one
+  role: cashier
+
+two_event_lead:
+  user: two
+  role: event_lead

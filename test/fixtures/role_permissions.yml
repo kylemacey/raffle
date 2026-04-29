@@ -1,0 +1,181 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+platform_admin_events_view:
+  role: platform_admin
+  permission: events_view
+
+platform_admin_pos_sell:
+  role: platform_admin
+  permission: pos_sell
+
+platform_admin_customers_search:
+  role: platform_admin
+  permission: customers_search
+
+platform_admin_orders_view_own:
+  role: platform_admin
+  permission: orders_view_own
+
+platform_admin_card_readers_connect:
+  role: platform_admin
+  permission: card_readers_connect
+
+platform_admin_orders_view_event:
+  role: platform_admin
+  permission: orders_view_event
+
+platform_admin_refunds_issue:
+  role: platform_admin
+  permission: refunds_issue
+
+platform_admin_drawings_manage:
+  role: platform_admin
+  permission: drawings_manage
+
+platform_admin_users_manage:
+  role: platform_admin
+  permission: users_manage
+
+platform_admin_roles_assign:
+  role: platform_admin
+  permission: roles_assign
+
+platform_admin_reports_view_fundraising:
+  role: platform_admin
+  permission: reports_view_fundraising
+
+platform_admin_subscriptions_view:
+  role: platform_admin
+  permission: subscriptions_view
+
+platform_admin_reports_view_pii:
+  role: platform_admin
+  permission: reports_view_pii
+
+platform_admin_reports_download:
+  role: platform_admin
+  permission: reports_download
+
+platform_admin_super_admin_assign:
+  role: platform_admin
+  permission: super_admin_assign
+
+platform_admin_break_glass:
+  role: platform_admin
+  permission: platform_break_glass
+
+cashier_events_view:
+  role: cashier
+  permission: events_view
+
+cashier_pos_sell:
+  role: cashier
+  permission: pos_sell
+
+cashier_customers_search:
+  role: cashier
+  permission: customers_search
+
+cashier_orders_view_own:
+  role: cashier
+  permission: orders_view_own
+
+cashier_card_readers_connect:
+  role: cashier
+  permission: card_readers_connect
+
+event_lead_events_view:
+  role: event_lead
+  permission: events_view
+
+event_lead_pos_sell:
+  role: event_lead
+  permission: pos_sell
+
+event_lead_customers_search:
+  role: event_lead
+  permission: customers_search
+
+event_lead_orders_view_own:
+  role: event_lead
+  permission: orders_view_own
+
+event_lead_card_readers_connect:
+  role: event_lead
+  permission: card_readers_connect
+
+event_lead_orders_view_event:
+  role: event_lead
+  permission: orders_view_event
+
+event_lead_refunds_issue:
+  role: event_lead
+  permission: refunds_issue
+
+event_lead_drawings_manage:
+  role: event_lead
+  permission: drawings_manage
+
+event_lead_reports_view_fundraising:
+  role: event_lead
+  permission: reports_view_fundraising
+
+config_admin_events_view:
+  role: config_admin
+  permission: events_view
+
+config_admin_pos_sell:
+  role: config_admin
+  permission: pos_sell
+
+config_admin_orders_view_event:
+  role: config_admin
+  permission: orders_view_event
+
+config_admin_refunds_issue:
+  role: config_admin
+  permission: refunds_issue
+
+config_admin_drawings_manage:
+  role: config_admin
+  permission: drawings_manage
+
+config_admin_reports_view_fundraising:
+  role: config_admin
+  permission: reports_view_fundraising
+
+config_admin_subscriptions_view:
+  role: config_admin
+  permission: subscriptions_view
+
+config_admin_reports_download:
+  role: config_admin
+  permission: reports_download
+
+config_admin_users_manage:
+  role: config_admin
+  permission: users_manage
+
+config_admin_roles_assign:
+  role: config_admin
+  permission: roles_assign
+
+board_reporter_events_view:
+  role: board_reporter
+  permission: events_view
+
+board_reporter_reports_view_fundraising:
+  role: board_reporter
+  permission: reports_view_fundraising
+
+board_reporter_subscriptions_view:
+  role: board_reporter
+  permission: subscriptions_view
+
+board_reporter_reports_view_pii:
+  role: board_reporter
+  permission: reports_view_pii
+
+board_reporter_reports_download:
+  role: board_reporter
+  permission: reports_download

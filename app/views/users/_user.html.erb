@@ -10,8 +10,32 @@
   </p>
 
   <p>
-    <strong>Admin:</strong>
+    <strong>Legacy admin flag:</strong>
     <%= user.admin %>
   </p>
+
+  <p>
+    <strong>Roles:</strong>
+    <% if user.roles.any? %>
+      <% user.roles.sort_by(&:power_level).each do |role| %>
+        <span class="badge text-bg-secondary"><%= role.name %></span>
+      <% end %>
+    <% else %>
+      None assigned
+    <% end %>
+  </p>
+
+  <div>
+    <strong>Effective capabilities:</strong>
+    <% if user.capability_badges.any? %>
+      <div class="d-flex flex-wrap gap-1 mt-2">
+        <% user.capability_badges.each do |badge| %>
+          <span class="badge rounded-pill <%= badge[:css_class] %>"><%= badge[:label] %></span>
+        <% end %>
+      </div>
+    <% else %>
+      None assigned
+    <% end %>
+  </div>
 
 </div>

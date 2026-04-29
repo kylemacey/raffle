@@ -1,0 +1,97 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+events_view:
+  key: events.view
+  name: View events
+  category: events
+  description: View event lists, dashboards, and operational context.
+
+pos_sell:
+  key: pos.sell
+  name: Sell through POS
+  category: point_of_sale
+  description: Use the point-of-sale workflow to create orders.
+
+customers_search:
+  key: customers.search
+  name: Search customers
+  category: point_of_sale
+  description: Search customer records during checkout.
+
+orders_view_own:
+  key: orders.view_own
+  name: View own orders
+  category: orders
+  description: View orders created by the current user.
+
+card_readers_connect:
+  key: card_readers.connect
+  name: Connect card reader
+  category: payments
+  description: Connect or select a Stripe Terminal reader during checkout.
+
+orders_view_event:
+  key: orders.view_event
+  name: View event orders
+  category: orders
+  description: View orders for an active event.
+
+refunds_issue:
+  key: refunds.issue
+  name: Issue refunds
+  category: payments
+  description: Issue refunds for paid orders.
+
+drawings_manage:
+  key: drawings.manage
+  name: Manage drawings
+  category: raffle
+  description: Create drawings and inspect drawing output.
+
+users_manage:
+  key: users.manage
+  name: Manage users
+  category: admin
+  description: Create and edit users and PINs.
+
+roles_assign:
+  key: roles.assign
+  name: Assign roles
+  category: admin
+  description: Assign RBAC roles to users.
+
+reports_view_fundraising:
+  key: reports.view_fundraising
+  name: View fundraising reports
+  category: reporting
+  description: View fundraising totals, MRR, and payment-method breakdowns.
+
+subscriptions_view:
+  key: subscriptions.view
+  name: View subscriptions
+  category: reporting
+  description: View RocStar supporter/subscription context.
+
+reports_view_pii:
+  key: reports.view_pii
+  name: View report PII
+  category: reporting
+  description: View supporter contact details in reporting surfaces.
+
+reports_download:
+  key: reports.download
+  name: Download financial reports
+  category: reporting
+  description: Download financial report exports.
+
+super_admin_assign:
+  key: super_admin.assign
+  name: Assign SuperAdmin role
+  category: admin
+  description: Assign the highest-power platform role.
+
+platform_break_glass:
+  key: platform.break_glass
+  name: Use break-glass controls
+  category: platform
+  description: Use platform-level rescue controls during live incidents.

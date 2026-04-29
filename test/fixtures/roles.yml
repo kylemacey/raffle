@@ -1,0 +1,31 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+platform_admin:
+  key: platform_admin
+  name: SuperAdmin
+  description: Break-glass operator for live incidents and developer/testing workflows.
+  system: true
+
+config_admin:
+  key: config_admin
+  name: Admin
+  description: Trusted technical board member responsible for setup and configuration.
+  system: true
+
+event_lead:
+  key: event_lead
+  name: Event Lead
+  description: Board member responsible for smooth event operations.
+  system: true
+
+cashier:
+  key: cashier
+  name: Cashier
+  description: Event-day volunteer focused on fast POS checkout.
+  system: true
+
+board_reporter:
+  key: board_reporter
+  name: Financial Analyst
+  description: Board leader who needs fundraising health and supporter visibility.
+  system: true
