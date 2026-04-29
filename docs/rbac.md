@@ -83,6 +83,8 @@ overlap and blast radius are visible at a glance.
 The database still stores flat role-permission assignments. There is no role
 inheritance in v1.
 
+![Role capability badge UI](screenshots/rbac/role-capability-badges.png)
+
 ### `cashier`
 
 Persona: Cashier / Sales Volunteer
