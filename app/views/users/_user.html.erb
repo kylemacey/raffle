@@ -10,11 +10,6 @@
   </p>
 
   <p>
-    <strong>Legacy admin flag:</strong>
-    <%= user.admin %>
-  </p>
-
-  <p>
     <strong>Roles:</strong>
     <% if user.roles.any? %>
       <% user.roles.sort_by(&:power_level).each do |role| %>

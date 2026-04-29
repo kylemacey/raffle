@@ -3,14 +3,17 @@
     <h1 class="mb-0"><%= @event.name %></h1>
     <small class="text-muted">Event Dashboard</small>
   </div>
-  <%= link_to 'Edit Event', edit_event_path(@event), class: 'btn btn-outline-secondary' %>
+  <% if current_user_can?("events.manage") %>
+    <%= link_to 'Edit Event', edit_event_path(@event), class: 'btn btn-outline-secondary' %>
+  <% end %>
 </div>
 
 <div class="row">
   <!-- Left Column: Stats & Drawings -->
   <div class="col-md-8">
-    <!-- Stats Cards -->
-    <div class="card mb-4">
+    <% if @show_event_financials %>
+      <!-- Stats Cards -->
+      <div class="card mb-4">
       <div class="card-header">
         <h5 class="card-title mb-0">At a Glance</h5>
       </div>
@@ -31,9 +34,11 @@
         </div>
       </div>
     </div>
+    <% end %>
 
-    <!-- Drawings List -->
-    <div class="card">
+    <% if current_user_can?("drawings.manage") %>
+      <!-- Drawings List -->
+      <div class="card">
       <div class="card-header">
         <h5 class="card-title mb-0">Drawings</h5>
       </div>
@@ -71,6 +76,7 @@
         <% end %>
       </div>
     </div>
+    <% end %>
   </div>
 
   <!-- Right Column: Actions -->
@@ -81,17 +87,25 @@
       </div>
       <div class="card-body">
         <div class="d-grid gap-2">
-          <%= link_to 'Go to POS for this Event', pos_main_path, class: 'btn btn-success' %>
-          <hr>
-          <%= link_to 'New Drawing', new_event_drawing_path(@event), class: 'btn btn-primary' %>
-          <%= link_to 'View Entries', event_entries_path(@event), class: 'btn btn-outline-secondary' %>
-          <%= link_to 'View Orders', orders_path, class: 'btn btn-outline-secondary' %>
+          <% if current_user_can?("pos.sell") %>
+            <%= link_to 'Go to POS for this Event', pos_main_path, class: 'btn btn-success' %>
+          <% end %>
+          <% if current_user_can?("drawings.manage") %>
+            <%= link_to 'New Drawing', new_event_drawing_path(@event), class: 'btn btn-primary' %>
+          <% end %>
+          <% if current_user_can?("entries.manage") %>
+            <%= link_to 'View Entries', event_entries_path(@event), class: 'btn btn-outline-secondary' %>
+          <% end %>
+          <% if current_user_can_any?("orders.view_all", "orders.view_event", "orders.view_own") %>
+            <%= link_to 'View Orders', orders_path, class: 'btn btn-outline-secondary' %>
+          <% end %>
         </div>
       </div>
     </div>
 
     <!-- Heavy Hitters -->
-    <div class="card mt-4">
+    <% if @show_supporter_details %>
+      <div class="card mt-4">
       <div class="card-header">
         <h5 class="card-title mb-0">Raffle Heavy Hitters</h5>
       </div>
@@ -114,11 +128,14 @@
         <% end %>
       </div>
     </div>
+    <% end %>
   </div>
 </div>
 
 <div>
   <%= link_to "Back to events", events_path %>
 
-  <%= button_to "Destroy this event", @event, method: :delete %>
+  <% if current_user_can?("events.manage") %>
+    <%= button_to "Destroy this event", @event, method: :delete %>
+  <% end %>
 </div>

@@ -21,42 +21,50 @@
     <%= form.text_field :pin %>
   </div>
 
-  <div>
-    <%= form.label :admin, "Legacy admin flag", style: "display: block" %>
-    <%= form.check_box :admin %>
-    <p>
-      Existing authorization still reads this flag. New role assignments below
-      are scaffolding for replacing it.
-    </p>
-  </div>
+  <% if current_user_can?("roles.assign") %>
+    <fieldset>
+      <legend>Roles</legend>
 
-  <fieldset>
-    <legend>Roles</legend>
+      <% @roles.each do |role| %>
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="form-check">
+              <%= check_box_tag "user[role_ids][]", role.id, user.role_ids.include?(role.id), id: "user_role_ids_#{role.id}", class: "form-check-input" %>
+              <%= label_tag "user_role_ids_#{role.id}", role.name, class: "form-check-label fw-semibold" %>
+              <span class="badge text-bg-secondary ms-2"><%= pluralize(role.capability_badges.length, "capability") %></span>
+            </div>
 
-    <% @roles.each do |role| %>
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="form-check">
-            <%= check_box_tag "user[role_ids][]", role.id, user.role_ids.include?(role.id), id: "user_role_ids_#{role.id}", class: "form-check-input" %>
-            <%= label_tag "user_role_ids_#{role.id}", role.name, class: "form-check-label fw-semibold" %>
-            <span class="badge text-bg-secondary ms-2"><%= pluralize(role.capability_badges.length, "capability") %></span>
-          </div>
+            <p class="mb-2 text-body-secondary">
+            <%= role.description %>
+            </p>
 
-          <p class="mb-2 text-body-secondary">
-          <%= role.description %>
-          </p>
-
-          <div class="d-flex flex-wrap gap-1">
-            <% role.capability_badges.each do |badge| %>
-              <span class="badge rounded-pill <%= badge[:css_class] %>"><%= badge[:label] %></span>
-            <% end %>
+            <div class="d-flex flex-wrap gap-1">
+              <% role.capability_badges.each do |badge| %>
+                <span class="badge rounded-pill <%= badge[:css_class] %>"><%= badge[:label] %></span>
+              <% end %>
+            </div>
           </div>
         </div>
-      </div>
-    <% end %>
+      <% end %>
 
-    <%= hidden_field_tag "user[role_ids][]", "" %>
-  </fieldset>
+      <% if user.has_role?("platform_admin") && !current_user_can?("super_admin.assign") %>
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="form-check">
+              <%= check_box_tag "platform_admin_locked", "1", true, disabled: true, class: "form-check-input" %>
+              <%= label_tag "platform_admin_locked", "SuperAdmin", class: "form-check-label fw-semibold" %>
+              <span class="badge text-bg-secondary ms-2">locked</span>
+            </div>
+            <p class="mb-0 text-body-secondary">
+              SuperAdmin assignment requires platform-level permission.
+            </p>
+          </div>
+        </div>
+      <% end %>
+
+      <%= hidden_field_tag "user[role_ids][]", "" %>
+    </fieldset>
+  <% end %>
 
   <% if user.roles.any? %>
     <div>

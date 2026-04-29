@@ -1,6 +1,6 @@
 <h1>Readers</h1>
 
-<% if Rails.env.development? %>
+<% if Rails.env.development? && current_user_can?("card_readers.manage") %>
   <div class="card my-4">
     <div class="card-header">
       Create a Simulated Reader (Development Only)

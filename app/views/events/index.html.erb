@@ -11,4 +11,6 @@
   <% end %>
 </div>
 
-<%= link_to "New event", new_event_path %>
+<% if current_user_can?("events.manage") %>
+  <%= link_to "New event", new_event_path %>
+<% end %>
