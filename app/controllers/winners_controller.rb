@@ -1,5 +1,5 @@
 class WinnersController < ApplicationController
-  before_action :require_admin!
+  before_action -> { require_permission!("winners.manage") }
   before_action :set_event
   before_action :set_drawing
   before_action :set_winner, only: %i[ show edit update destroy ]

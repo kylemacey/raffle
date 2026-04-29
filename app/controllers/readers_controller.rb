@@ -2,6 +2,8 @@ class ReadersController < ApplicationController
   include ReadersHelper
 
   before_action :require_authentication!
+  before_action -> { require_permission!("card_readers.connect") }, except: [:create_simulated]
+  before_action -> { require_permission!("card_readers.manage") }, only: [:create_simulated]
 
   def list
     @readers = Stripe::Terminal::Reader.list(status: :online)

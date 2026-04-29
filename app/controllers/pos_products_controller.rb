@@ -1,5 +1,5 @@
 class PosProductsController < ApplicationController
-  before_action :require_admin!
+  before_action -> { require_permission!("pos_products.manage") }
   before_action :set_pos_product, only: %i[show edit update destroy]
 
   def index

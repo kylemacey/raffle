@@ -3,6 +3,8 @@ class PosController < ApplicationController
   include ReadersHelper
 
   before_action :require_authentication!
+  before_action -> { require_permission!("pos.sell") }, except: [:search_customers]
+  before_action -> { require_permission!("customers.search") }, only: [:search_customers]
   before_action :load_cart_from_params, only: [:checkout]
   before_action :use_full_width_container
 

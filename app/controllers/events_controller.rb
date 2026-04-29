@@ -1,7 +1,7 @@
 class EventsController < ApplicationController
   before_action :set_event, only: %i[ show edit update destroy ]
-  before_action :require_admin!, except: [:index, :show]
-  before_action :require_authentication!, only: [:show]
+  before_action -> { require_permission!("events.view") }, only: %i[ index show ]
+  before_action -> { require_permission!("events.manage") }, except: %i[ index show ]
 
   # GET /events or /events.json
   def index
@@ -10,14 +10,18 @@ class EventsController < ApplicationController
 
   # GET /events/1 or /events/1.json
   def show
-    @stats = {
-      total_entries: @event.entries.sum(:qty),
-      total_orders: @event.orders.joins(:payment).count,
-      gross_volume: @event.orders.joins(:payment).sum(:total_amount)
-    }
+    @show_event_financials = current_user_can?("reports.view_fundraising")
+    @show_supporter_details = current_user_can?("reports.view_pii")
 
-    # Calculate Heavy Hitters
-    if @stats[:total_entries] > 0
+    if @show_event_financials
+      @stats = {
+        total_entries: @event.entries.sum(:qty),
+        total_orders: @event.orders.joins(:payment).count,
+        gross_volume: @event.orders.joins(:payment).sum(:total_amount)
+      }
+    end
+
+    if @show_supporter_details && @stats && @stats[:total_entries] > 0
       @heavy_hitters = @event.entries
                              .group(:name)
                              .order('sum_qty desc')

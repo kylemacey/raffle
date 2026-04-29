@@ -13,11 +13,7 @@ class AuthenticationController < ApplicationController
 
     if @user = User.find_by(pin: pin)
       session[:current_user_id] = @user.id
-      if @user.admin?
-        redirect_to :root, notice: "Successfully logged in"
-      else
-        redirect_to pos_main_path, notice: "Successfully logged in"
-      end
+      redirect_to default_after_sign_in_path, notice: "Successfully logged in"
     else
       redirect_to sign_in_path, alert: "Incorrect PIN"
     end
