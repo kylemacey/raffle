@@ -1,7 +1,7 @@
 require "test_helper"
 
 class PaymentTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
+  test "can belong to an entry for legacy raffle payments" do
+    assert_equal entries(:one), payments(:one).entry
+  end
 end

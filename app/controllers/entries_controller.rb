@@ -3,6 +3,7 @@ require 'csv'
 class EntriesController < ApplicationController
   before_action :set_event
   before_action :set_entry, only: %i[ show edit update destroy ]
+  before_action :require_admin!
 
   # GET /entries or /entries.json
   def index

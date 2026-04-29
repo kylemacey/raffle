@@ -1,0 +1,85 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>
+    Orders
+    <% unless @show_pending %>
+      <small class="text-muted">(Completed Only)</small>
+    <% end %>
+  </h1>
+
+  <div>
+    <% if @show_pending %>
+      <%= link_to "Hide Pending Orders", orders_path, class: "btn btn-outline-secondary" %>
+    <% else %>
+      <%= link_to "Show All Orders", orders_path(show_pending: true), class: "btn btn-outline-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="mb-3">
+  <p class="text-muted">
+    Showing <%= @orders.count %> order<%= 's' unless @orders.count == 1 %>
+    <% unless @show_pending %>
+      (completed orders only)
+    <% end %>
+  </p>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Event</th>
+        <th>Total Amount</th>
+        <th>Payment Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td><%= order.id %></td>
+          <td>
+            <strong><%= order.customer_name %></strong><br>
+            <small class="text-muted"><%= order.customer_email %></small>
+            <% if order.user %>
+              <br><small class="text-muted">Agent: <%= order.user.name %></small>
+            <% end %>
+          </td>
+          <td><%= order.event&.name %></td>
+          <td><%= number_to_currency(order.total_amount / 100.0) %></td>
+          <td>
+            <% if order.payment %>
+              <span class="badge bg-success">Paid</span>
+              <% if order.payment.payment_intent_id.present? %>
+                <br>
+                <small>
+                  <%= stripe_payment_url(order.payment.payment_intent_id,
+                      link_text: "View on Stripe",
+                      class: "text-decoration-none") %>
+                </small>
+              <% end %>
+            <% else %>
+              <span class="badge bg-warning">Pending</span>
+            <% end %>
+          </td>
+          <td><%= order.created_at.strftime("%B %d, %Y at %I:%M %p") %></td>
+          <td>
+            <div class="d-flex">
+              <%= link_to "View Details", order_path(order), class: "btn btn-sm btn-outline-primary" %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% if @orders.empty? %>
+  <div class="text-center py-5">
+    <h3 class="text-muted">No orders found</h3>
+    <p class="text-muted">Orders will appear here once they are created.</p>
+  </div>
+<% end %>

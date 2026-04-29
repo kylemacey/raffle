@@ -1,0 +1,10 @@
+<% if schema.any? %>
+  <div class="mb-3">
+    <h5>Product Configuration</h5>
+    <% schema.each do |field| %>
+      <div class="mb-3">
+        <%= render partial: "pos_products/configuration_fields/#{field[:type]}", locals: { field: field } %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

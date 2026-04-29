@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   include AuthenticationHelper
 
   before_action :require_basic_auth
+  before_action :set_current_user
 
   private
 
@@ -10,5 +11,11 @@ class ApplicationController < ActionController::Base
       http_name, http_password = ENV['HTTP_AUTH'].split(':')
       http_basic_authenticate_or_request_with name: http_name, password: http_password
     end
+  end
+
+  protected
+
+  def use_full_width_container
+    @full_width_container = true
   end
 end

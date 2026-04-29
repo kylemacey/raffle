@@ -2,7 +2,8 @@ require "test_helper"
 
 class RocStarPricesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @roc_star_price = roc_star_prices(:one)
+    @roc_star_price = roc_star_prices(:monthly_10)
+    sign_in(users(:admin))
   end
 
   test "should get index" do
@@ -17,7 +18,7 @@ class RocStarPricesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create roc_star_price" do
     assert_difference("RocStarPrice.count") do
-      post roc_star_prices_url, params: { roc_star_price: { amount: @roc_star_price.amount, description: @roc_star_price.description, interval: @roc_star_price.interval, name: @roc_star_price.name, stripe_product_id: @roc_star_price.stripe_product_id, stripe_price_id: @roc_star_price.stripe_price_id } }
+      post roc_star_prices_url, params: { roc_star_price: { amount: 3500, description: @roc_star_price.description, interval: @roc_star_price.interval, name: "Monthly Plan $35", stripe_product_id: "prod_monthly_35", stripe_price_id: "price_monthly_35" } }
     end
 
     assert_redirected_to roc_star_price_url(RocStarPrice.last)

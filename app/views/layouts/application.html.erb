@@ -3,10 +3,22 @@
   <head>
     <title>Farley Raffle</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name=”apple-mobile-web-app-capable” content=”yes “>
+
+    <!-- iOS Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Farley Raffle">
+    <%= favicon_link_tag 'favicon.svg', rel: 'apple-touch-icon', type: 'image/svg+xml' %>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4338CA">
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%= favicon_link_tag 'favicon.svg' %>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
@@ -19,18 +31,31 @@
             <li class="nav-item navbar-brand">
               <%= link_to "Farley Raffle", pos_main_path, class: "navbar-brand" %>
             </li>
-            <li class="nav-item">
-              <%= link_to "Events", events_path, class: "nav-link" %>
-            </li>
-            <li class="nav-item">
-              <%= link_to "Card Readers", readers_list_path, class: "nav-link" %>
-            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Events</a>
+              <ul class="dropdown-menu">
+                <% grouped_events = grouped_events_for_dropdown %>
 
-            <% if @current_user&.admin? %>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Events</a>
-                <ul class="dropdown-menu">
-                  <% Event.all.each do |event| %>
+                <%# Past Year Events %>
+                <% grouped_events[:past_year].each do |event| %>
+                  <li>
+                    <% if event == current_event %>
+                      <%= link_to event.name, event, class: "dropdown-item active" %>
+                    <% else %>
+                      <%= link_to event.name, event, class: "dropdown-item" %>
+                    <% end %>
+                  </li>
+                <% end %>
+
+                <%# Divider and Older Events section %>
+                <% if grouped_events[:show_older_events_section] %>
+                  <%# Show divider only if there were recent events AND there are older events %>
+                  <% if grouped_events[:past_year].any? %>
+                    <li><hr class="dropdown-divider"></li>
+                  <% end %>
+
+                  <%# Older five events %>
+                  <% grouped_events[:older_five].each do |event| %>
                     <li>
                       <% if event == current_event %>
                         <%= link_to event.name, event, class: "dropdown-item active" %>
@@ -39,17 +64,37 @@
                       <% end %>
                     </li>
                   <% end %>
+
+                  <%# Divider and "All Events" link %>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><%= link_to "All Events", events_path, class: "dropdown-item" %></li>
+                <% end %>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <%= link_to "Orders", orders_path, class: "nav-link" %>
+            </li>
+            <li class="nav-item">
+              <%= link_to "Card Readers", readers_list_path, class: "nav-link" %>
+            </li>
+
+            <% if current_user_is_admin? %>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Admin</a>
+                <ul class="dropdown-menu">
+                  <li><%= link_to "Users", users_path, class: "dropdown-item" %></li>
+                  <li><%= link_to "Roc Star Prices", roc_star_prices_path, class: "dropdown-item" %></li>
+                  <li><%= link_to "POS Products", pos_products_path, class: "dropdown-item" %></li>
                 </ul>
-              </li>
-              <li class="nav-item">
-                <%= link_to "Users", users_path, class: "nav-link" %>
-              </li>
-              <li class="nav-item">
-                <%= link_to "Roc Star Prices", roc_star_prices_path, class: "nav-link" %>
               </li>
             <% end %>
           </ul>
           <ul class="nav nav-pills">
+            <li class="nav-item">
+              <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#posHelpModal">
+                <i class="fas fa-question-circle"></i> Help
+              </button>
+            </li>
             <% if authenticated? %>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false"><%= current_user.name %></a>
@@ -70,9 +115,68 @@
           </ul>
         </div>
       </nav>
-      <div class="container">
+      <div class="<%= container_class %>">
         <%= yield %>
       </div>
+    </div>
 
+    <!-- Help Modal -->
+    <div class="modal fade" id="posHelpModal" tabindex="-1" aria-labelledby="posHelpModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="posHelpModalLabel">POS Checkout Guide</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Here's a quick guide to using the new Point-of-Sale checkout system.</p>
+
+            <h4 class="mt-4">Basic Operations</h4>
+            <ul class="list-group list-group-flush mb-4">
+              <li class="list-group-item"><strong>Adding Items:</strong> Simply click on a product from the list on the left to add it to the shopping cart.</li>
+              <li class="list-group-item"><strong>Managing the Cart:</strong> You can change the quantity of any item directly in the cart or remove items by clicking the red '×' button.</li>
+              <li class="list-group-item"><strong>Customer Info:</strong> You must enter the customer's full name and a valid email address. For returning customers, start typing their name or email to see a list of suggestions. Selecting one will fill out their details automatically.</li>
+            </ul>
+
+            <h4 class="mt-4">Raffle Ticket Purchases</h4>
+            <div class="alert alert-warning">
+              Please inform customers that they will <strong>not</strong> receive a physical ticket or number. Their entry is recorded digitally with the name and email they provide. The drawing will be held at the end of the event. Winners will be announced, and if they have already left, we will contact them via email to arrange prize delivery.
+            </div>
+
+            <h4 class="mt-4">Roc Star Subscriptions</h4>
+            <p>Handling Roc Star sign-ups has a few special rules. Remember, these are <strong>recurring subscriptions</strong> that bill the customer automatically.</p>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <strong>Easy to Spot:</strong> Roc Star subscription products (for monthly or annual recurring billing) have a special <span style="background-color: #035a34; color: white; padding: 2px 5px; border-radius: 4px; border: 1px solid #ffffff4d;">dark green background</span>.
+              </li>
+              <li class="list-group-item">
+                <strong>Card Payment Required:</strong> All recurring Roc Star subscriptions require a credit or debit card payment. When a subscription is in the cart, the "Cash" payment option will be disabled automatically.
+              </li>
+              <li class="list-group-item">
+                <strong>One Subscription Per Order:</strong> To keep things simple, only one Roc Star subscription can be purchased in a single order. The system will prevent you from adding more than one.
+              </li>
+              <li class="list-group-item">
+                <strong>Combine with Another Purchase:</strong> Due to a technical limitation, a Roc Star subscription cannot be purchased by itself. It must be combined with at least one other item (like a mulligan or putt for prizes ticket). If you try to check out with only a subscription, the system will show an alert with instructions.
+              </li>
+            </ul>
+
+            <div class="alert alert-info mt-4">
+              <strong>How Roc Star Billing Works:</strong> When a customer buys a one-time item and signs up to be a Roc Star, you will only charge them for the <strong>one-time item(s)</strong> at the terminal. The system securely saves their card, and their recurring subscription (monthly or annual) is automatically created in the background.
+            </div>
+
+            <hr>
+            <p class="text-center mt-4">
+              For any further help, please contact Jared at <a href="tel:5853091797">585-309-1797</a>.
+              <br>
+              <small class="text-muted">Text is preferred, but call if immediate help is needed.</small>
+            </p>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

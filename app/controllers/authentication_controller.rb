@@ -3,7 +3,15 @@ class AuthenticationController < ApplicationController
   end
 
   def create
-    if @user = User.find_by(pin: params[:pin])
+    pin = params[:pin]
+
+    # Validate PIN format
+    unless pin&.match?(/\A\d{4}\z/)
+      redirect_to sign_in_path, alert: "PIN must be exactly 4 digits"
+      return
+    end
+
+    if @user = User.find_by(pin: pin)
       session[:current_user_id] = @user.id
       if @user.admin?
         redirect_to :root, notice: "Successfully logged in"
@@ -18,6 +26,6 @@ class AuthenticationController < ApplicationController
   def destroy
     session.delete(:current_user_id)
     session.delete(:current_reader_id)
-    redirect_to :root, notice: "Successfully logged out"
+    redirect_to sign_in_path, notice: "Successfully logged out"
   end
 end

@@ -1,5 +1,6 @@
 class RocStarPricesController < ApplicationController
   before_action :set_roc_star_price, only: %i[ show edit update destroy ]
+  before_action :require_admin!
 
   # GET /roc_star_prices or /roc_star_prices.json
   def index

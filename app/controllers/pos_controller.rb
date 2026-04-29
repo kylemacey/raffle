@@ -3,6 +3,8 @@ class PosController < ApplicationController
   include ReadersHelper
 
   before_action :require_authentication!
+  before_action :load_cart_from_params, only: [:checkout]
+  before_action :use_full_width_container
 
   def new
     @events = Event.all
@@ -14,59 +16,85 @@ class PosController < ApplicationController
   end
 
   def main
-    redirect_to pos_path unless current_event
-    @products = RaffleProduct.all
+    @products = PosProduct.where(active: true).order(:priority)
+    @event = current_event
   end
 
   def checkout
-    unless current_event
-      redirect_to pos_path
+    if @cart_items.empty?
+      redirect_to pos_main_path, alert: 'Your cart is empty.'
+      return
     end
 
-    if params[:payment_method] == "cash"
-      entry = Entry.create!(
-        name: params[:name],
-        phone: params[:email],
-        qty: params[:tickets],
-        event: current_event,
-      )
-
-      Payment.create!(
-        entry: entry,
-        payment_method_type: "cash",
-        amount: RaffleProduct.custom_price(params[:tickets].to_i),
-      )
-
-      redirect_to pos_success_path(entry_id: entry.id)
+    if params[:payment_method] == 'card' && current_reader.blank?
+      redirect_to readers_list_path, alert: 'Select a card reader before checking out with card.'
+      return
     end
 
-    if params[:payment_method] == "card"
+    order = nil
+    begin
+      ActiveRecord::Base.transaction do
+        order = current_event.orders.create!(
+          customer_name: params[:name],
+          customer_email: params[:email],
+          total_amount: @cart_total,
+          user: current_user,
+          payment_method_type: params[:payment_method]
+        )
+
+        @cart_items.each do |item|
+          order.order_items.create!(
+            pos_product: item[:product],
+            quantity: item[:quantity],
+            unit_price: item[:product].price
+          )
+        end
+
+        if params[:payment_method] == 'cash'
+          order.create_payment!(
+            payment_method_type: 'cash',
+            amount: @cart_total
+          )
+        end
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to pos_main_path, alert: "Error creating order: #{e.message}"
+      return
+    end
+
+    if params[:payment_method] == 'cash'
+      # Use the new OrderProcessingService for cash payments
+      result = OrderProcessingService.process_order(order)
+
+      if result[:success]
+        Rails.logger.info "Cash payment: Successfully processed Order ##{order.id} with #{result[:processed].count} items"
+      else
+        Rails.logger.error "Cash payment: Order ##{order.id} processing completed with #{result[:failed].count} failures"
+        result[:failed].each do |failure|
+          Rails.logger.error "  - Item #{failure[:item].id} (#{failure[:item].pos_product.name}): #{failure[:error].message}"
+        end
+      end
+
+      redirect_to pos_success_path(order_id: order.id, cart_cleared: true)
+
+    elsif params[:payment_method] == 'card'
       payment_service = CollectPaymentService.new(
-        customer: {
-          name: params[:name],
-          email: params[:email],
-        },
-        reader: current_reader,
+        order: order,
+        reader: current_reader
       )
 
-      payment_service.collect_payment(
-        RaffleProduct.custom_price(params[:tickets].to_i),
-        metadata: {
-          event: current_event.id,
-          name: params[:name],
-          email: params[:email],
-          qty: params[:tickets],
-          agent: current_user.name,
-        }
-      )
+      payment_service.collect_payment
 
       if payment_service.success?
+        Rails.logger.info "Created payment intent for Order ##{order.id}"
         redirect_to(
           controller: :pos,
           action: :wait_for_pin_pad,
           payment_intent_id: payment_service.payment_intent.id
         )
-
+      else
+        order.destroy
+        redirect_to pos_main_path, alert: 'Could not initiate card payment.'
       end
     end
   end
@@ -85,7 +113,17 @@ class PosController < ApplicationController
   end
 
   def success
-    @entry = Entry.find(params[:entry_id])
+    @order = Order.find(params[:order_id])
+  end
+
+  def failure
+    @order = Order.find(params[:order_id])
+    @payment_intent = Stripe::PaymentIntent.retrieve(@order.payment.payment_intent_id) if @order.payment&.payment_intent_id
+  rescue ActiveRecord::RecordNotFound
+    redirect_to pos_main_path, alert: 'Order not found.'
+  rescue Stripe::StripeError => e
+    Rails.logger.error "Error retrieving payment intent: #{e.message}"
+    redirect_to pos_main_path, alert: 'Payment information not found.'
   end
 
   # Turbo Action
@@ -97,6 +135,97 @@ class PosController < ApplicationController
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace("custom_price", partial: "pos/custom_price", locals: { price: price })
       end
+    end
+  end
+
+  def simulate_payment
+    if Rails.env.development? && current_reader&.device_type&.start_with?('simulated')
+      begin
+        Stripe::Terminal::Reader::TestHelpers.present_payment_method(current_reader.id)
+      rescue Stripe::StripeError => e
+        flash[:alert] = "Error simulating payment: #{e.message}"
+        redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+      end
+    else
+      flash[:alert] = "Payment simulation is only available for simulated readers in development."
+      redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+    end
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("simulation_controls", partial: "pos/simulation_status", locals: { message: "Success simulation sent." }) }
+      format.html { redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) }
+    end
+  end
+
+  def simulate_decline
+    if Rails.env.development? && current_reader&.device_type&.start_with?('simulated')
+      begin
+        Stripe::Terminal::Reader::TestHelpers.present_payment_method(
+          current_reader.id,
+          {
+            card_present: { number: '4000000000000002'},
+            type: "card_present",
+          }
+        )
+      rescue Stripe::StripeError => e
+        flash[:alert] = "Error simulating decline: #{e.message}"
+        redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+      end
+    else
+      flash[:alert] = "Payment simulation is only available for simulated readers in development."
+      redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+    end
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("simulation_controls", partial: "pos/simulation_status", locals: { message: "Decline simulation sent." }) }
+      format.html { redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) }
+    end
+  end
+
+  def search_customers
+    query = params[:query]
+    if query.blank?
+      render json: []
+      return
+    end
+
+    begin
+      customers = Stripe::Customer.search(
+        query: %{name~"#{query}" OR email~"#{query}"},
+        limit: 10
+      )
+      render json: customers.data.map { |c| { id: c.id, name: c.name, email: c.email } }
+    rescue Stripe::StripeError => e
+      Rails.logger.error "Stripe customer search error: #{e.message}"
+      render json: { error: "Failed to search customers" }, status: :internal_server_error
+    end
+  end
+
+  private
+
+  def load_cart_from_params
+    cart_data = params[:cart_data]
+    unless cart_data
+      @cart_items = []
+      @cart_total = 0
+      return
+    end
+
+    begin
+      cart = JSON.parse(cart_data)
+      product_ids = cart.keys
+      @cart_products = PosProduct.where(id: product_ids)
+
+      @cart_items = @cart_products.map do |product|
+        {
+          product: product,
+          quantity: cart[product.id.to_s] || 0
+        }
+      end.compact
+
+      @cart_total = @cart_items.sum { |item| item[:product].price * item[:quantity] }
+    rescue JSON::ParserError
+      redirect_to pos_main_path, alert: 'Invalid cart data.'
     end
   end
 end

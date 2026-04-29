@@ -1,4 +1,32 @@
 <div>
   <h2>Payment Successful!</h2>
+
+  <div class="card my-4">
+    <div class="card-header">
+      Order Summary
+    </div>
+    <div class="card-body">
+      <p><strong>Order ID:</strong> <%= @order.id %></p>
+      <p><strong>Customer:</strong> <%= @order.customer_name %> (<%= @order.customer_email %>)</p>
+      <p><strong>Total:</strong> <%= number_to_currency(@order.total_amount / 100.0) %></p>
+      <p><strong>Payment Method:</strong> <%= @order.payment_method_type.capitalize %></p>
+
+      <h5>Items Purchased:</h5>
+      <ul>
+        <% @order.order_items.each do |item| %>
+          <li>
+            <%= item.quantity %>x <%= item.pos_product.name %>
+            at <%= number_to_currency(item.unit_price / 100.0) %> each
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+
   <p><%= link_to "Return to POS", pos_main_path, class: "btn btn-primary" %></p>
 </div>
+
+<script>
+// Clear the cart after successful checkout (for both cash and card payments)
+localStorage.removeItem('pos_cart');
+</script>

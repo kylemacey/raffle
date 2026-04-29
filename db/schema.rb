@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_06_14_210816) do
+ActiveRecord::Schema[7.0].define(version: 2025_06_22_210646) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,15 +40,55 @@ ActiveRecord::Schema[7.0].define(version: 2025_06_14_210816) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "order_items", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "pos_product_id", null: false
+    t.integer "quantity"
+    t.integer "unit_price"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["pos_product_id"], name: "index_order_items_on_pos_product_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.string "customer_name"
+    t.string "customer_email"
+    t.integer "total_amount"
+    t.bigint "event_id", null: false
+    t.bigint "user_id", null: false
+    t.string "payment_method_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_orders_on_event_id"
+    t.index ["user_id"], name: "index_orders_on_user_id"
+  end
+
   create_table "payments", force: :cascade do |t|
     t.string "payment_method_type"
     t.string "amount"
     t.string "payment_intent_id"
-    t.bigint "entry_id", null: false
+    t.bigint "entry_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "order_id"
     t.index ["entry_id"], name: "index_payments_on_entry_id"
+    t.index ["order_id"], name: "index_payments_on_order_id"
     t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
+  end
+
+  create_table "pos_products", force: :cascade do |t|
+    t.string "name"
+    t.integer "price"
+    t.string "stripe_product_id"
+    t.string "stripe_price_id"
+    t.string "product_type"
+    t.boolean "active"
+    t.jsonb "configuration"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "priority"
   end
 
   create_table "roc_star_prices", force: :cascade do |t|
@@ -87,7 +127,12 @@ ActiveRecord::Schema[7.0].define(version: 2025_06_14_210816) do
 
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "order_items", "pos_products"
+  add_foreign_key "orders", "events"
+  add_foreign_key "orders", "users"
   add_foreign_key "payments", "entries"
+  add_foreign_key "payments", "orders"
   add_foreign_key "winners", "drawings"
   add_foreign_key "winners", "entries"
 end

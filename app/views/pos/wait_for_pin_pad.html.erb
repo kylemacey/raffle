@@ -1,8 +1,35 @@
-<h1>Payment Processing</h1>
+<div data-controller="redirect">
+  <h1>Payment Processing</h1>
 
-<turbo-frame id="payment_status_<%= @payment_intent.id %>">
-  Complete the transaction on the reader <em><% current_reader.label %></em>.
   <%= turbo_stream_from "payment_status_#{@payment_intent.id}" %>
-</turbo-frame>
+  <div id="redirect_target" hidden></div>
 
-<p><%= button_to "Cancel Payment", readers_cancel_action_path, method: :delete, class: "btn btn-danger" %></p>
+  <turbo-frame id="payment_status_<%= @payment_intent.id %>">
+    Complete the transaction on the reader <em><%= current_reader.label %></em>.
+  </turbo-frame>
+
+  <% if Rails.env.development? && current_reader&.device_type&.start_with?('simulated') %>
+    <div class="card my-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Simulated Reader Controls (Development)</h5>
+      </div>
+      <div class="card-body">
+        <div id="simulation_controls">
+          <p><strong>Payment Intent:</strong> <code><%= @payment_intent.id %></code></p>
+          <p><strong>Amount:</strong> <%= number_to_currency(@payment_intent.amount / 100.0) %></p>
+          <div class="d-grid gap-2">
+            <%= form_with(url: simulate_payment_path(@payment_intent.id), method: :post) do |form| %>
+              <%= form.submit "Simulate Successful Payment", class: "btn btn-success" %>
+            <% end %>
+            <%= form_with(url: simulate_decline_path(@payment_intent.id), method: :post) do |form| %>
+              <%= form.submit "Simulate Declined Payment", class: "btn btn-warning" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <hr>
+  <p><%= button_to "Cancel Payment", readers_cancel_action_path, method: :delete, class: "btn btn-danger" %></p>
+</div>

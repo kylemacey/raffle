@@ -1,0 +1,17 @@
+<% if payment_intent.status == 'succeeded' || payment_intent.status == 'requires_capture' %>
+  <div class="alert alert-success">
+    <h4 class="alert-heading">Payment Successful!</h4>
+    <p>Your payment has been processed successfully.</p>
+    <p>Redirecting to the success page...</p>
+  </div>
+
+  <%# This meta tag will trigger a client-side redirect after a short delay %>
+  <%= tag.meta "http-equiv": "refresh", content: "2;url=#{pos_success_path(order_id)}" %>
+
+<% else %>
+  <div class="alert alert-danger">
+    <h4 class="alert-heading">Payment Failed</h4>
+    <p>There was an issue processing the payment. The payment status is: <strong><%= payment_intent.status %></strong>.</p>
+    <%= link_to "Return to POS", pos_main_path, class: "btn btn-primary" %>
+  </div>
+<% end %>

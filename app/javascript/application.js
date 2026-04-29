@@ -2,5 +2,5 @@
 import "@hotwired/turbo-rails"; // Turbo setup
 import "popper"
 import "bootstrap"
-// import "./controllers"; // Load Stimulus controllersimport "@hotwired/turbo-rails"
+// import "./controllers"; // Load Stimulus controllers
 import "controllers"

@@ -1,5 +1,27 @@
 <h1>Readers</h1>
 
+<% if Rails.env.development? %>
+  <div class="card my-4">
+    <div class="card-header">
+      Create a Simulated Reader (Development Only)
+    </div>
+    <div class="card-body">
+      <% if @locations.present? && @locations.any? %>
+        <%= form_with url: readers_create_simulated_path, method: :post do |f| %>
+          <div class="mb-3">
+            <%= f.label :location_id, "Select a Stripe Location", class: 'form-label' %>
+            <%= f.collection_select :location_id, @locations.data, :id, :display_name, {}, { class: 'form-select' } %>
+          </div>
+          <%= f.submit "Create Simulated Reader", class: "btn btn-secondary" %>
+        <% end %>
+      <% else %>
+        <p>No Stripe Terminal Locations found.</p>
+        <p>Please create a location in your <%= stripe_terminal_location_url(nil, link_text: "Stripe Dashboard") %> first.</p>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <% if @readers.any? %>
     <%= form_with url: readers_assign_path do |f| %>
         <% @readers.each do |reader| %>

@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: Raffle Ticket
+  price: 100
+  stripe_product_id: prod_raffle
+  stripe_price_id: price_raffle
+  product_type: raffle
+  active: false
+  configuration:
+    tickets_per_unit: 1
+  description: Raffle ticket fixture
+
+two:
+  name: RocStar Subscription
+  price: 1000
+  stripe_product_id: prod_subscription
+  stripe_price_id: price_subscription
+  product_type: subscription
+  active: false
+  configuration:
+    subscription_type: monthly
+  description: Subscription fixture

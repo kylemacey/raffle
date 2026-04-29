@@ -1,0 +1,69 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title mb-0">Shopping Cart</h4>
+    <button type="button" class="btn btn-sm btn-outline-danger" data-action="click->cart#clearCart">
+      Clear Cart
+    </button>
+  </div>
+  <div class="card-body">
+    <div id="cart-items">
+      <!-- Cart items will be populated by JavaScript -->
+    </div>
+    <div id="cart-total" class="mt-3">
+      <!-- Total will be populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<%= form_with url: pos_checkout_path, data: { turbo: false }, id: "checkout-form" do |f| %>
+  <div class="card mt-4">
+    <div class="card-header">
+      <h4 class="card-title mb-0">Customer & Payment</h4>
+    </div>
+    <div class="card-body" data-controller="customer-search">
+      <div class="mb-3 position-relative">
+        <%= f.label :name, class: "form-label" %>
+        <%= f.text_field :name, class: "form-control", required: true,
+              "data-customer-search-target": "name",
+              "data-action": "input->customer-search#handleInput keydown->customer-search#handleKeys",
+              autocomplete: "off",
+              data: { "1p-ignore": true } %>
+        <div class="list-group position-absolute w-100 d-none"
+             data-customer-search-target="results"
+             style="z-index: 1000;"></div>
+      </div>
+      <div class="mb-3">
+        <%= f.label :email, class: "form-label" %>
+        <%= f.text_field :email, class: "form-control", required: true,
+              "data-customer-search-target": "email",
+              autocomplete: "off",
+              data: { "1p-ignore": true } %>
+      </div>
+
+      <h5 class="mt-4">Select Payment Method</h5>
+      <div class="d-grid gap-2">
+        <span data-cart-target="cashPaymentLabelWrapper" class="d-grid">
+          <%= f.radio_button :payment_method, "cash", class: "btn-check", required: true, id: 'payment_method_cash_checkout', data: { cart_target: 'cashPaymentMethod' } %>
+          <%= f.label :payment_method_cash_checkout, "Cash", class: "btn btn-lg btn-outline-success" %>
+        </span>
+
+        <% if current_reader %>
+          <%= f.radio_button :payment_method, "card", class: "btn-check", required: true, id: 'payment_method_card_checkout', data: { cart_target: 'cardPaymentMethod' } %>
+          <%= f.label :payment_method_card_checkout, "Card", class: "btn btn-lg btn-outline-primary" %>
+        <% else %>
+          <p class="text-center text-warning mt-2">
+            No card reader connected. <%= link_to "Connect one now", readers_list_path %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+    <div class="card-footer">
+      <%= f.submit "Complete Sale", class: "btn btn-lg btn-success w-100", data: { cart_target: "checkoutButton" }, disabled: true %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+// Set up product data immediately
+window.posProducts = <%= raw PosProduct.active.to_json(only: [:id, :name, :price]) %>;
+</script>

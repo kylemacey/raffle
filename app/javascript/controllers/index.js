@@ -1,15 +1,22 @@
-import { Application } from "@hotwired/stimulus"
+import { application } from "controllers/application"
 
-import PosController from "controllers/pos_controller";
-import WinnersController from "controllers/winners_controller";
+import CartController from "controllers/cart_controller"
+application.register("cart", CartController)
 
-const application = Application.start()
+import CustomerSearchController from "controllers/customer_search_controller"
+application.register("customer-search", CustomerSearchController)
 
-// Configure Stimulus development experience
-application.debug = false
-window.Stimulus = application
+import PosProductFormController from "controllers/pos_product_form_controller"
+application.register("pos-product-form", PosProductFormController)
 
-application.register("pos", PosController);
-application.register("winners", WinnersController);
+import RedirectController from "controllers/redirect_controller"
+application.register("redirect", RedirectController)
 
-export { application }
+import SortableController from "controllers/sortable_controller"
+application.register("sortable", SortableController)
+
+import WinnersController from "controllers/winners_controller"
+application.register("winners", WinnersController)
+
+import MatchHeightController from "controllers/match_height_controller"
+application.register("match-height", MatchHeightController)

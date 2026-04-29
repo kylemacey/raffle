@@ -1,9 +1,137 @@
-<h1>Sign in</h1>
+<div class="number-pad-container">
+  <div class="number-pad-info">
+    <h1>Sign In</h1>
+    <p class="pin-instructions">Enter your PIN to continue.</p>
+    <div class="pin-display">
+      <div class="pin-dots">
+        <% 4.times do |i| %>
+          <div class="pin-dot" data-index="<%= i %>"></div>
+        <% end %>
+      </div>
+    </div>
 
-<p style="color: green"><%= notice %></p>
-<p style="color: red"><%= alert %></p>
+    <% if notice %>
+      <div class="alert alert-success"><%= notice %></div>
+    <% end %>
+    <% if alert %>
+      <div class="alert alert-danger"><%= alert %></div>
+    <% end %>
+  </div>
 
-<%= form_with url: authentication_create_path do |f| %>
-  <%= f.text_field :pin %>
-  <%= f.submit "Log in" %>
-<% end %>
+  <div class="number-pad-interactive">
+    <div class="number-pad">
+      <div class="number-pad-row">
+        <button class="number-btn" data-number="1">1</button>
+        <button class="number-btn" data-number="2">2</button>
+        <button class="number-btn" data-number="3">3</button>
+      </div>
+      <div class="number-pad-row">
+        <button class="number-btn" data-number="4">4</button>
+        <button class="number-btn" data-number="5">5</button>
+        <button class="number-btn" data-number="6">6</button>
+      </div>
+      <div class="number-pad-row">
+        <button class="number-btn" data-number="7">7</button>
+        <button class="number-btn" data-number="8">8</button>
+        <button class="number-btn" data-number="9">9</button>
+      </div>
+      <div class="number-pad-row">
+        <button class="number-btn clear-btn" id="clearBtn">CLEAR</button>
+        <button class="number-btn" data-number="0">0</button>
+        <button class="number-btn backspace-btn" id="backspaceBtn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 3H7C6.31 3 5.77 3.35 5.41 3.88L0 12L5.41 20.12C5.77 20.65 6.31 21 7 21H22C23.1 21 24 20.1 24 19V5C24 3.9 23.1 3 22 3ZM19 15.59L17.59 17L14 13.41L10.41 17L9 15.59L12.59 12L9 8.41L10.41 7L14 10.59L17.59 7L19 8.41L15.41 12L19 15.59Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="submit-btn" id="submitBtn" disabled>Sign In</button>
+  </div>
+
+
+  <%= form_with url: authentication_create_path, id: "pinForm", class: "hidden-form" do |f| %>
+    <%= f.text_field :pin, id: "pinInput" %>
+  <% end %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let pin = '';
+  const maxPinLength = 4;
+
+  const pinInput = document.getElementById('pinInput');
+  const pinForm = document.getElementById('pinForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const backspaceBtn = document.getElementById('backspaceBtn');
+  const pinDots = document.querySelectorAll('.pin-dot');
+
+  // Number button click handler
+  document.querySelectorAll('.number-btn[data-number]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const number = this.dataset.number;
+      if (pin.length < maxPinLength) {
+        pin += number;
+        updatePinDisplay();
+      }
+    });
+  });
+
+  // Clear button
+  clearBtn.addEventListener('click', function() {
+    pin = '';
+    updatePinDisplay();
+  });
+
+  // Backspace button
+  backspaceBtn.addEventListener('click', function() {
+    if (pin.length > 0) {
+      pin = pin.slice(0, -1);
+      updatePinDisplay();
+    }
+  });
+
+  // Submit button
+  submitBtn.addEventListener('click', function() {
+    if (pin.length === maxPinLength) {
+      pinInput.value = pin;
+      pinForm.submit();
+    }
+  });
+
+  // Update pin display
+  function updatePinDisplay() {
+    // Update dots
+    pinDots.forEach((dot, index) => {
+      if (index < pin.length) {
+        dot.classList.add('filled');
+      } else {
+        dot.classList.remove('filled');
+      }
+    });
+
+    // Enable/disable submit button
+    submitBtn.disabled = pin.length !== maxPinLength;
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', function(e) {
+    if (e.key >= '0' && e.key <= '9') {
+      if (pin.length < maxPinLength) {
+        pin += e.key;
+        updatePinDisplay();
+      }
+    } else if (e.key === 'Backspace') {
+      if (pin.length > 0) {
+        pin = pin.slice(0, -1);
+        updatePinDisplay();
+      }
+    } else if (e.key === 'Enter') {
+      if (pin.length === maxPinLength) {
+        pinInput.value = pin;
+        pinForm.submit();
+      }
+    }
+  });
+});
+</script>
