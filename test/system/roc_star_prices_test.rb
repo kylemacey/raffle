@@ -2,7 +2,7 @@ require "application_system_test_case"
 
 class RocStarPricesTest < ApplicationSystemTestCase
   setup do
-    @roc_star_price = roc_star_prices(:one)
+    @roc_star_price = roc_star_prices(:monthly_10)
   end
 
   test "visiting the index" do

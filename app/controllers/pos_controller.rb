@@ -200,7 +200,11 @@ class PosController < ApplicationController
 
   def load_cart_from_params
     cart_data = params[:cart_data]
-    return unless cart_data
+    unless cart_data
+      @cart_items = []
+      @cart_total = 0
+      return
+    end
 
     begin
       cart = JSON.parse(cart_data)

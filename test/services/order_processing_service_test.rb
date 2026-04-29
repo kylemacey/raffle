@@ -1,4 +1,5 @@
 require "test_helper"
+require "minitest/mock"
 
 class OrderProcessingServiceTest < ActiveSupport::TestCase
   def setup
@@ -60,13 +61,15 @@ class OrderProcessingServiceTest < ActiveSupport::TestCase
   end
 
   test "handles processing errors gracefully" do
-    # Mock the processor to raise an error
-    processor = mock
-    processor.stubs(:process).raises(StandardError, "Processing failed")
+    processor = Object.new
+    def processor.process(_order_item)
+      raise StandardError, "Processing failed"
+    end
 
-    PosProducts::Factory.stubs(:create_processor).returns(processor)
-
-    result = OrderProcessingService.process_order(@order)
+    result = nil
+    PosProducts::Factory.stub(:create_processor, processor) do
+      result = OrderProcessingService.process_order(@order)
+    end
 
     assert_not result[:success]
     assert_equal 0, result[:processed].count
@@ -82,12 +85,13 @@ class OrderProcessingServiceTest < ActiveSupport::TestCase
   end
 
   test "delegates all processing logic to individual processors" do
-    # Mock the processor to verify it receives the order_item
-    processor = mock
-    processor.expects(:process).with(@order_item).once
+    processor = Minitest::Mock.new
+    processor.expect(:process, nil, [@order_item])
 
-    PosProducts::Factory.stubs(:create_processor).returns(processor)
+    PosProducts::Factory.stub(:create_processor, processor) do
+      OrderProcessingService.process_order(@order)
+    end
 
-    OrderProcessingService.process_order(@order)
+    processor.verify
   end
 end

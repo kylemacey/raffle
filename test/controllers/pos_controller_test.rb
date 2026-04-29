@@ -1,6 +1,11 @@
 require "test_helper"
 
 class PosControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    sign_in(users(:one))
+    post pos_create_path, params: { event_id: events(:one).id }
+  end
+
   test "should get main" do
     get pos_main_path
     assert_response :success
@@ -17,7 +22,7 @@ class PosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get success" do
-    get pos_success_path(entry_id: 1)
+    get pos_success_path(order_id: orders(:one).id)
     assert_response :success
   end
 end
