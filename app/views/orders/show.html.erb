@@ -93,6 +93,21 @@
                 link_text: "View on Stripe Dashboard",
                 class: "btn btn-primary w-100") %>
           <% end %>
+
+          <% if @order.payment.stripe_setup_intent_id.present? %>
+            <p><strong>Stripe Setup Intent:</strong>
+              <code><%= @order.payment.stripe_setup_intent_id %></code>
+            </p>
+          <% end %>
+
+          <% if @order.payment.stripe_subscription_id.present? %>
+            <p><strong>Stripe Subscription:</strong>
+              <code><%= @order.payment.stripe_subscription_id %></code>
+            </p>
+            <%= stripe_subscription_url(@order.payment.stripe_subscription_id,
+                link_text: "View Subscription on Stripe",
+                class: "btn btn-outline-primary w-100 mt-2") %>
+          <% end %>
         <% else %>
           <p class="text-muted">No payment information available.</p>
         <% end %>
