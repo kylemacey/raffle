@@ -33,6 +33,21 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, orders(:two).customer_name
   end
 
+  test "event order scope does not carry across sign ins" do
+    other_event_lead = User.create!(name: "Other Event Lead", pin: "7788")
+    other_event_lead.roles << roles(:event_lead)
+
+    sign_in(users(:two))
+    post pos_create_path, params: { event_id: events(:one).id }
+
+    sign_in(other_event_lead)
+
+    get orders_url(show_pending: true)
+
+    assert_response :success
+    assert_not_includes response.body, orders(:one).customer_name
+  end
+
   test "cashier cannot view another user's order" do
     sign_in(users(:one))
 

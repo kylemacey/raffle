@@ -66,6 +66,30 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "config admin receives json errors when creating platform admin role assignment" do
+    config_admin = User.create!(name: "Config Admin", pin: "6677")
+    config_admin.roles << roles(:config_admin)
+    sign_in(config_admin)
+
+    assert_no_difference("User.count") do
+      post users_url(format: :json), params: { user: { name: "Break Glass", pin: "7766", role_ids: [roles(:platform_admin).id] } }
+    end
+
+    assert_response :forbidden
+    assert_includes JSON.parse(response.body)["base"], "You are not authorized to assign SuperAdmin."
+  end
+
+  test "config admin receives json errors when updating platform admin role assignment" do
+    config_admin = User.create!(name: "Config Admin", pin: "6677")
+    config_admin.roles << roles(:config_admin)
+    sign_in(config_admin)
+
+    patch user_url(@user, format: :json), params: { user: { name: @user.name, pin: @user.pin, role_ids: [roles(:platform_admin).id] } }
+
+    assert_response :forbidden
+    assert_includes JSON.parse(response.body)["base"], "You are not authorized to assign SuperAdmin."
+  end
+
   test "platform admin can assign platform admin role" do
     assert_difference("User.count") do
       post users_url, params: { user: { name: "Break Glass", pin: "7766", role_ids: [roles(:platform_admin).id] } }

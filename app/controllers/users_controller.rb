@@ -24,7 +24,7 @@ class UsersController < ApplicationController
   # POST /users or /users.json
   def create
     @user = User.new(user_params)
-    return render(:new, status: :forbidden) unless authorize_role_assignment!(@user)
+    return render_forbidden_role_assignment(:new) unless authorize_role_assignment!(@user)
 
     respond_to do |format|
       if @user.save
@@ -39,7 +39,7 @@ class UsersController < ApplicationController
 
   # PATCH/PUT /users/1 or /users/1.json
   def update
-    return render(:edit, status: :forbidden) unless authorize_role_assignment!(@user)
+    return render_forbidden_role_assignment(:edit) unless authorize_role_assignment!(@user)
 
     respond_to do |format|
       if @user.update(user_params)
@@ -115,5 +115,12 @@ class UsersController < ApplicationController
 
     def submitted_role_ids
       Array(params.dig(:user, :role_ids)).reject(&:blank?).map(&:to_i)
+    end
+
+    def render_forbidden_role_assignment(template)
+      respond_to do |format|
+        format.html { render template, status: :forbidden }
+        format.json { render json: @user.errors, status: :forbidden }
+      end
     end
 end

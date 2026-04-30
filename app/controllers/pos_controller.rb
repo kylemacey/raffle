@@ -16,6 +16,7 @@ class PosController < ApplicationController
 
   def create
     session[:current_event_id] = params[:event_id]
+    session[:current_event_user_id] = current_user.id
     redirect_to pos_main_path
   end
 

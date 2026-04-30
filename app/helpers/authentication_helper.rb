@@ -23,7 +23,14 @@ module AuthenticationHelper
 
     current_user_can?("orders.view_event") &&
       session[:current_event_id].present? &&
+      session[:current_event_user_id].to_i == current_user.id &&
       order.event_id == session[:current_event_id].to_i
+  end
+
+  def current_event_selected_by_current_user?
+    current_user &&
+      session[:current_event_id].present? &&
+      session[:current_event_user_id].to_i == current_user.id
   end
 
   def require_authentication!

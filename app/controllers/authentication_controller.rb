@@ -12,6 +12,7 @@ class AuthenticationController < ApplicationController
     end
 
     if @user = User.find_by(pin: pin)
+      clear_session_context!
       session[:current_user_id] = @user.id
       redirect_to default_after_sign_in_path, notice: "Successfully logged in"
     else
@@ -20,8 +21,16 @@ class AuthenticationController < ApplicationController
   end
 
   def destroy
-    session.delete(:current_user_id)
-    session.delete(:current_reader_id)
+    clear_session_context!
     redirect_to sign_in_path, notice: "Successfully logged out"
+  end
+
+  private
+
+  def clear_session_context!
+    session.delete(:current_user_id)
+    session.delete(:current_event_id)
+    session.delete(:current_event_user_id)
+    session.delete(:current_reader_id)
   end
 end
