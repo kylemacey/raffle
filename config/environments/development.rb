@@ -74,4 +74,10 @@ Rails.application.configure do
 
   # Allow all ngrok subdomains in development
   config.hosts << /.+\.ngrok(-free)?\.app/
+  config.hosts << "raffle.test"
+
+  ENV.fetch("RAILS_DEVELOPMENT_HOSTS", "").split(",").each do |host|
+    host = host.strip
+    config.hosts << host if host.present?
+  end
 end

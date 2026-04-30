@@ -1,0 +1,16 @@
+[project]
+name = "raffle"
+
+[services.web]
+port = "auto"
+color = "cyan"
+
+[services.stripe-webhooks]
+color = "magenta"
+
+[routes]
+"raffle.test" = "web"
+
+[plugins.http]
+enabled = true
+listen = "127.0.0.1:18082"
