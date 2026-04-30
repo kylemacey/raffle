@@ -3,7 +3,11 @@ class PosController < ApplicationController
   include ReadersHelper
 
   before_action :require_authentication!
+  before_action -> { require_permission!("pos.sell") }, except: [:search_customers]
+  before_action -> { require_permission!("customers.search") }, only: [:search_customers]
   before_action :load_cart_from_params, only: [:checkout]
+  before_action :set_pos_order, only: [:success, :failure]
+  before_action :require_pos_order_access!, only: [:success, :failure]
   before_action :use_full_width_container
 
   def new
@@ -12,6 +16,7 @@ class PosController < ApplicationController
 
   def create
     session[:current_event_id] = params[:event_id]
+    session[:current_event_user_id] = current_user.id
     redirect_to pos_main_path
   end
 
@@ -115,18 +120,14 @@ class PosController < ApplicationController
   end
 
   def success
-    @order = Order.find(params[:order_id])
   end
 
   def failure
-    @order = Order.find(params[:order_id])
     if @order.payment&.stripe_intent_id.present?
       @terminal_intent = retrieve_terminal_intent(@order.payment.stripe_intent_id)
       @payment_intent = @terminal_intent if payment_intent_id?(@order.payment.stripe_intent_id)
       @setup_intent = @terminal_intent if setup_intent_id?(@order.payment.stripe_intent_id)
     end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to pos_main_path, alert: 'Order not found.'
   rescue Stripe::StripeError => e
     Rails.logger.error "Error retrieving payment intent: #{e.message}"
     redirect_to pos_main_path, alert: 'Payment information not found.'
@@ -208,6 +209,20 @@ class PosController < ApplicationController
   end
 
   private
+
+  def set_pos_order
+    @order = Order.find(params[:order_id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to pos_main_path, alert: 'Order not found.'
+    false
+  end
+
+  def require_pos_order_access!
+    return true if @order && current_user_can_view_order?(@order)
+
+    redirect_to pos_main_path, alert: 'Not authorized'
+    false
+  end
 
   def terminal_intent_id_param
     params[:intent_id] || params[:payment_intent_id] || params[:setup_intent_id]

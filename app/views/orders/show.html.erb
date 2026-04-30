@@ -85,28 +85,30 @@
           <p><strong>Amount:</strong> <%= number_to_currency(@order.payment.amount.to_f / 100.0) %></p>
           <p><strong>Payment Date:</strong> <%= @order.payment.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
 
-          <% if @order.payment.payment_intent_id.present? %>
-            <p><strong>Stripe Payment Intent:</strong>
-              <code><%= @order.payment.payment_intent_id %></code>
-            </p>
-            <%= stripe_payment_url(@order.payment.payment_intent_id,
-                link_text: "View on Stripe Dashboard",
-                class: "btn btn-primary w-100") %>
-          <% end %>
+          <% if current_user_can_any?("reports.view_fundraising", "refunds.issue") %>
+            <% if @order.payment.payment_intent_id.present? %>
+              <p><strong>Stripe Payment Intent:</strong>
+                <code><%= @order.payment.payment_intent_id %></code>
+              </p>
+              <%= stripe_payment_url(@order.payment.payment_intent_id,
+                  link_text: "View on Stripe Dashboard",
+                  class: "btn btn-primary w-100") %>
+            <% end %>
 
-          <% if @order.payment.stripe_setup_intent_id.present? %>
-            <p><strong>Stripe Setup Intent:</strong>
-              <code><%= @order.payment.stripe_setup_intent_id %></code>
-            </p>
-          <% end %>
+            <% if @order.payment.stripe_setup_intent_id.present? %>
+              <p><strong>Stripe Setup Intent:</strong>
+                <code><%= @order.payment.stripe_setup_intent_id %></code>
+              </p>
+            <% end %>
 
-          <% if @order.payment.stripe_subscription_id.present? %>
-            <p><strong>Stripe Subscription:</strong>
-              <code><%= @order.payment.stripe_subscription_id %></code>
-            </p>
-            <%= stripe_subscription_url(@order.payment.stripe_subscription_id,
-                link_text: "View Subscription on Stripe",
-                class: "btn btn-outline-primary w-100 mt-2") %>
+            <% if @order.payment.stripe_subscription_id.present? %>
+              <p><strong>Stripe Subscription:</strong>
+                <code><%= @order.payment.stripe_subscription_id %></code>
+              </p>
+              <%= stripe_subscription_url(@order.payment.stripe_subscription_id,
+                  link_text: "View Subscription on Stripe",
+                  class: "btn btn-outline-primary w-100 mt-2") %>
+            <% end %>
           <% end %>
         <% else %>
           <p class="text-muted">No payment information available.</p>
@@ -115,10 +117,10 @@
     </div>
 
     <!-- Actions -->
-    <% if current_user_is_admin? %>
+    <% if current_user_can?("orders.delete") %>
       <div class="card mb-4">
         <div class="card-header">
-          <h5 class="card-title mb-0">Admin Actions</h5>
+          <h5 class="card-title mb-0">Order Actions</h5>
         </div>
         <div class="card-body">
           <%= button_to "Delete Order", order_path(@order), method: :delete,
@@ -140,8 +142,13 @@
         <% if @order.user %>
           <hr>
           <p><strong>Agent:</strong> <%= @order.user.name %></p>
-          <% if @order.user.admin? %>
-            <p><strong>Agent Role:</strong> <span class="badge bg-info">Admin</span></p>
+          <% if @order.user.roles.any? %>
+            <p>
+              <strong>Agent Roles:</strong>
+              <% @order.user.roles.sort_by(&:power_level).each do |role| %>
+                <span class="badge bg-info"><%= role.name %></span>
+              <% end %>
+            </p>
           <% end %>
         <% end %>
       </div>

@@ -59,14 +59,14 @@
               <% else %>
                 <span class="badge bg-success">Paid</span>
               <% end %>
-              <% if order.payment.payment_intent_id.present? %>
+              <% if order.payment.payment_intent_id.present? && current_user_can_any?("reports.view_fundraising", "refunds.issue") %>
                 <br>
                 <small>
                   <%= stripe_payment_url(order.payment.payment_intent_id,
                       link_text: "View on Stripe",
                       class: "text-decoration-none") %>
                 </small>
-              <% elsif order.payment.stripe_subscription_id.present? %>
+              <% elsif order.payment.stripe_subscription_id.present? && current_user_can_any?("reports.view_fundraising", "refunds.issue") %>
                 <br>
                 <small>
                   <%= stripe_subscription_url(order.payment.stripe_subscription_id,

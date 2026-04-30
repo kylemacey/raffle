@@ -6,6 +6,30 @@ events_view:
   category: events
   description: View event lists, dashboards, and operational context.
 
+events_manage:
+  key: events.manage
+  name: Manage events
+  category: events
+  description: Create and edit event records.
+
+entries_manage:
+  key: entries.manage
+  name: Manage entries
+  category: raffle
+  description: Create, edit, import, and delete raffle entries.
+
+drawings_manage:
+  key: drawings.manage
+  name: Manage drawings
+  category: raffle
+  description: Create drawings and inspect drawing output.
+
+winners_manage:
+  key: winners.manage
+  name: Manage winners
+  category: raffle
+  description: Find winners and update claim status.
+
 pos_sell:
   key: pos.sell
   name: Sell through POS
@@ -24,17 +48,23 @@ orders_view_own:
   category: orders
   description: View orders created by the current user.
 
-card_readers_connect:
-  key: card_readers.connect
-  name: Connect card reader
-  category: payments
-  description: Connect or select a Stripe Terminal reader during checkout.
-
 orders_view_event:
   key: orders.view_event
   name: View event orders
   category: orders
   description: View orders for an active event.
+
+orders_view_all:
+  key: orders.view_all
+  name: View all orders
+  category: orders
+  description: View all orders across events.
+
+orders_delete:
+  key: orders.delete
+  name: Delete orders
+  category: orders
+  description: Delete order records when recovery requires it.
 
 refunds_issue:
   key: refunds.issue
@@ -42,11 +72,17 @@ refunds_issue:
   category: payments
   description: Issue refunds for paid orders.
 
-drawings_manage:
-  key: drawings.manage
-  name: Manage drawings
-  category: raffle
-  description: Create drawings and inspect drawing output.
+card_readers_connect:
+  key: card_readers.connect
+  name: Connect card reader
+  category: payments
+  description: Connect or select a Stripe Terminal reader during checkout.
+
+card_readers_manage:
+  key: card_readers.manage
+  name: Manage card readers
+  category: payments
+  description: Assign Stripe Terminal readers and manage reader setup.
 
 users_manage:
   key: users.manage
@@ -60,17 +96,29 @@ roles_assign:
   category: admin
   description: Assign RBAC roles to users.
 
+super_admin_assign:
+  key: super_admin.assign
+  name: Assign SuperAdmin role
+  category: admin
+  description: Assign the highest-power platform role.
+
+pos_products_manage:
+  key: pos_products.manage
+  name: Manage POS products
+  category: configuration
+  description: Create, edit, activate, and reorder POS products.
+
+roc_star_prices_manage:
+  key: roc_star_prices.manage
+  name: Manage RocStar prices
+  category: configuration
+  description: Manage recurring subscription price records.
+
 reports_view_fundraising:
   key: reports.view_fundraising
   name: View fundraising reports
   category: reporting
   description: View fundraising totals, MRR, and payment-method breakdowns.
-
-subscriptions_view:
-  key: subscriptions.view
-  name: View subscriptions
-  category: reporting
-  description: View RocStar supporter/subscription context.
 
 reports_view_pii:
   key: reports.view_pii
@@ -84,11 +132,17 @@ reports_download:
   category: reporting
   description: Download financial report exports.
 
-super_admin_assign:
-  key: super_admin.assign
-  name: Assign SuperAdmin role
-  category: admin
-  description: Assign the highest-power platform role.
+subscriptions_view:
+  key: subscriptions.view
+  name: View subscriptions
+  category: reporting
+  description: View RocStar supporter/subscription context.
+
+platform_impersonate:
+  key: platform.impersonate
+  name: Impersonate roles
+  category: platform
+  description: Use role impersonation for testing and support.
 
 platform_break_glass:
   key: platform.break_glass

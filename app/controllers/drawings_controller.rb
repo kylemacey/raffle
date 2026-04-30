@@ -1,7 +1,7 @@
 class DrawingsController < ApplicationController
   before_action :set_event
   before_action :set_drawing, only: %i[ show edit update destroy winners ]
-  before_action :require_admin!
+  before_action -> { require_permission!("drawings.manage") }
 
   # GET /drawings or /drawings.json
   def index

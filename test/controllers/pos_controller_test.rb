@@ -86,7 +86,24 @@ class PosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get success" do
-    get pos_success_path(order_id: orders(:one).id)
+    order = Order.create!(
+      customer_name: "Cashier Customer",
+      customer_email: "cashier@example.com",
+      total_amount: 100,
+      event: events(:one),
+      user: users(:one),
+      payment_method_type: "cash"
+    )
+    order.create_payment!(payment_method_type: "cash", amount: 100)
+
+    get pos_success_path(order_id: order.id)
+
     assert_response :success
+  end
+
+  test "cashier cannot view another user's success page" do
+    get pos_success_path(order_id: orders(:one).id)
+
+    assert_redirected_to pos_main_path
   end
 end

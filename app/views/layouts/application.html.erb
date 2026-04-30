@@ -29,8 +29,9 @@
         <div class="container-fluid">
           <ul class="nav nav-pills">
             <li class="nav-item navbar-brand">
-              <%= link_to "Farley Raffle", pos_main_path, class: "navbar-brand" %>
+              <%= link_to "Farley Raffle", authenticated? ? default_after_sign_in_path : sign_in_path, class: "navbar-brand" %>
             </li>
+            <% if current_user_can?("events.view") %>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Events</a>
               <ul class="dropdown-menu">
@@ -71,20 +72,31 @@
                 <% end %>
               </ul>
             </li>
-            <li class="nav-item">
-              <%= link_to "Orders", orders_path, class: "nav-link" %>
-            </li>
-            <li class="nav-item">
-              <%= link_to "Card Readers", readers_list_path, class: "nav-link" %>
-            </li>
+            <% end %>
+            <% if current_user_can_any?("orders.view_all", "orders.view_event", "orders.view_own") %>
+              <li class="nav-item">
+                <%= link_to "Orders", orders_path, class: "nav-link" %>
+              </li>
+            <% end %>
+            <% if current_user_can?("card_readers.connect") %>
+              <li class="nav-item">
+                <%= link_to "Card Readers", readers_list_path, class: "nav-link" %>
+              </li>
+            <% end %>
 
-            <% if current_user_is_admin? %>
+            <% if current_user_can_any?("users.manage", "roc_star_prices.manage", "pos_products.manage") %>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Admin</a>
                 <ul class="dropdown-menu">
-                  <li><%= link_to "Users", users_path, class: "dropdown-item" %></li>
-                  <li><%= link_to "Roc Star Prices", roc_star_prices_path, class: "dropdown-item" %></li>
-                  <li><%= link_to "POS Products", pos_products_path, class: "dropdown-item" %></li>
+                  <% if current_user_can?("users.manage") %>
+                    <li><%= link_to "Users", users_path, class: "dropdown-item" %></li>
+                  <% end %>
+                  <% if current_user_can?("roc_star_prices.manage") %>
+                    <li><%= link_to "Roc Star Prices", roc_star_prices_path, class: "dropdown-item" %></li>
+                  <% end %>
+                  <% if current_user_can?("pos_products.manage") %>
+                    <li><%= link_to "POS Products", pos_products_path, class: "dropdown-item" %></li>
+                  <% end %>
                 </ul>
               </li>
             <% end %>
@@ -99,9 +111,11 @@
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false"><%= current_user.name %></a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                  <li>
-                    <%= link_to "Select Event", pos_path, class: "dropdown-item" %>
-                  </li>
+                  <% if current_user_can?("pos.sell") %>
+                    <li>
+                      <%= link_to "Select Event", pos_path, class: "dropdown-item" %>
+                    </li>
+                  <% end %>
                   <li>
                     <%= link_to "Sign out", authentication_path, data: {turbo_method: :delete, turbo_confirm: 'Are you sure?'}, method: :delete, class: "dropdown-item" %>
                   </li>
