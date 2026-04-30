@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_29_190000) do
+ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -72,9 +72,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_190000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "order_id"
+    t.string "stripe_setup_intent_id"
+    t.string "stripe_subscription_id"
+    t.string "status"
     t.index ["entry_id"], name: "index_payments_on_entry_id"
     t.index ["order_id"], name: "index_payments_on_order_id"
     t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
+    t.index ["status"], name: "index_payments_on_status"
+    t.index ["stripe_setup_intent_id"], name: "index_payments_on_stripe_setup_intent_id"
+    t.index ["stripe_subscription_id"], name: "index_payments_on_stripe_subscription_id"
   end
 
   create_table "permissions", force: :cascade do |t|

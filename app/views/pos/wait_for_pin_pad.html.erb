@@ -1,11 +1,11 @@
 <div data-controller="redirect">
-  <h1>Payment Processing</h1>
+  <h1><%= @setup_intent ? "Subscription Setup" : "Payment Processing" %></h1>
 
-  <%= turbo_stream_from "payment_status_#{@payment_intent.id}" %>
+  <%= turbo_stream_from "payment_status_#{@terminal_intent.id}" %>
   <div id="redirect_target" hidden></div>
 
-  <turbo-frame id="payment_status_<%= @payment_intent.id %>">
-    Complete the transaction on the reader <em><%= current_reader.label %></em>.
+  <turbo-frame id="payment_status_<%= @terminal_intent.id %>">
+    Complete the <%= @setup_intent ? "subscription setup" : "transaction" %> on the reader <em><%= current_reader.label %></em>.
   </turbo-frame>
 
   <% if Rails.env.development? && current_reader&.device_type&.start_with?('simulated') %>
@@ -15,14 +15,18 @@
       </div>
       <div class="card-body">
         <div id="simulation_controls">
-          <p><strong>Payment Intent:</strong> <code><%= @payment_intent.id %></code></p>
-          <p><strong>Amount:</strong> <%= number_to_currency(@payment_intent.amount / 100.0) %></p>
+          <p><strong><%= @setup_intent ? "Setup Intent" : "Payment Intent" %>:</strong> <code><%= @terminal_intent.id %></code></p>
+          <% if @payment_intent %>
+            <p><strong>Amount:</strong> <%= number_to_currency(@payment_intent.amount / 100.0) %></p>
+          <% else %>
+            <p><strong>Terminal Charge:</strong> <%= number_to_currency(0) %></p>
+          <% end %>
           <div class="d-grid gap-2">
-            <%= form_with(url: simulate_payment_path(@payment_intent.id), method: :post) do |form| %>
-              <%= form.submit "Simulate Successful Payment", class: "btn btn-success" %>
+            <%= form_with(url: simulate_payment_path(@terminal_intent.id), method: :post) do |form| %>
+              <%= form.submit "Simulate Successful Card", class: "btn btn-success" %>
             <% end %>
-            <%= form_with(url: simulate_decline_path(@payment_intent.id), method: :post) do |form| %>
-              <%= form.submit "Simulate Declined Payment", class: "btn btn-warning" %>
+            <%= form_with(url: simulate_decline_path(@terminal_intent.id), method: :post) do |form| %>
+              <%= form.submit "Simulate Declined Card", class: "btn btn-warning" %>
             <% end %>
           </div>
         </div>

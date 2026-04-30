@@ -13,7 +13,7 @@ class OrdersController < ApplicationController
 
     # By default, only show completed orders (with payments)
     unless params[:show_pending]
-      @orders = @orders.joins(:payment)
+      @orders = @orders.joins(:payment).where(payments: { status: Payment::SUCCESS_STATUSES })
     end
 
     @show_pending = params[:show_pending].present?

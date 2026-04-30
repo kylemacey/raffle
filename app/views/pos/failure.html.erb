@@ -1,9 +1,9 @@
 <div>
-  <h2>Payment Failed</h2>
+  <h2>Transaction Failed</h2>
 
   <div class="alert alert-danger">
-    <h4 class="alert-heading">Payment Processing Error</h4>
-    <p>We were unable to process your payment. This could be due to:</p>
+    <h4 class="alert-heading">Transaction Processing Error</h4>
+    <p>We were unable to process the transaction. This could be due to:</p>
     <ul>
       <li>Insufficient funds</li>
       <li>Card declined by your bank</li>
@@ -18,7 +18,7 @@
     </div>
     <div class="card-body">
       <div class="d-grid gap-3">
-        <%= link_to "Try Payment Again", pos_main_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "Try Again", pos_main_path, class: "btn btn-primary btn-lg" %>
         <%= link_to "Return to POS", pos_main_path, class: "btn btn-outline-secondary" %>
       </div>
     </div>
@@ -37,6 +37,9 @@
         <% if @payment_intent.last_payment_error %>
           <p><strong>Error:</strong> <%= @payment_intent.last_payment_error.message %></p>
         <% end %>
+      <% end %>
+      <% if @setup_intent %>
+        <p><strong>Setup Status:</strong> <span class="badge bg-danger"><%= @setup_intent.status %></span></p>
       <% end %>
     </div>
   </div>
