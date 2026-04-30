@@ -181,6 +181,78 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_includes broadcasts.last.last[:locals][:url], "/pos/failure/#{order.id}"
   end
 
+  test "late terminal setup intent failure does not redirect succeeded order" do
+    order = build_order_with_items([[pos_products(:two), 1]])
+    order.create_payment!(
+      payment_method_type: "card",
+      amount: "0",
+      stripe_setup_intent_id: "seti_late_failure",
+      stripe_subscription_id: "sub_existing_123",
+      status: "succeeded"
+    )
+    setup_intent = OpenStruct.new(
+      id: "seti_late_failure",
+      metadata: { "order_id" => order.id.to_s }
+    )
+    event = terminal_event(
+      "terminal.reader.action_failed",
+      "process_setup_intent",
+      "setup_intent",
+      setup_intent.id
+    )
+    broadcasts = []
+
+    with_broadcast_stub(broadcasts) do
+      Stripe::Webhook.stub(:construct_event, event) do
+        Stripe::SetupIntent.stub(:retrieve, setup_intent) do
+          post "/webhooks/stripe", params: "{}"
+        end
+      end
+    end
+
+    assert_response :success
+    payment = order.reload.payment
+    assert_equal "succeeded", payment.status
+    assert_equal "sub_existing_123", payment.stripe_subscription_id
+    assert_empty broadcasts
+  end
+
+  test "late terminal payment intent failure does not redirect succeeded order" do
+    order = build_order_with_items([[pos_products(:one), 1]])
+    order.create_payment!(
+      payment_method_type: "card",
+      amount: "100",
+      payment_intent_id: "pi_late_failure",
+      status: "succeeded"
+    )
+    payment_intent = OpenStruct.new(
+      id: "pi_late_failure",
+      metadata: { "order_id" => order.id.to_s },
+      amount: 100
+    )
+    event = terminal_event(
+      "terminal.reader.action_failed",
+      "process_payment_intent",
+      "payment_intent",
+      payment_intent.id
+    )
+    broadcasts = []
+
+    with_broadcast_stub(broadcasts) do
+      Stripe::Webhook.stub(:construct_event, event) do
+        Stripe::PaymentIntent.stub(:retrieve, payment_intent) do
+          post "/webhooks/stripe", params: "{}"
+        end
+      end
+    end
+
+    assert_response :success
+    payment = order.reload.payment
+    assert_equal "succeeded", payment.status
+    assert_equal "pi_late_failure", payment.payment_intent_id
+    assert_empty broadcasts
+  end
+
   private
 
   def build_order_with_items(items)

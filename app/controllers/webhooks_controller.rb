@@ -286,13 +286,13 @@ class WebhooksController < ApplicationController
     Rails.logger.info "Setup failed for #{setup_intent_id}"
     return unless order_id
 
-    record_terminal_failure(
+    if record_terminal_failure(
       order_id,
       stripe_setup_intent_id: setup_intent_id,
       amount: 0
     )
-
-    broadcast_failure_redirect(setup_intent_id, order_id)
+      broadcast_failure_redirect(setup_intent_id, order_id)
+    end
   end
 
   def handle_payment_failure(payment_intent)
@@ -302,21 +302,23 @@ class WebhooksController < ApplicationController
     Rails.logger.info "Payment failed for #{payment_intent_id}"
     return unless order_id
 
-    record_terminal_failure(
+    if record_terminal_failure(
       order_id,
       payment_intent_id: payment_intent_id,
       amount: payment_intent.amount
     )
-
-    broadcast_failure_redirect(payment_intent_id, order_id)
+      broadcast_failure_redirect(payment_intent_id, order_id)
+    end
   end
 
   def record_terminal_failure(order_id, attrs)
-    return unless order_id && Order.exists?(order_id)
+    return false unless order_id
 
-    order = Order.find(order_id)
+    order = Order.find_by(id: order_id)
+    return false unless order
+
     order.with_lock do
-      next if order.payment&.succeeded?
+      next false if order.payment&.succeeded?
 
       payment = order.payment || order.build_payment
       payment.update!(
@@ -325,6 +327,7 @@ class WebhooksController < ApplicationController
           status: 'failed'
         }.merge(attrs)
       )
+      true
     end
   end
 
