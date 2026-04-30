@@ -1,4 +1,6 @@
 class WebhooksController < ApplicationController
+  SUCCESSFUL_SUBSCRIPTION_STATUSES = %w[active trialing].freeze
+
   skip_before_action :verify_authenticity_token
 
   def stripe
@@ -172,8 +174,10 @@ class WebhooksController < ApplicationController
       end
 
       subscription = create_subscription_for_order(order, setup_intent.customer, generated_card_pm_id)
-      unless subscription
+      unless successful_subscription?(subscription)
+        Rails.logger.error "Webhook (Thread): Subscription #{subscription&.id || '(none)'} was not active for Order ##{order.id}."
         payment.update!(status: 'failed')
+        payment.update!(stripe_subscription_id: subscription.id) if subscription
         broadcast_failure_redirect(setup_intent_id, order.id)
         next
       end
@@ -243,11 +247,20 @@ class WebhooksController < ApplicationController
       metadata: { order_id: order.id }
     })
 
-    Rails.logger.info "Webhook (Thread): Successfully created Subscription #{subscription.id} for Order ##{order.id}"
+    if successful_subscription?(subscription)
+      Rails.logger.info "Webhook (Thread): Successfully created Subscription #{subscription.id} for Order ##{order.id}"
+    else
+      Rails.logger.error "Webhook (Thread): Created Subscription #{subscription.id} for Order ##{order.id}, but status is #{subscription.status}."
+    end
+
     subscription
   rescue Stripe::StripeError => e
     Rails.logger.error "Webhook (Thread): Failed to create subscription for Order ##{order.id}. Error: #{e.message}"
     nil
+  end
+
+  def successful_subscription?(subscription)
+    subscription && SUCCESSFUL_SUBSCRIPTION_STATUSES.include?(subscription.status)
   end
 
   def attach_payment_method_to_customer(payment_method_id, customer_id)

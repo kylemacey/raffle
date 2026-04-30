@@ -62,7 +62,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
       "setup_intent",
       setup_intent.id
     )
-    subscription = OpenStruct.new(id: "sub_webhook_123")
+    subscription = OpenStruct.new(id: "sub_webhook_123", status: "active")
     broadcasts = []
     setup_retrieve_arg = nil
 
@@ -132,6 +132,52 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "failed", payment.status
     assert_nil payment.stripe_subscription_id
     assert_equal "payment_status_seti_missing_card", broadcasts.last.first.first
+    assert_includes broadcasts.last.last[:locals][:url], "/pos/failure/#{order.id}"
+  end
+
+  test "terminal reader setup intent success with inactive subscription records failure" do
+    order = build_order_with_items([[pos_products(:two), 1]])
+    setup_intent = OpenStruct.new(
+      id: "seti_incomplete_subscription",
+      metadata: { "order_id" => order.id.to_s },
+      customer: "cus_setup_123",
+      latest_attempt: OpenStruct.new(
+        payment_method_details: OpenStruct.new(
+          card_present: OpenStruct.new(generated_card: "pm_generated_123")
+        )
+      )
+    )
+    event = terminal_event(
+      "terminal.reader.action_succeeded",
+      "process_setup_intent",
+      "setup_intent",
+      setup_intent.id
+    )
+    subscription = OpenStruct.new(id: "sub_incomplete_123", status: "incomplete")
+    broadcasts = []
+
+    with_sync_thread do
+      with_broadcast_stub(broadcasts) do
+        Stripe::Webhook.stub(:construct_event, event) do
+          Stripe::SetupIntent.stub(:retrieve, setup_intent) do
+            Stripe::PaymentMethod.stub(:attach, OpenStruct.new(id: "pm_generated_123")) do
+              Stripe::Customer.stub(:update, OpenStruct.new(id: "cus_setup_123")) do
+                Stripe::Subscription.stub(:create, subscription) do
+                  post "/webhooks/stripe", params: "{}"
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_response :success
+    payment = order.reload.payment
+    assert_equal "failed", payment.status
+    assert_equal "seti_incomplete_subscription", payment.stripe_setup_intent_id
+    assert_equal "sub_incomplete_123", payment.stripe_subscription_id
+    assert_equal "payment_status_seti_incomplete_subscription", broadcasts.last.first.first
     assert_includes broadcasts.last.last[:locals][:url], "/pos/failure/#{order.id}"
   end
 
