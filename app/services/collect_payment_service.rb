@@ -1,5 +1,5 @@
 class CollectPaymentService
-  attr_reader :order, :reader, :payment_intent
+  attr_reader :order, :reader, :payment_intent, :setup_intent
 
   def initialize(order:, reader:)
     @reader = reader
@@ -11,12 +11,38 @@ class CollectPaymentService
 
     stripe_customer = find_or_create_customer
 
+    if subscription_only?
+      collect_setup_intent(stripe_customer)
+    else
+      collect_payment_intent(stripe_customer)
+    end
+  end
+
+  def intent
+    payment_intent || setup_intent
+  end
+
+  def intent_id
+    intent&.id
+  end
+
+  def intent_type
+    setup_intent.present? ? "setup_intent" : "payment_intent"
+  end
+
+  def success?
+    intent.present?
+  end
+
+private
+
+  def collect_payment_intent(stripe_customer)
     params = {
       amount: one_time_items_total,
       currency: 'usd',
       payment_method_types: ['card_present'],
       capture_method: 'manual',
-      customer: stripe_customer,
+      customer: stripe_customer_id(stripe_customer),
       metadata: { order_id: order.id }
     }
 
@@ -35,19 +61,38 @@ class CollectPaymentService
     })
   end
 
-  def success?
-    payment_intent.present?
-  end
+  def collect_setup_intent(stripe_customer)
+    @setup_intent = Stripe::SetupIntent.create(
+      payment_method_types: ['card_present'],
+      usage: 'off_session',
+      customer: stripe_customer_id(stripe_customer),
+      metadata: { order_id: order.id }
+    )
 
-private
+    reader.process_setup_intent({
+      setup_intent: setup_intent.id,
+      allow_redisplay: 'limited',
+      process_config: {
+        enable_customer_cancellation: true,
+      }
+    })
+  end
 
   def subscription_present?
     order.order_items.any? { |item| item.pos_product.product_type == 'subscription' }
   end
 
+  def subscription_only?
+    subscription_present? && one_time_items_total.zero?
+  end
+
   def one_time_items_total
     order.order_items.reject { |item| item.pos_product.product_type == 'subscription' }
       .sum { |item| item.unit_price * item.quantity }
+  end
+
+  def stripe_customer_id(stripe_customer)
+    stripe_customer.respond_to?(:id) ? stripe_customer.id : stripe_customer
   end
 
   def find_or_create_customer

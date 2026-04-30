@@ -52,12 +52,25 @@
           <td><%= number_to_currency(order.total_amount / 100.0) %></td>
           <td>
             <% if order.payment %>
-              <span class="badge bg-success">Paid</span>
+              <% if order.payment.failed? %>
+                <span class="badge bg-danger">Failed</span>
+              <% elsif order.payment.processing? %>
+                <span class="badge bg-info">Processing</span>
+              <% else %>
+                <span class="badge bg-success">Paid</span>
+              <% end %>
               <% if order.payment.payment_intent_id.present? %>
                 <br>
                 <small>
                   <%= stripe_payment_url(order.payment.payment_intent_id,
                       link_text: "View on Stripe",
+                      class: "text-decoration-none") %>
+                </small>
+              <% elsif order.payment.stripe_subscription_id.present? %>
+                <br>
+                <small>
+                  <%= stripe_subscription_url(order.payment.stripe_subscription_id,
+                      link_text: "View Subscription",
                       class: "text-decoration-none") %>
                 </small>
               <% end %>

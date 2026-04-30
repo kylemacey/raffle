@@ -86,11 +86,11 @@ class PosController < ApplicationController
       payment_service.collect_payment
 
       if payment_service.success?
-        Rails.logger.info "Created payment intent for Order ##{order.id}"
+        Rails.logger.info "Created #{payment_service.intent_type} for Order ##{order.id}"
         redirect_to(
           controller: :pos,
           action: :wait_for_pin_pad,
-          payment_intent_id: payment_service.payment_intent.id
+          intent_id: payment_service.intent_id
         )
       else
         order.destroy
@@ -100,7 +100,9 @@ class PosController < ApplicationController
   end
 
   def wait_for_pin_pad
-    @payment_intent = Stripe::PaymentIntent.retrieve(params[:payment_intent_id])
+    @terminal_intent = retrieve_terminal_intent(terminal_intent_id_param)
+    @payment_intent = @terminal_intent if payment_intent_id?(terminal_intent_id_param)
+    @setup_intent = @terminal_intent if setup_intent_id?(terminal_intent_id_param)
 
     respond_to do |format|
       format.html # Render the initial HTML view
@@ -118,7 +120,11 @@ class PosController < ApplicationController
 
   def failure
     @order = Order.find(params[:order_id])
-    @payment_intent = Stripe::PaymentIntent.retrieve(@order.payment.payment_intent_id) if @order.payment&.payment_intent_id
+    if @order.payment&.stripe_intent_id.present?
+      @terminal_intent = retrieve_terminal_intent(@order.payment.stripe_intent_id)
+      @payment_intent = @terminal_intent if payment_intent_id?(@order.payment.stripe_intent_id)
+      @setup_intent = @terminal_intent if setup_intent_id?(@order.payment.stripe_intent_id)
+    end
   rescue ActiveRecord::RecordNotFound
     redirect_to pos_main_path, alert: 'Order not found.'
   rescue Stripe::StripeError => e
@@ -144,16 +150,16 @@ class PosController < ApplicationController
         Stripe::Terminal::Reader::TestHelpers.present_payment_method(current_reader.id)
       rescue Stripe::StripeError => e
         flash[:alert] = "Error simulating payment: #{e.message}"
-        redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+        redirect_to pos_wait_for_pin_pad_path(intent_id: terminal_intent_id_param) and return
       end
     else
       flash[:alert] = "Payment simulation is only available for simulated readers in development."
-      redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+      redirect_to pos_wait_for_pin_pad_path(intent_id: terminal_intent_id_param) and return
     end
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("simulation_controls", partial: "pos/simulation_status", locals: { message: "Success simulation sent." }) }
-      format.html { redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) }
+      format.html { redirect_to pos_wait_for_pin_pad_path(intent_id: terminal_intent_id_param) }
     end
   end
 
@@ -169,16 +175,16 @@ class PosController < ApplicationController
         )
       rescue Stripe::StripeError => e
         flash[:alert] = "Error simulating decline: #{e.message}"
-        redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+        redirect_to pos_wait_for_pin_pad_path(intent_id: terminal_intent_id_param) and return
       end
     else
       flash[:alert] = "Payment simulation is only available for simulated readers in development."
-      redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) and return
+      redirect_to pos_wait_for_pin_pad_path(intent_id: terminal_intent_id_param) and return
     end
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("simulation_controls", partial: "pos/simulation_status", locals: { message: "Decline simulation sent." }) }
-      format.html { redirect_to pos_wait_for_pin_pad_path(payment_intent_id: params[:payment_intent_id]) }
+      format.html { redirect_to pos_wait_for_pin_pad_path(intent_id: terminal_intent_id_param) }
     end
   end
 
@@ -202,6 +208,26 @@ class PosController < ApplicationController
   end
 
   private
+
+  def terminal_intent_id_param
+    params[:intent_id] || params[:payment_intent_id] || params[:setup_intent_id]
+  end
+
+  def retrieve_terminal_intent(intent_id)
+    if setup_intent_id?(intent_id)
+      Stripe::SetupIntent.retrieve(intent_id)
+    else
+      Stripe::PaymentIntent.retrieve(intent_id)
+    end
+  end
+
+  def setup_intent_id?(intent_id)
+    intent_id.to_s.start_with?("seti_")
+  end
+
+  def payment_intent_id?(intent_id)
+    !setup_intent_id?(intent_id)
+  end
 
   def load_cart_from_params
     cart_data = params[:cart_data]

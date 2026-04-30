@@ -1,13 +1,13 @@
-<% if @payment_intent.status == "requires_capture" %>
+<% if @terminal_intent.status == "requires_capture" || @terminal_intent.status == "succeeded" %>
   <turbo-stream action="replace" target="payment-status">
     <template>
-      <p>Payment succeeded! Redirecting...</p>
+      <p>Transaction succeeded! Redirecting...</p>
     </template>
   </turbo-stream>
 <% else %>
   <turbo-stream action="replace" target="payment-status">
     <template>
-      Complete the payment on the Reader Device: <%= current_reader.label %> | <%= current_reader&.action&.status %> | <%= @payment_intent.status %>
+      Complete the transaction on the Reader Device: <%= current_reader.label %> | <%= current_reader&.action&.status %> | <%= @terminal_intent.status %>
     </template>
   </turbo-stream>
 <% end %>
