@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "shellwords"
+
+begin
+  require "dotenv"
+rescue LoadError
+  abort "dotenv is not installed. Run bundle install."
+end
+
+Dotenv.load(".env")
+
+keys = ARGV
+keys = %w[
+  DATABASE_URL
+  DB_HOST
+  DB_PORT
+  POSTGRES_HOST
+  POSTGRES_PORT
+  POSTGRES_USER
+  POSTGRES_PASSWORD
+  RACKMOUNT_STRIPE_SYNC_ENDPOINT_SECRET
+  RAILS_ENV
+  STRIPE_API_KEY
+  STRIPE_ENDPOINT_SECRET
+  STRIPE_SECRET_KEY
+  STRIPE_WEBHOOK_EVENTS
+  STRIPE_WEBHOOK_FORWARD_TO
+] if keys.empty?
+
+keys.each do |key|
+  next unless key.match?(/\A[A-Z_][A-Z0-9_]*\z/)
+
+  value = ENV[key]
+  next if value.nil?
+
+  puts "export #{key}=#{Shellwords.escape(value)}"
+end

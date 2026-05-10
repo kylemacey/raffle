@@ -1,11 +1,13 @@
-version: "3.9"
 services:
   db:
     image: postgres
     volumes:
       - ./tmp/db:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_HOST_PORT:-55434}:5432"
     environment:
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
   web:
     build: .
     command: /bin/sh -c "while sleep 1000; do :; done"
@@ -17,3 +19,4 @@ services:
       - db
     environment:
       RAILS_ENV: development
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/raffle_development

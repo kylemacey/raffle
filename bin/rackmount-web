@@ -1,0 +1,49 @@
+#!/usr/bin/env sh
+set -eu
+
+cd "$(dirname "$0")/.."
+
+if [ -x bin/rackmount-env ]; then
+  eval "$(bin/rackmount-env)"
+fi
+
+: "${PORT:=3000}"
+: "${RAILS_ENV:=development}"
+if [ -z "${DATABASE_URL:-}" ]; then
+  : "${POSTGRES_HOST:=${DB_HOST:-127.0.0.1}}"
+  : "${POSTGRES_PORT:=${DB_PORT:-55434}}"
+  : "${POSTGRES_USER:=postgres}"
+  : "${POSTGRES_PASSWORD:=password}"
+  : "${POSTGRES_DATABASE:=raffle_${RAILS_ENV}}"
+  DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}"
+  export POSTGRES_HOST POSTGRES_PORT POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DATABASE
+fi
+
+export PORT RAILS_ENV DATABASE_URL
+echo "Using DATABASE_URL for PostgreSQL"
+
+stripe_api_key="${STRIPE_API_KEY:-${STRIPE_SECRET_KEY:-}}"
+if [ -n "${STRIPE_API_KEY:-}" ]; then
+  stripe_api_key_source="STRIPE_API_KEY"
+else
+  stripe_api_key_source="STRIPE_SECRET_KEY"
+fi
+
+if [ "${RACKMOUNT_STRIPE_SYNC_ENDPOINT_SECRET:-1}" != "0" ] && [ -n "$stripe_api_key" ]; then
+  if command -v stripe >/dev/null 2>&1; then
+    echo "Resolving Stripe webhook signing secret with ${stripe_api_key_source}"
+    stripe_secret_output="$(stripe listen --api-key "$stripe_api_key" --skip-update --color off --print-secret 2>&1 || true)"
+    stripe_endpoint_secret="$(printf "%s\n" "$stripe_secret_output" | sed -nE 's/.*(whsec_[A-Za-z0-9_]+).*/\1/p' | head -n 1)"
+
+    if [ -n "$stripe_endpoint_secret" ]; then
+      export STRIPE_ENDPOINT_SECRET="$stripe_endpoint_secret"
+      echo "Loaded Stripe webhook signing secret for Rackmount web process"
+    else
+      echo "Could not resolve Stripe webhook signing secret. Set STRIPE_ENDPOINT_SECRET manually or check STRIPE_API_KEY." >&2
+    fi
+  else
+    echo "stripe CLI not found; skipping automatic STRIPE_ENDPOINT_SECRET lookup." >&2
+  fi
+fi
+
+exec bundle exec rails server -b "${BINDING:-127.0.0.1}" -p "$PORT"

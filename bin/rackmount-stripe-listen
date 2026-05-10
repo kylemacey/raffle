@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+set -eu
+
+cd "$(dirname "$0")/.."
+
+if [ -x bin/rackmount-env ]; then
+  eval "$(bin/rackmount-env)"
+fi
+
+: "${WEB_PORT:=3000}"
+
+stripe_api_key="${STRIPE_API_KEY:-${STRIPE_SECRET_KEY:-}}"
+if [ -n "${STRIPE_API_KEY:-}" ]; then
+  stripe_api_key_source="STRIPE_API_KEY"
+else
+  stripe_api_key_source="STRIPE_SECRET_KEY"
+fi
+
+if [ -z "$stripe_api_key" ]; then
+  echo "STRIPE_API_KEY or STRIPE_SECRET_KEY is required for Rackmount Stripe webhook forwarding." >&2
+  echo "Set one in this project's .env so the Stripe CLI does not use another configured project." >&2
+  exit 78
+fi
+
+if ! command -v stripe >/dev/null 2>&1; then
+  echo "stripe CLI is required for webhook forwarding but was not found in PATH." >&2
+  exit 127
+fi
+
+forward_to="${STRIPE_WEBHOOK_FORWARD_TO:-http://127.0.0.1:${WEB_PORT}/webhooks/stripe}"
+events="${STRIPE_WEBHOOK_EVENTS:-terminal.reader.action_succeeded,terminal.reader.action_failed}"
+
+echo "Forwarding Stripe webhooks to ${forward_to}"
+echo "Using Stripe API key from ${stripe_api_key_source}"
+
+exec stripe listen \
+  --api-key "$stripe_api_key" \
+  --skip-update \
+  --color off \
+  --events "$events" \
+  --forward-to "$forward_to"
