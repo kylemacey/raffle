@@ -163,7 +163,7 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
       Stripe::Invoice.stub(:void_invoice, ->(invoice_id) {
         voided_invoice_id = invoice_id
-        raise Stripe::InvalidRequestError.new("Invoice is already void", "invoice")
+        raise Stripe::InvalidRequestError.new("You can only pass in open invoices. This invoice isn't open.", "invoice")
       }) do
         Stripe::Invoice.stub(:retrieve, ->(invoice_id) {
           retrieved_invoice_id = invoice_id
@@ -185,6 +185,43 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     assert_equal replacement_bid, item.reload.winning_bid
     assert_equal "in_replacement_after_void_123", item.invoice_record.stripe_invoice_id
     assert_equal 2, item.invoice_records.count
+  end
+
+  test "does not replace winner when remote current invoice has been paid" do
+    item, replacement_bid, current_bid, old_invoice = build_closed_item_with_two_bids
+    paid_invoice = stripe_invoice(
+      id: old_invoice.stripe_invoice_id,
+      status: "paid",
+      paid_at: 1_700_000_200
+    )
+    voided_invoice_id = nil
+    retrieved_invoice_id = nil
+
+    Stripe::Invoice.stub(:void_invoice, ->(invoice_id) {
+      voided_invoice_id = invoice_id
+      raise Stripe::InvalidRequestError.new("You can only pass in open invoices. This invoice isn't open.", "invoice")
+    }) do
+      Stripe::Invoice.stub(:retrieve, ->(invoice_id) {
+        retrieved_invoice_id = invoice_id
+        paid_invoice
+      }) do
+        Stripe::Customer.stub(:search, ->(*) { raise "should not create replacement invoice for paid invoice" }) do
+          result = SilentAuction::CloseItemService.new(item, winning_bid: replacement_bid, replace_invoice: true).call
+
+          assert_not result.success?
+          assert_match "already paid", result.message
+        end
+      end
+    end
+
+    assert_equal "in_old_123", voided_invoice_id
+    assert_equal "in_old_123", retrieved_invoice_id
+    assert_equal "paid", old_invoice.reload.stripe_status
+    assert old_invoice.paid_at
+    assert_nil old_invoice.superseded_at
+    assert_equal current_bid, item.reload.winning_bid
+    assert_equal old_invoice, item.invoice_record
+    assert_equal 1, item.invoice_records.count
   end
 
   test "does not replace winner when current invoice is already paid" do

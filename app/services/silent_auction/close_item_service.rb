@@ -82,6 +82,7 @@ module SilentAuction
 
       if current_invoice&.voidable?
         void_current_invoice(current_invoice)
+        return Result.new(success: false, message: "The current invoice is already paid. Handle it manually before selecting a new winner.", invoice_record: current_invoice) if current_invoice.reload.paid?
       end
 
       current_invoice&.mark_superseded!
@@ -139,13 +140,17 @@ module SilentAuction
       invoice_record.sync_from_stripe_invoice!(voided_invoice)
       invoice_record.update!(voided_at: Time.current) if invoice_record.voided_at.blank?
     rescue Stripe::InvalidRequestError => e
-      raise unless e.message.to_s.match?(/void/i)
-
       remote_invoice = Stripe::Invoice.retrieve(invoice_record.stripe_invoice_id)
-      raise unless stripe_value(remote_invoice, :status) == "void"
-
       invoice_record.sync_from_stripe_invoice!(remote_invoice)
-      invoice_record.update!(voided_at: Time.current) if invoice_record.voided_at.blank?
+
+      case stripe_value(remote_invoice, :status)
+      when "void"
+        invoice_record.update!(voided_at: Time.current) if invoice_record.voided_at.blank?
+      when "paid"
+        nil
+      else
+        raise e
+      end
     end
 
     def invoice_params(customer, winning_bid, invoice_setting)
