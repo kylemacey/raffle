@@ -48,6 +48,27 @@ Rails.application.routes.draw do
 
   # Events are the top-level resource for drawings and entries.
   resources :events do
+    get 'silent_auction', to: 'public_silent_auction_items#index', as: :public_silent_auction
+    post 'silent_auction/:silent_auction_item_id/bids', to: 'public_silent_auction_bids#create', as: :public_silent_auction_item_bids
+    get 'silent_auction/:id', to: 'public_silent_auction_items#show', as: :public_silent_auction_item
+
+    resources :silent_auction_items, except: [:destroy] do
+      collection do
+        patch :open_all
+        patch :pause_all
+        get :close_all_confirmation
+        patch :close_all
+      end
+
+      member do
+        patch :open
+        patch :pause
+        get :close_confirmation
+        patch :close
+        post :retry_invoice
+      end
+    end
+
     resources :drawings do
       resources :winners do
         collection do
@@ -63,6 +84,9 @@ Rails.application.routes.draw do
   # == ADMIN RESOURCES ==
   # User management.
   resources :users
+
+  resource :silent_auction_setting, only: [:edit, :update]
+  resource :invoice_setting, only: [:edit, :update]
 
   # Product and Price Management.
   resources :pos_products do

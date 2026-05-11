@@ -1,0 +1,28 @@
+<h1>Silent Auction Settings</h1>
+
+<%= form_with(model: @setting, url: silent_auction_setting_path, method: :patch, local: true) do |f| %>
+  <% if @setting.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% @setting.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :formatted_bid_increment, "Minimum bid increment", class: "form-label" %>
+    <div class="input-group">
+      <span class="input-group-text">$</span>
+      <%= f.number_field :formatted_bid_increment,
+                         class: "form-control",
+                         min: 0.01,
+                         step: "0.01",
+                         value: number_with_precision(@setting.formatted_bid_increment, precision: 2),
+                         required: true %>
+    </div>
+  </div>
+
+  <%= f.submit "Save settings", class: "btn btn-primary" %>
+<% end %>

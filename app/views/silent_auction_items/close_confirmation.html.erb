@@ -1,0 +1,41 @@
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="mb-0">Close Item</h1>
+    <p class="text-muted mb-0"><%= @item.name %> · <%= @event.name %></p>
+  </div>
+  <%= link_to "Cancel", event_silent_auction_item_path(@event, @item), class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="alert alert-warning">
+  Closing this item ends bidding immediately. If there is a winning bid, the app will create, finalize, and send a Stripe invoice to the winner.
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Close Summary</h2>
+  </div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Item</dt>
+      <dd class="col-sm-8"><%= @item.name %></dd>
+      <dt class="col-sm-4">Status</dt>
+      <dd class="col-sm-8"><%= @item.status_label %></dd>
+      <dt class="col-sm-4">Due date</dt>
+      <dd class="col-sm-8"><%= pluralize(@invoice_setting.days_until_due, "day") %> after invoice is sent</dd>
+      <% if @winning_bid %>
+        <dt class="col-sm-4">Winning bidder</dt>
+        <dd class="col-sm-8"><%= @winning_bid.bidder_name %> &lt;<%= @winning_bid.bidder_email %>&gt;</dd>
+        <dt class="col-sm-4">Winning amount</dt>
+        <dd class="col-sm-8"><%= number_to_currency(@winning_bid.amount_cents / 100.0) %></dd>
+      <% else %>
+        <dt class="col-sm-4">Winning bidder</dt>
+        <dd class="col-sm-8 text-muted">No bids; no invoice will be created.</dd>
+      <% end %>
+    </dl>
+  </div>
+</div>
+
+<div class="d-flex gap-2">
+  <%= button_to "Close item", close_event_silent_auction_item_path(@event, @item), method: :patch, class: "btn btn-danger btn-lg" %>
+  <%= link_to "Back to item", event_silent_auction_item_path(@event, @item), class: "btn btn-outline-secondary btn-lg" %>
+</div>

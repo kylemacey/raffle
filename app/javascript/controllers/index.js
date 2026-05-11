@@ -9,6 +9,9 @@ application.register("customer-search", CustomerSearchController)
 import PosProductFormController from "controllers/pos_product_form_controller"
 application.register("pos-product-form", PosProductFormController)
 
+import PhoneFormatController from "controllers/phone_format_controller"
+application.register("phone-format", PhoneFormatController)
+
 import RedirectController from "controllers/redirect_controller"
 application.register("redirect", RedirectController)
 

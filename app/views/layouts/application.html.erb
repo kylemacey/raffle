@@ -84,7 +84,7 @@
               </li>
             <% end %>
 
-            <% if current_user_can_any?("users.manage", "roc_star_prices.manage", "pos_products.manage") %>
+            <% if current_user_can_any?("users.manage", "roc_star_prices.manage", "pos_products.manage", "silent_auction.manage", "invoice_settings.manage") %>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Admin</a>
                 <ul class="dropdown-menu">
@@ -96,6 +96,15 @@
                   <% end %>
                   <% if current_user_can?("pos_products.manage") %>
                     <li><%= link_to "POS Products", pos_products_path, class: "dropdown-item" %></li>
+                  <% end %>
+                  <% if current_user_can_any?("silent_auction.manage", "invoice_settings.manage") %>
+                    <li><hr class="dropdown-divider"></li>
+                  <% end %>
+                  <% if current_user_can?("silent_auction.manage") %>
+                    <li><%= link_to "Silent Auction Settings", edit_silent_auction_setting_path, class: "dropdown-item" %></li>
+                  <% end %>
+                  <% if current_user_can?("invoice_settings.manage") %>
+                    <li><%= link_to "Invoice Settings", edit_invoice_setting_path, class: "dropdown-item" %></li>
                   <% end %>
                 </ul>
               </li>

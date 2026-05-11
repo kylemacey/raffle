@@ -1,0 +1,25 @@
+<h1>Invoice Settings</h1>
+
+<div class="alert alert-info">
+  Stripe invoice templates control which payment methods appear on hosted invoices.
+  <%= link_to "Open Stripe invoice template settings", "https://dashboard.stripe.com/settings/billing/invoice", target: "_blank", rel: "noopener" %>
+</div>
+
+<%= form_with(model: @setting, url: invoice_setting_path, method: :patch, local: true) do |f| %>
+  <% if @setting.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% @setting.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :days_until_due, class: "form-label" %>
+    <%= f.number_field :days_until_due, class: "form-control", min: 1, max: 365, required: true %>
+  </div>
+
+  <%= f.submit "Save settings", class: "btn btn-primary" %>
+<% end %>

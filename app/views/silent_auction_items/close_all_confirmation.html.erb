@@ -1,0 +1,59 @@
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="mb-0">Close All Auction Items</h1>
+    <p class="text-muted mb-0"><%= @event.name %></p>
+  </div>
+  <%= link_to "Cancel", event_silent_auction_items_path(@event), class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="alert alert-warning">
+  Closing all items ends bidding for every open or paused item. Items with bids will create, finalize, and send Stripe invoices to their winners.
+</div>
+
+<% if @items.any? %>
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h2 class="h5 mb-0">Items To Close</h2>
+      <span class="text-muted"><%= pluralize(@invoice_setting.days_until_due, "day") %> until due</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Winner</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @items.each do |item| %>
+            <% winning_bid = item.current_bid %>
+            <tr>
+              <td><%= item.name %></td>
+              <td><%= item.status_label %></td>
+              <% if winning_bid %>
+                <td><%= winning_bid.bidder_name %> &lt;<%= winning_bid.bidder_email %>&gt;</td>
+                <td><%= number_to_currency(winning_bid.amount_cents / 100.0) %></td>
+              <% else %>
+                <td class="text-muted">No bids; no invoice</td>
+                <td><%= number_to_currency(item.starting_bid_cents / 100.0) %></td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= button_to "Close all items", close_all_event_silent_auction_items_path(@event), method: :patch, class: "btn btn-danger btn-lg" %>
+    <%= link_to "Back to silent auction", event_silent_auction_items_path(@event), class: "btn btn-outline-secondary btn-lg" %>
+  </div>
+<% else %>
+  <div class="card">
+    <div class="card-body">
+      <p class="text-muted mb-0">There are no open or paused silent auction items to close.</p>
+    </div>
+  </div>
+<% end %>
