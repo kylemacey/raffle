@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+open_item_first:
+  silent_auction_item: open_item
+  bidder_name: First Bidder
+  bidder_phone: "(585) 555-0100"
+  bidder_email: first@example.com
+  amount_cents: 5000
+
+open_item_second:
+  silent_auction_item: open_item
+  bidder_name: Second Bidder
+  bidder_phone: "(585) 555-0101"
+  bidder_email: second@example.com
+  amount_cents: 7500
