@@ -41,8 +41,9 @@ class InvoiceRecordTest < ActiveSupport::TestCase
 
     assert record.unexpired?
 
-    record.supersede!
+    record.mark_superseded!
 
+    assert record.superseded_at
     assert_not record.unexpired?
   end
 end

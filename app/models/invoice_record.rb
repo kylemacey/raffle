@@ -44,8 +44,11 @@ class InvoiceRecord < ApplicationRecord
     stripe_invoice_id.present? && !paid? && !voided?
   end
 
-  def supersede!
-    update!(superseded_at: Time.current)
+  def mark_superseded!
+    now = Time.current
+    update_columns(superseded_at: now, updated_at: now)
+    self.superseded_at = now
+    self.updated_at = now
   end
 
   private

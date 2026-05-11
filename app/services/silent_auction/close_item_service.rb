@@ -84,7 +84,7 @@ module SilentAuction
         void_current_invoice(current_invoice)
       end
 
-      current_invoice&.supersede!
+      current_invoice&.mark_superseded!
       item.association(:invoice_record).reset
       item.update!(
         status: "closed",
@@ -137,6 +137,14 @@ module SilentAuction
     def void_current_invoice(invoice_record)
       voided_invoice = Stripe::Invoice.void_invoice(invoice_record.stripe_invoice_id)
       invoice_record.sync_from_stripe_invoice!(voided_invoice)
+      invoice_record.update!(voided_at: Time.current) if invoice_record.voided_at.blank?
+    rescue Stripe::InvalidRequestError => e
+      raise unless e.message.to_s.match?(/void/i)
+
+      remote_invoice = Stripe::Invoice.retrieve(invoice_record.stripe_invoice_id)
+      raise unless stripe_value(remote_invoice, :status) == "void"
+
+      invoice_record.sync_from_stripe_invoice!(remote_invoice)
       invoice_record.update!(voided_at: Time.current) if invoice_record.voided_at.blank?
     end
 
