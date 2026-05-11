@@ -135,43 +135,49 @@
       </div>
       <div class="card-body">
         <% if @bids.any? %>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr>
-                  <th class="text-nowrap">Amount</th>
-                  <th>Name</th>
-                  <th class="text-nowrap">Email</th>
-                  <th class="text-nowrap">Phone</th>
-                  <th class="text-nowrap">Placed</th>
-                  <% if @item.closed? %>
-                    <th></th>
-                  <% end %>
-                </tr>
-              </thead>
-              <tbody>
-                <% @bids.each do |bid| %>
-                  <tr class="<%= 'table-success' if bid == @item.winning_bid %>">
-                    <td class="text-nowrap"><%= number_to_currency(bid.amount_cents / 100.0) %></td>
-                    <td><%= bid.bidder_name %></td>
-                    <td class="text-nowrap"><%= mail_to bid.bidder_email %></td>
-                    <td class="text-nowrap"><%= bid.bidder_phone %></td>
-                    <td class="text-nowrap"><%= l bid.created_at, format: :short %></td>
-                    <% if @item.closed? %>
-                      <td class="text-end">
-                        <% if bid == @item.winning_bid %>
-                          <span class="badge text-bg-success">Current winner</span>
-                        <% else %>
-                          <%= link_to "Select winner",
-                                      promote_winner_confirmation_event_silent_auction_item_path(@event, @item, bid_id: bid.id),
-                                      class: "btn btn-sm btn-outline-warning" %>
-                        <% end %>
-                      </td>
+          <div class="silent-auction-admin-bid-list">
+            <% @bids.each do |bid| %>
+              <% current_winner = bid == @item.winning_bid %>
+              <div class="silent-auction-admin-bid-row <%= 'silent-auction-admin-bid-row-winner' if current_winner %>">
+                <div class="silent-auction-admin-bid-amount">
+                  <span>Bid</span>
+                  <strong><%= number_to_currency(bid.amount_cents / 100.0) %></strong>
+                </div>
+
+                <div class="silent-auction-admin-bid-person">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h3><%= bid.bidder_name %></h3>
+                    <% if current_winner %>
+                      <span class="badge text-bg-success">Current winner</span>
                     <% end %>
-                  </tr>
+                  </div>
+                  <div class="silent-auction-admin-bid-placed">
+                    Placed <%= l bid.created_at, format: :short %>
+                  </div>
+                </div>
+
+                <div class="silent-auction-admin-bid-contact">
+                  <div>
+                    <span>Email</span>
+                    <%= mail_to bid.bidder_email %>
+                  </div>
+                  <div>
+                    <span>Phone</span>
+                    <%= bid.bidder_phone %>
+                  </div>
+                </div>
+
+                <% if @item.closed? %>
+                  <div class="silent-auction-admin-bid-action">
+                    <% unless current_winner %>
+                      <%= link_to "Select winner",
+                                  promote_winner_confirmation_event_silent_auction_item_path(@event, @item, bid_id: bid.id),
+                                  class: "btn btn-sm btn-outline-warning" %>
+                    <% end %>
+                  </div>
                 <% end %>
-              </tbody>
-            </table>
+              </div>
+            <% end %>
           </div>
         <% else %>
           <p class="text-muted mb-0">No bids have been placed.</p>
