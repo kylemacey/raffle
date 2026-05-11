@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_11_140000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_11_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -62,6 +62,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_11_140000) do
     t.datetime "updated_at", null: false
     t.datetime "due_at"
     t.datetime "superseded_at"
+    t.bigint "order_id"
+    t.index ["order_id"], name: "index_invoice_records_on_order_id", unique: true
     t.index ["source_type", "source_id"], name: "index_invoice_records_on_active_source", unique: true, where: "(superseded_at IS NULL)"
     t.index ["stripe_invoice_id"], name: "index_invoice_records_on_stripe_invoice_id", unique: true
     t.index ["stripe_status"], name: "index_invoice_records_on_stripe_status"
@@ -111,10 +113,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_11_140000) do
     t.string "stripe_setup_intent_id"
     t.string "stripe_subscription_id"
     t.string "status"
+    t.string "stripe_invoice_id"
     t.index ["entry_id"], name: "index_payments_on_entry_id"
     t.index ["order_id"], name: "index_payments_on_order_id"
     t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
     t.index ["status"], name: "index_payments_on_status"
+    t.index ["stripe_invoice_id"], name: "index_payments_on_stripe_invoice_id", unique: true
     t.index ["stripe_setup_intent_id"], name: "index_payments_on_stripe_setup_intent_id"
     t.index ["stripe_subscription_id"], name: "index_payments_on_stripe_subscription_id"
   end
@@ -245,6 +249,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_11_140000) do
 
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
+  add_foreign_key "invoice_records", "orders"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "pos_products"
   add_foreign_key "orders", "events"

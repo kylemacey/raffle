@@ -1,3 +1,6 @@
+<% invoice_record = @order.invoice_record %>
+<% silent_auction_item = invoice_record&.source if invoice_record&.source_type == "SilentAuctionItem" %>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1>Order #<%= @order.id %></h1>
   <%= link_to "Back to Orders", orders_path, class: "btn btn-outline-secondary" %>
@@ -16,6 +19,12 @@
             <p><strong>Customer Name:</strong> <%= @order.customer_name %></p>
             <p><strong>Customer Email:</strong> <%= @order.customer_email %></p>
             <p><strong>Event:</strong> <%= @order.event&.name %></p>
+            <% if silent_auction_item %>
+              <p>
+                <strong>Source:</strong>
+                <%= link_to silent_auction_item.name, event_silent_auction_item_path(silent_auction_item.event, silent_auction_item) %>
+              </p>
+            <% end %>
           </div>
           <div class="col-md-6">
             <p><strong>Order Date:</strong> <%= @order.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
@@ -107,6 +116,15 @@
               </p>
               <%= stripe_subscription_url(@order.payment.stripe_subscription_id,
                   link_text: "View Subscription on Stripe",
+                  class: "btn btn-outline-primary w-100 mt-2") %>
+            <% end %>
+
+            <% if @order.payment.stripe_invoice_id.present? %>
+              <p><strong>Stripe Invoice:</strong>
+                <code><%= @order.payment.stripe_invoice_id %></code>
+              </p>
+              <%= stripe_invoice_url(@order.payment.stripe_invoice_id,
+                  link_text: "View Invoice on Stripe",
                   class: "btn btn-outline-primary w-100 mt-2") %>
             <% end %>
           <% end %>

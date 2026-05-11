@@ -69,6 +69,10 @@
               <dt class="col-sm-4">Hosted invoice</dt>
               <dd class="col-sm-8"><%= link_to "Open hosted invoice", invoice.stripe_invoice_url, target: "_blank", rel: "noopener" %></dd>
             <% end %>
+            <% if invoice.order.present? %>
+              <dt class="col-sm-4">Order</dt>
+              <dd class="col-sm-8"><%= link_to "Order ##{invoice.order.id}", order_path(invoice.order) %></dd>
+            <% end %>
             <% if invoice.last_error.present? %>
               <dt class="col-sm-4">Last error</dt>
               <dd class="col-sm-8 text-danger"><%= invoice.last_error %></dd>
@@ -99,6 +103,7 @@
                   <th>Amount</th>
                   <th>Due</th>
                   <th>Invoice</th>
+                  <th>Order</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,6 +123,13 @@
                         <%= stripe_invoice_url(invoice.stripe_invoice_id, link_text: invoice.stripe_invoice_id) %>
                       <% else %>
                         <span class="text-muted">Pending</span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <% if invoice.order.present? %>
+                        <%= link_to "##{invoice.order.id}", order_path(invoice.order) %>
+                      <% else %>
+                        <span class="text-muted">None</span>
                       <% end %>
                     </td>
                   </tr>

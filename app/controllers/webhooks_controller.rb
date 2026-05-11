@@ -291,6 +291,7 @@ class WebhooksController < ApplicationController
       invoice_record.update!(failed_at: Time.current, last_error: invoice_error_message(invoice) || "Invoice finalization failed.")
     when "invoice.paid"
       invoice_record.update!(last_error: nil)
+      InvoiceRecords::CreateOrderFromPaidInvoiceService.new(invoice_record, stripe_invoice: invoice).call
     end
   end
 

@@ -253,13 +253,14 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_empty broadcasts
   end
 
-  test "invoice paid webhook syncs invoice record" do
+  test "invoice paid webhook syncs invoice record and creates order" do
     invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
       stripe_invoice_id: "in_paid_123",
       stripe_status: "open",
       amount_cents: 7500,
       customer_name: "Winner",
-      customer_email: "winner@example.com"
+      customer_email: "winner@example.com",
+      customer_phone: "(585) 555-0124"
     )
     event = invoice_event(
       "invoice.paid",
@@ -273,12 +274,17 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
           "paid_at" => 1_700_000_100,
           "voided_at" => nil
         },
+        "payment_intent" => "pi_invoice_paid_123",
         "attempt_count" => 1
       }
     )
 
-    Stripe::Webhook.stub(:construct_event, event) do
-      post "/webhooks/stripe", params: "{}"
+    assert_difference -> { Order.count }, 1 do
+      assert_difference -> { Payment.count }, 1 do
+        Stripe::Webhook.stub(:construct_event, event) do
+          post "/webhooks/stripe", params: "{}"
+        end
+      end
     end
 
     assert_response :success
@@ -287,6 +293,58 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "https://invoice.stripe.com/i/paid", invoice_record.stripe_invoice_url
     assert invoice_record.paid_at
     assert_nil invoice_record.last_error
+
+    order = invoice_record.order
+    assert_equal silent_auction_items(:closed_item).event, order.event
+    assert_equal "Winner", order.customer_name
+    assert_equal "winner@example.com", order.customer_email
+    assert_equal "(585) 555-0124", order.customer_phone
+    assert_equal 7500, order.total_amount
+    assert_equal "stripe_invoice", order.payment_method_type
+    assert_equal "succeeded", order.payment.status
+    assert_equal "in_paid_123", order.payment.stripe_invoice_id
+    assert_equal "pi_invoice_paid_123", order.payment.payment_intent_id
+    assert_equal "Silent Auction: #{silent_auction_items(:closed_item).name}", order.order_items.sole.pos_product.name
+  end
+
+  test "duplicate invoice paid webhook does not duplicate order" do
+    invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
+      stripe_invoice_id: "in_paid_duplicate_123",
+      stripe_status: "paid",
+      amount_cents: 7500,
+      customer_name: "Winner",
+      customer_email: "winner@example.com",
+      paid_at: Time.current
+    )
+    event = invoice_event(
+      "invoice.paid",
+      {
+        "id" => "in_paid_duplicate_123",
+        "status" => "paid",
+        "status_transitions" => {
+          "finalized_at" => 1_700_000_000,
+          "paid_at" => 1_700_000_100,
+          "voided_at" => nil
+        },
+        "attempt_count" => 1
+      }
+    )
+
+    Stripe::Webhook.stub(:construct_event, event) do
+      post "/webhooks/stripe", params: "{}"
+    end
+    assert_response :success
+
+    assert_no_difference -> { Order.count } do
+      assert_no_difference -> { Payment.count } do
+        Stripe::Webhook.stub(:construct_event, event) do
+          post "/webhooks/stripe", params: "{}"
+        end
+      end
+    end
+
+    assert invoice_record.reload.order
+    assert invoice_record.order.payment
   end
 
   test "invoice payment failed webhook stores failure state" do

@@ -1,5 +1,6 @@
 class InvoiceRecord < ApplicationRecord
   belongs_to :source, polymorphic: true
+  belongs_to :order, optional: true
 
   scope :active, -> { where(superseded_at: nil) }
   scope :superseded, -> { where.not(superseded_at: nil) }

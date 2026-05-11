@@ -4,6 +4,7 @@ class Order < ApplicationRecord
   has_many :order_items, dependent: :destroy
   has_many :pos_products, through: :order_items
   has_one :payment, dependent: :destroy
+  has_one :invoice_record, dependent: :nullify
 
   validates :customer_name, presence: true
   validates :customer_email, presence: true

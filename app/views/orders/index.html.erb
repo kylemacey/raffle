@@ -73,6 +73,13 @@
                       link_text: "View Subscription",
                       class: "text-decoration-none") %>
                 </small>
+              <% elsif order.payment.stripe_invoice_id.present? && current_user_can_any?("reports.view_fundraising", "refunds.issue") %>
+                <br>
+                <small>
+                  <%= stripe_invoice_url(order.payment.stripe_invoice_id,
+                      link_text: "View Invoice",
+                      class: "text-decoration-none") %>
+                </small>
               <% end %>
             <% else %>
               <span class="badge bg-warning">Pending</span>
