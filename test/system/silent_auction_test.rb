@@ -14,7 +14,7 @@ class SilentAuctionTest < ApplicationSystemTestCase
     fill_in "Email", with: "system@example.com"
     fill_in "Bid amount", with: "100.00"
     check "I agree to pay this bid if I win."
-    click_on "Place bid"
+    click_on "Place $100 bid"
 
     assert_text "Bid placed"
     assert_text "$100.00"
@@ -30,7 +30,7 @@ class SilentAuctionTest < ApplicationSystemTestCase
     fill_in "Description", with: "Created from a system test."
     fill_in "Starting bid", with: "45.00"
     fill_in "Image URL", with: "https://example.com/system-prize.jpg"
-    click_on "Create Silent auction item"
+    click_on "Create item"
 
     assert_text "Silent auction item was created"
     assert_text "System Prize"

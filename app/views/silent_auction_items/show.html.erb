@@ -4,8 +4,8 @@
     <p class="text-muted mb-0"><%= @event.name %> Silent Auction</p>
   </div>
   <div class="d-flex flex-wrap gap-2 justify-content-end">
-    <%= link_to "Public view", event_public_silent_auction_item_path(@event, @item), class: "btn btn-outline-secondary" if @item.publicly_listed? %>
-    <%= link_to "Edit", edit_event_silent_auction_item_path(@event, @item), class: "btn btn-outline-secondary" %>
+    <%= link_to "Public view", event_public_silent_auction_item_path(@event, @item), class: "btn btn-outline-light" if @item.publicly_listed? %>
+    <%= link_to "Edit", edit_event_silent_auction_item_path(@event, @item), class: "btn btn-outline-light" %>
     <% unless @item.closed? %>
       <% if @item.open? %>
         <%= button_to "Pause", pause_event_silent_auction_item_path(@event, @item), method: :patch, class: "btn btn-warning" %>
@@ -93,21 +93,21 @@
             <table class="table table-sm align-middle">
               <thead>
                 <tr>
-                  <th>Amount</th>
+                  <th class="text-nowrap">Amount</th>
                   <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Placed</th>
+                  <th class="text-nowrap">Email</th>
+                  <th class="text-nowrap">Phone</th>
+                  <th class="text-nowrap">Placed</th>
                 </tr>
               </thead>
               <tbody>
                 <% @bids.each do |bid| %>
                   <tr class="<%= 'table-success' if bid == @item.winning_bid %>">
-                    <td><%= number_to_currency(bid.amount_cents / 100.0) %></td>
+                    <td class="text-nowrap"><%= number_to_currency(bid.amount_cents / 100.0) %></td>
                     <td><%= bid.bidder_name %></td>
-                    <td><%= mail_to bid.bidder_email %></td>
-                    <td><%= bid.bidder_phone %></td>
-                    <td><%= l bid.created_at, format: :short %></td>
+                    <td class="text-nowrap"><%= mail_to bid.bidder_email %></td>
+                    <td class="text-nowrap"><%= bid.bidder_phone %></td>
+                    <td class="text-nowrap"><%= l bid.created_at, format: :short %></td>
                   </tr>
                 <% end %>
               </tbody>

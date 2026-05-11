@@ -7,6 +7,9 @@ class SilentAuctionItemsController < ApplicationController
     @items = @event.silent_auction_items
                    .includes(:invoice_record, :winning_bid, :silent_auction_bids)
                    .ordered_for_admin
+    @open_all_count = @event.silent_auction_items.where(status: %w[draft paused]).count
+    @pause_all_count = @event.silent_auction_items.where(status: "open").count
+    @close_all_count = @event.silent_auction_items.where(status: %w[open paused]).count
   end
 
   def show

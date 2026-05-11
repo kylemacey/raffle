@@ -11,6 +11,9 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
     get event_silent_auction_items_url(@event)
 
     assert_response :success
+    assert_select "button", "Open all (2)"
+    assert_select "button", "Pause all (1)"
+    assert_select "a", "Close all (2)"
   end
 
   test "event lead can create item" do

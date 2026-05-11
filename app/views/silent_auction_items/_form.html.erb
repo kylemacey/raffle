@@ -1,4 +1,4 @@
-<%= form_with(model: [event, item], local: true) do |f| %>
+<%= form_with(model: [event, item], data: { controller: "image-preview" }, local: true) do |f| %>
   <% if item.errors.any? %>
     <div class="alert alert-danger">
       <ul class="mb-0">
@@ -40,11 +40,26 @@
 
   <div class="mb-3">
     <%= f.label :image_url, "Image URL", class: "form-label" %>
-    <%= f.url_field :image_url, class: "form-control", required: true %>
+    <%= f.url_field :image_url,
+                    class: "form-control",
+                    required: true,
+                    data: {
+                      image_preview_target: "input",
+                      action: "input->image-preview#update change->image-preview#update"
+                    } %>
+    <div class="silent-auction-image-preview mt-3" data-image-preview-target="preview" hidden>
+      <%= tag.img alt: "Image preview",
+                  class: "silent-auction-image-preview-image",
+                  data: {
+                    image_preview_target: "image",
+                    action: "load->image-preview#loaded error->image-preview#failed"
+                  } %>
+      <div class="form-text text-warning" data-image-preview-target="message"></div>
+    </div>
   </div>
 
   <div class="d-flex gap-2">
-    <%= f.submit class: "btn btn-success" %>
+    <%= f.submit(item.persisted? ? "Update item" : "Create item", class: "btn btn-success") %>
     <%= link_to "Cancel", item.persisted? ? event_silent_auction_item_path(event, item) : event_silent_auction_items_path(event), class: "btn btn-outline-secondary" %>
   </div>
 <% end %>

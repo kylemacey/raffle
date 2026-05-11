@@ -36,9 +36,12 @@
     </div>
 
     <% if @item.open? %>
+      <% initial_bid_amount = @bid.formatted_amount || (@item.next_minimum_bid_cents / 100.0) %>
+      <% initial_bid_label = number_to_currency(initial_bid_amount, precision: initial_bid_amount.to_f % 1 == 0 ? 0 : 2) %>
       <%= form_with model: [@event, @item, @bid],
                     url: event_public_silent_auction_item_bids_path(@event, @item),
                     class: "auction-bid-form",
+                    data: { controller: "bid-amount-submit" },
                     local: true do |f| %>
         <% if @bid.errors.any? %>
           <div class="alert alert-danger">
@@ -83,7 +86,11 @@
                                  required: true,
                                  min: (@item.next_minimum_bid_cents / 100.0),
                                  step: "0.01",
-                                 value: number_with_precision(@bid.formatted_amount || (@item.next_minimum_bid_cents / 100.0), precision: 2) %>
+                                 value: number_with_precision(initial_bid_amount, precision: 2),
+                                 data: {
+                                   bid_amount_submit_target: "input",
+                                   action: "input->bid-amount-submit#sync change->bid-amount-submit#sync"
+                                 } %>
             </div>
           </div>
         </div>
@@ -94,7 +101,7 @@
         </div>
 
         <div class="auction-form-actions">
-          <%= f.submit "Place bid", class: "btn btn-primary btn-lg" %>
+          <%= f.submit "Place #{initial_bid_label} bid", class: "btn btn-primary btn-lg", data: { bid_amount_submit_target: "submit" } %>
         </div>
       <% end %>
     <% elsif @item.paused? %>

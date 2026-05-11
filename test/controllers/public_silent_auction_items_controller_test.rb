@@ -10,6 +10,7 @@ class PublicSilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Silent Auction"
+    assert_no_match "auction-status-open", response.body
   end
 
   test "public show is available for open item" do

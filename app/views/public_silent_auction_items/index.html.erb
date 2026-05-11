@@ -11,7 +11,9 @@
       <%= link_to event_public_silent_auction_item_path(@event, item), class: "auction-item-card" do %>
         <div class="auction-item-image-wrap">
           <%= image_tag item.image_url, alt: item.name, class: "auction-item-image" %>
-          <span class="auction-status auction-status-<%= item.status %>"><%= item.status_label %></span>
+          <% unless item.open? %>
+            <span class="auction-status auction-status-<%= item.status %>"><%= item.status_label %></span>
+          <% end %>
         </div>
         <div class="auction-item-body">
           <h2><%= item.name %></h2>

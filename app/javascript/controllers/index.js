@@ -6,6 +6,12 @@ application.register("cart", CartController)
 import CustomerSearchController from "controllers/customer_search_controller"
 application.register("customer-search", CustomerSearchController)
 
+import BidAmountSubmitController from "controllers/bid_amount_submit_controller"
+application.register("bid-amount-submit", BidAmountSubmitController)
+
+import ImagePreviewController from "controllers/image_preview_controller"
+application.register("image-preview", ImagePreviewController)
+
 import PosProductFormController from "controllers/pos_product_form_controller"
 application.register("pos-product-form", PosProductFormController)
 
