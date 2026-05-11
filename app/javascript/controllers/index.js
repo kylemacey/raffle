@@ -29,3 +29,6 @@ application.register("winners", WinnersController)
 
 import MatchHeightController from "controllers/match_height_controller"
 application.register("match-height", MatchHeightController)
+
+import PaymentMethodTypesController from "controllers/payment_method_types_controller"
+application.register("payment-method-types", PaymentMethodTypesController)
