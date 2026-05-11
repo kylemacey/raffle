@@ -14,7 +14,10 @@
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h2 class="h5 mb-0">Items To Close</h2>
-      <span class="text-muted"><%= pluralize(@invoice_setting.days_until_due, "day") %> until due</span>
+      <span class="text-muted">
+        <%= pluralize(@invoice_setting.days_until_due, "day") %> until due ·
+        <%= @invoice_setting.stripe_payment_method_configuration_id.presence || "Stripe invoice template default" %>
+      </span>
     </div>
     <div class="table-responsive">
       <table class="table table-sm align-middle mb-0">

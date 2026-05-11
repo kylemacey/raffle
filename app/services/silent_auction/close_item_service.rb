@@ -58,15 +58,10 @@ module SilentAuction
 
     def create_stripe_invoice(invoice_record, winning_bid)
       customer = find_or_create_customer(winning_bid)
+      invoice_setting = InvoiceSetting.current
       invoice_record.update!(stripe_customer_id: customer.id)
 
-      invoice = Stripe::Invoice.create(
-        customer: customer.id,
-        collection_method: "send_invoice",
-        days_until_due: InvoiceSetting.current.days_until_due,
-        auto_advance: false,
-        metadata: invoice_metadata(winning_bid)
-      )
+      invoice = Stripe::Invoice.create(invoice_params(customer, winning_bid, invoice_setting))
 
       invoice_record.update!(
         stripe_invoice_id: invoice.id,
@@ -91,6 +86,24 @@ module SilentAuction
     rescue Stripe::StripeError => e
       invoice_record.update!(last_error: e.message)
       Result.new(success: false, message: "Stripe invoice failed: #{e.message}", invoice_record: invoice_record)
+    end
+
+    def invoice_params(customer, winning_bid, invoice_setting)
+      params = {
+        customer: customer.id,
+        collection_method: "send_invoice",
+        days_until_due: invoice_setting.days_until_due,
+        auto_advance: false,
+        metadata: invoice_metadata(winning_bid)
+      }
+
+      if invoice_setting.stripe_payment_method_configuration_id?
+        params[:payment_settings] = {
+          payment_method_configuration: invoice_setting.stripe_payment_method_configuration_id
+        }
+      end
+
+      params
     end
 
     def find_or_create_customer(winning_bid)

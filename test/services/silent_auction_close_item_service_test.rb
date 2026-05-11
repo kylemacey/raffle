@@ -91,6 +91,20 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     assert_nil item.invoice_record.last_error
   end
 
+  test "passes payment method configuration when invoice setting has one" do
+    InvoiceSetting.current.update!(stripe_payment_method_configuration_id: "pmc_test_123")
+    item = build_item_with_bid(email: "configuration@example.com")
+    customer = OpenStruct.new(id: "cus_configuration", email: "configuration@example.com", created: 30)
+
+    Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
+      with_invoice_stubs(expected_payment_method_configuration_id: "pmc_test_123") do
+        result = SilentAuction::CloseItemService.new(item).call
+
+        assert result.success?
+      end
+    end
+  end
+
   private
 
   def build_item_with_bid(email:)
@@ -112,7 +126,8 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     item
   end
 
-  def with_invoice_stubs
+  def with_invoice_stubs(expected_payment_method_configuration_id: nil)
+    invoice_params = nil
     invoice_item_params = nil
     invoice = OpenStruct.new(id: "in_test_123", status: "draft")
     finalized_invoice = OpenStruct.new(id: "in_test_123", status: "open")
@@ -129,7 +144,7 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
       attempt_count: 0
     )
 
-    Stripe::Invoice.stub(:create, invoice) do
+    Stripe::Invoice.stub(:create, ->(params) { invoice_params = params; invoice }) do
       Stripe::InvoiceItem.stub(:create, ->(params) { invoice_item_params = params; OpenStruct.new(id: "ii_test_123") }) do
         Stripe::Invoice.stub(:finalize_invoice, finalized_invoice) do
           Stripe::Invoice.stub(:send_invoice, sent_invoice) do
@@ -139,6 +154,16 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
       end
     end
 
+    assert_equal "send_invoice", invoice_params[:collection_method]
+    assert_equal InvoiceSetting.current.days_until_due, invoice_params[:days_until_due]
+    if expected_payment_method_configuration_id
+      assert_equal(
+        { payment_method_configuration: expected_payment_method_configuration_id },
+        invoice_params[:payment_settings]
+      )
+    else
+      assert_not invoice_params.key?(:payment_settings)
+    end
     assert_equal 5000, invoice_item_params[:amount]
     assert_equal "usd", invoice_item_params[:currency]
   end

@@ -18,6 +18,6 @@ class InvoiceSettingsController < ApplicationController
   private
 
   def setting_params
-    params.require(:invoice_setting).permit(:days_until_due)
+    params.require(:invoice_setting).permit(:days_until_due, :stripe_payment_method_configuration_id)
   end
 end
