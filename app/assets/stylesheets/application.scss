@@ -240,13 +240,19 @@
 
 .silent-auction-admin-bid-row {
   display: grid;
-  grid-template-columns: minmax(104px, 0.22fr) minmax(160px, 0.9fr) minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(92px, 112px) minmax(140px, 1fr) minmax(0, 1.05fr);
   gap: 16px;
   align-items: center;
+  max-width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--bs-border-color);
   border-radius: 8px;
   background: var(--bs-body-bg);
+  box-sizing: border-box;
+}
+
+.silent-auction-admin-bid-row > * {
+  min-width: 0;
 }
 
 .silent-auction-admin-bid-row-winner {
@@ -286,8 +292,8 @@
 }
 
 .silent-auction-admin-bid-action {
+  grid-column: 3;
   justify-self: end;
-  min-width: 116px;
   text-align: right;
 }
 
