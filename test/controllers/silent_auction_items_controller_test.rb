@@ -76,6 +76,49 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
     assert_select "td", text: "Weekend Getaway"
   end
 
+  test "event lead can review new winner confirmation" do
+    item = @event.silent_auction_items.create!(
+      name: "Replacement Candidate Item",
+      description: "Closed item with replacement candidates.",
+      starting_bid_cents: 5000,
+      image_url: "https://example.com/replacement-candidate.jpg",
+      status: "open"
+    )
+    replacement_bid = item.silent_auction_bids.create!(
+      bidder_name: "Replacement Bidder",
+      bidder_phone: "585-555-0180",
+      bidder_email: "replacement-bidder@example.com",
+      amount_cents: 5000,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 5000
+    )
+    current_bid = item.silent_auction_bids.create!(
+      bidder_name: "Current Bidder",
+      bidder_phone: "585-555-0181",
+      bidder_email: "current-bidder@example.com",
+      amount_cents: 7500,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 7500
+    )
+    item.update!(status: "closed", closed_at: Time.current, winning_bid: current_bid)
+    item.create_invoice_record!(
+      stripe_invoice_id: "in_current_123",
+      stripe_status: "open",
+      amount_cents: current_bid.amount_cents,
+      customer_name: current_bid.bidder_name,
+      customer_email: current_bid.bidder_email,
+      due_at: 2.days.from_now
+    )
+
+    get promote_winner_confirmation_event_silent_auction_item_url(@event, item, bid_id: replacement_bid.id)
+
+    assert_response :success
+    assert_select "h1", "Select New Winner"
+    assert_select ".alert", text: /current invoice has not expired/
+    assert_select "dd", text: /Replacement Bidder/
+    assert_select "form[action='#{promote_winner_event_silent_auction_item_path(@event, item)}']"
+  end
+
   test "event lead can close all no-bid items without invoices" do
     empty_event = events(:two)
     first = empty_event.silent_auction_items.create!(

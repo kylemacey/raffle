@@ -66,6 +66,8 @@ Rails.application.routes.draw do
         get :close_confirmation
         patch :close
         post :retry_invoice
+        get :promote_winner_confirmation
+        patch :promote_winner
       end
     end
 

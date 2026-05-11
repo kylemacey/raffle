@@ -1,7 +1,10 @@
 class SilentAuctionItemsController < ApplicationController
   before_action -> { require_permission!("silent_auction.manage") }
   before_action :set_event
-  before_action :set_item, only: %i[show edit update open pause close close_confirmation retry_invoice]
+  before_action :set_item, only: %i[
+    show edit update open pause close close_confirmation retry_invoice
+    promote_winner_confirmation promote_winner
+  ]
 
   def index
     @items = @event.silent_auction_items
@@ -90,6 +93,18 @@ class SilentAuctionItemsController < ApplicationController
 
   def retry_invoice
     result = SilentAuction::CloseItemService.new(@item).call
+    redirect_to event_silent_auction_item_path(@event, @item), flash_for_result(result)
+  end
+
+  def promote_winner_confirmation
+    @bid = @item.silent_auction_bids.find(params[:bid_id])
+    @invoice = @item.invoice_record
+    @invoice_setting = InvoiceSetting.current
+  end
+
+  def promote_winner
+    bid = @item.silent_auction_bids.find(params[:bid_id])
+    result = SilentAuction::CloseItemService.new(@item, winning_bid: bid, replace_invoice: true).call
     redirect_to event_silent_auction_item_path(@event, @item), flash_for_result(result)
   end
 

@@ -83,6 +83,52 @@
       </div>
     </div>
 
+    <% invoice_history = @item.invoice_history.to_a %>
+    <% if invoice_history.many? %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h5 mb-0">Invoice History</h2>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Due</th>
+                  <th>Invoice</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% invoice_history.each do |invoice| %>
+                  <tr class="<%= 'table-secondary' if invoice.superseded? %>">
+                    <td>
+                      <%= invoice.stripe_status.presence || "Pending" %>
+                      <% if invoice.superseded? %>
+                        <span class="badge text-bg-secondary ms-1">Superseded</span>
+                      <% end %>
+                    </td>
+                    <td><%= invoice.customer_name %></td>
+                    <td><%= number_to_currency(invoice.amount_cents / 100.0) %></td>
+                    <td><%= invoice.due_at ? l(invoice.due_at, format: :short) : "Not recorded" %></td>
+                    <td>
+                      <% if invoice.stripe_invoice_id.present? %>
+                        <%= stripe_invoice_url(invoice.stripe_invoice_id, link_text: invoice.stripe_invoice_id) %>
+                      <% else %>
+                        <span class="text-muted">Pending</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <div class="card">
       <div class="card-header">
         <h2 class="h5 mb-0">Bids</h2>
@@ -98,6 +144,9 @@
                   <th class="text-nowrap">Email</th>
                   <th class="text-nowrap">Phone</th>
                   <th class="text-nowrap">Placed</th>
+                  <% if @item.closed? %>
+                    <th></th>
+                  <% end %>
                 </tr>
               </thead>
               <tbody>
@@ -108,6 +157,17 @@
                     <td class="text-nowrap"><%= mail_to bid.bidder_email %></td>
                     <td class="text-nowrap"><%= bid.bidder_phone %></td>
                     <td class="text-nowrap"><%= l bid.created_at, format: :short %></td>
+                    <% if @item.closed? %>
+                      <td class="text-end">
+                        <% if bid == @item.winning_bid %>
+                          <span class="badge text-bg-success">Current winner</span>
+                        <% else %>
+                          <%= link_to "Select winner",
+                                      promote_winner_confirmation_event_silent_auction_item_path(@event, @item, bid_id: bid.id),
+                                      class: "btn btn-sm btn-outline-warning" %>
+                        <% end %>
+                      </td>
+                    <% end %>
                   </tr>
                 <% end %>
               </tbody>
