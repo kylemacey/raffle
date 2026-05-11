@@ -2,3 +2,6 @@
 
 default:
   days_until_due: 7
+  payment_method_types:
+    - card
+    - us_bank_account

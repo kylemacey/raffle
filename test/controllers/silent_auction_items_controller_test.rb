@@ -65,7 +65,7 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", "Close Item"
     assert_select "dd", text: /Second Bidder/
-    assert_select "dd", text: "Stripe invoice template default"
+    assert_select "dd", text: "Card, ACH direct debit"
   end
 
   test "event lead can review close all confirmation" do

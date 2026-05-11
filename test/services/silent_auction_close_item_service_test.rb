@@ -91,13 +91,27 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     assert_nil item.invoice_record.last_error
   end
 
-  test "does not pass unsupported payment method configuration to stripe invoice create" do
-    InvoiceSetting.current.update!(stripe_payment_method_configuration_id: "pmc_test_123")
-    item = build_item_with_bid(email: "configuration@example.com")
-    customer = OpenStruct.new(id: "cus_configuration", email: "configuration@example.com", created: 30)
+  test "passes configured payment method types to stripe invoice create" do
+    InvoiceSetting.current.update!(payment_method_types: %w[card us_bank_account])
+    item = build_item_with_bid(email: "payment-types@example.com")
+    customer = OpenStruct.new(id: "cus_payment_types", email: "payment-types@example.com", created: 30)
 
     Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
-      with_invoice_stubs do
+      with_invoice_stubs(expected_payment_method_types: %w[card us_bank_account]) do
+        result = SilentAuction::CloseItemService.new(item).call
+
+        assert result.success?
+      end
+    end
+  end
+
+  test "omits payment settings when payment method types are cleared" do
+    InvoiceSetting.current.update!(payment_method_types: [])
+    item = build_item_with_bid(email: "template-default@example.com")
+    customer = OpenStruct.new(id: "cus_template_default", email: "template-default@example.com", created: 30)
+
+    Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
+      with_invoice_stubs(expected_payment_method_types: []) do
         result = SilentAuction::CloseItemService.new(item).call
 
         assert result.success?
@@ -126,7 +140,7 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     item
   end
 
-  def with_invoice_stubs
+  def with_invoice_stubs(expected_payment_method_types: InvoiceSetting.current.payment_method_types)
     invoice_params = nil
     invoice_item_params = nil
     invoice = OpenStruct.new(id: "in_test_123", status: "draft")
@@ -156,7 +170,14 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
 
     assert_equal "send_invoice", invoice_params[:collection_method]
     assert_equal InvoiceSetting.current.days_until_due, invoice_params[:days_until_due]
-    assert_not invoice_params.key?(:payment_settings)
+    if expected_payment_method_types.present?
+      assert_equal(
+        { payment_method_types: expected_payment_method_types },
+        invoice_params[:payment_settings]
+      )
+    else
+      assert_not invoice_params.key?(:payment_settings)
+    end
     assert_equal 5000, invoice_item_params[:amount]
     assert_equal "usd", invoice_item_params[:currency]
   end
