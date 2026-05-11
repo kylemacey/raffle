@@ -253,6 +253,78 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_empty broadcasts
   end
 
+  test "invoice paid webhook syncs invoice record" do
+    invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
+      stripe_invoice_id: "in_paid_123",
+      stripe_status: "open",
+      amount_cents: 7500,
+      customer_name: "Winner",
+      customer_email: "winner@example.com"
+    )
+    event = invoice_event(
+      "invoice.paid",
+      {
+        "id" => "in_paid_123",
+        "status" => "paid",
+        "hosted_invoice_url" => "https://invoice.stripe.com/i/paid",
+        "invoice_pdf" => "https://pay.stripe.com/invoice/paid.pdf",
+        "status_transitions" => {
+          "finalized_at" => 1_700_000_000,
+          "paid_at" => 1_700_000_100,
+          "voided_at" => nil
+        },
+        "attempt_count" => 1
+      }
+    )
+
+    Stripe::Webhook.stub(:construct_event, event) do
+      post "/webhooks/stripe", params: "{}"
+    end
+
+    assert_response :success
+    invoice_record.reload
+    assert_equal "paid", invoice_record.stripe_status
+    assert_equal "https://invoice.stripe.com/i/paid", invoice_record.stripe_invoice_url
+    assert invoice_record.paid_at
+    assert_nil invoice_record.last_error
+  end
+
+  test "invoice payment failed webhook stores failure state" do
+    invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
+      stripe_invoice_id: "in_failed_123",
+      stripe_status: "open",
+      amount_cents: 7500,
+      customer_name: "Winner",
+      customer_email: "winner@example.com"
+    )
+    event = invoice_event(
+      "invoice.payment_failed",
+      {
+        "id" => "in_failed_123",
+        "status" => "open",
+        "hosted_invoice_url" => "https://invoice.stripe.com/i/failed",
+        "invoice_pdf" => "https://pay.stripe.com/invoice/failed.pdf",
+        "status_transitions" => {
+          "finalized_at" => 1_700_000_000,
+          "paid_at" => nil,
+          "voided_at" => nil
+        },
+        "attempt_count" => 1,
+        "last_finalization_error" => { "message" => "Payment failed." }
+      }
+    )
+
+    Stripe::Webhook.stub(:construct_event, event) do
+      post "/webhooks/stripe", params: "{}"
+    end
+
+    assert_response :success
+    invoice_record.reload
+    assert_equal "open", invoice_record.stripe_status
+    assert invoice_record.failed_at
+    assert_equal "Payment failed.", invoice_record.last_error
+  end
+
   private
 
   def build_order_with_items(items)
@@ -288,6 +360,15 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
             }
           }
         }
+      }
+    }
+  end
+
+  def invoice_event(event_type, invoice)
+    {
+      "type" => event_type,
+      "data" => {
+        "object" => invoice
       }
     }
   end

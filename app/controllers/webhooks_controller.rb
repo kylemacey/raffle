@@ -26,6 +26,14 @@ class WebhooksController < ApplicationController
     when 'terminal.reader.action_failed'
       reader = event['data']['object']
       handle_terminal_action_failed(reader)
+    when 'invoice.finalized',
+         'invoice.sent',
+         'invoice.paid',
+         'invoice.payment_failed',
+         'invoice.finalization_failed',
+         'invoice.voided'
+      invoice = event['data']['object']
+      handle_invoice_event(invoice, event['type'])
     else
       Rails.logger.info "Unhandled event type: #{event['type']}"
     end
@@ -263,6 +271,29 @@ class WebhooksController < ApplicationController
     subscription && SUCCESSFUL_SUBSCRIPTION_STATUSES.include?(subscription.status)
   end
 
+  def handle_invoice_event(invoice, event_type)
+    invoice_id = stripe_object_value(invoice, :id)
+    invoice_record = InvoiceRecord.find_by(stripe_invoice_id: invoice_id)
+
+    unless invoice_record
+      Rails.logger.info "Webhook: No local InvoiceRecord for Stripe invoice #{invoice_id}"
+      return
+    end
+
+    invoice_record.sync_from_stripe_invoice!(invoice)
+
+    case event_type
+    when "invoice.sent"
+      invoice_record.update!(sent_at: Time.current)
+    when "invoice.payment_failed"
+      invoice_record.update!(failed_at: Time.current, last_error: invoice_error_message(invoice) || "Invoice payment failed.")
+    when "invoice.finalization_failed"
+      invoice_record.update!(failed_at: Time.current, last_error: invoice_error_message(invoice) || "Invoice finalization failed.")
+    when "invoice.paid"
+      invoice_record.update!(last_error: nil)
+    end
+  end
+
   def attach_payment_method_to_customer(payment_method_id, customer_id)
     Stripe::PaymentMethod.attach(payment_method_id, { customer: customer_id })
   rescue Stripe::InvalidRequestError => e
@@ -334,6 +365,21 @@ class WebhooksController < ApplicationController
   def order_id_from_metadata(intent)
     metadata = intent.metadata
     metadata && (metadata['order_id'] || metadata[:order_id])
+  end
+
+  def invoice_error_message(invoice)
+    error = stripe_object_value(invoice, :last_finalization_error)
+    return if error.blank?
+
+    stripe_object_value(error, :message) || stripe_object_value(error, :code) || error.to_s
+  end
+
+  def stripe_object_value(object, key)
+    if object.respond_to?(key)
+      object.public_send(key)
+    elsif object.respond_to?(:[])
+      object[key.to_s] || object[key]
+    end
   end
 
   def broadcast_success_redirect(intent_id, order_id)
