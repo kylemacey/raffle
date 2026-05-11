@@ -89,21 +89,13 @@ module SilentAuction
     end
 
     def invoice_params(customer, winning_bid, invoice_setting)
-      params = {
+      {
         customer: customer.id,
         collection_method: "send_invoice",
         days_until_due: invoice_setting.days_until_due,
         auto_advance: false,
         metadata: invoice_metadata(winning_bid)
       }
-
-      if invoice_setting.stripe_payment_method_configuration_id?
-        params[:payment_settings] = {
-          payment_method_configuration: invoice_setting.stripe_payment_method_configuration_id
-        }
-      end
-
-      params
     end
 
     def find_or_create_customer(winning_bid)

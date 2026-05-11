@@ -16,7 +16,10 @@
       <h2 class="h5 mb-0">Items To Close</h2>
       <span class="text-muted">
         <%= pluralize(@invoice_setting.days_until_due, "day") %> until due ·
-        <%= @invoice_setting.stripe_payment_method_configuration_id.presence || "Stripe invoice template default" %>
+        Stripe invoice template default
+        <% if @invoice_setting.stripe_payment_method_configuration_id.present? %>
+          · stored config <%= @invoice_setting.stripe_payment_method_configuration_id %>
+        <% end %>
       </span>
     </div>
     <div class="table-responsive">

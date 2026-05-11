@@ -1,7 +1,8 @@
 <h1>Invoice Settings</h1>
 
 <div class="alert alert-info">
-  Leave Payment Method Configuration ID blank to use the Stripe invoice template default.
+  Stripe-hosted invoices use the enabled payment methods from the Stripe invoice template.
+  The Payment Method Configuration ID is saved here for future invoice flows, but it is not sent to Stripe invoice creation.
   <%= link_to "Open Stripe invoice template settings", "https://dashboard.stripe.com/settings/billing/invoice", target: "_blank", rel: "noopener" %>
 </div>
 
@@ -28,7 +29,7 @@
                      placeholder: "pmc_...",
                      autocomplete: "off" %>
     <div class="form-text">
-      Optional Stripe payment method configuration ID for invoices created by the app.
+      Optional reference ID. Current Stripe invoice creation supports invoice template defaults and explicit payment method types, not Payment Method Configuration IDs.
       <%= link_to "Manage payment method configurations", "https://dashboard.stripe.com/settings/payment_methods", target: "_blank", rel: "noopener" %>
     </div>
   </div>

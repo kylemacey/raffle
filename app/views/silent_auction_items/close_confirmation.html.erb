@@ -22,8 +22,13 @@
       <dd class="col-sm-8"><%= @item.status_label %></dd>
       <dt class="col-sm-4">Due date</dt>
       <dd class="col-sm-8"><%= pluralize(@invoice_setting.days_until_due, "day") %> after invoice is sent</dd>
-      <dt class="col-sm-4">Payment method configuration</dt>
-      <dd class="col-sm-8"><%= @invoice_setting.stripe_payment_method_configuration_id.presence || "Stripe invoice template default" %></dd>
+      <dt class="col-sm-4">Payment methods</dt>
+      <dd class="col-sm-8">
+        Stripe invoice template default
+        <% if @invoice_setting.stripe_payment_method_configuration_id.present? %>
+          <span class="text-muted">(stored config: <%= @invoice_setting.stripe_payment_method_configuration_id %>)</span>
+        <% end %>
+      </dd>
       <% if @winning_bid %>
         <dt class="col-sm-4">Winning bidder</dt>
         <dd class="col-sm-8"><%= @winning_bid.bidder_name %> &lt;<%= @winning_bid.bidder_email %>&gt;</dd>
