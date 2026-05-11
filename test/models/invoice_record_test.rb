@@ -12,6 +12,7 @@ class InvoiceRecordTest < ActiveSupport::TestCase
       status: "paid",
       hosted_invoice_url: "https://invoice.stripe.com/i/test",
       invoice_pdf: "https://pay.stripe.com/invoice/test.pdf",
+      due_date: 1_700_086_400,
       status_transitions: {
         "finalized_at" => 1_700_000_000,
         "paid_at" => 1_700_000_100,
@@ -26,5 +27,22 @@ class InvoiceRecordTest < ActiveSupport::TestCase
     assert_equal "https://invoice.stripe.com/i/test", record.stripe_invoice_url
     assert_equal "https://pay.stripe.com/invoice/test.pdf", record.stripe_invoice_pdf
     assert record.paid_at
+    assert record.due_at
+  end
+
+  test "unexpired is false for superseded invoice records" do
+    record = silent_auction_items(:closed_item).create_invoice_record!(
+      stripe_status: "open",
+      amount_cents: 7500,
+      customer_name: "Winner",
+      customer_email: "winner@example.com",
+      due_at: 2.days.from_now
+    )
+
+    assert record.unexpired?
+
+    record.supersede!
+
+    assert_not record.unexpired?
   end
 end

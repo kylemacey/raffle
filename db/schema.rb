@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_11_130000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_11_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -60,9 +60,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_11_130000) do
     t.datetime "voided_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["source_type", "source_id"], name: "index_invoice_records_on_source_type_and_source_id", unique: true
+    t.datetime "due_at"
+    t.datetime "superseded_at"
+    t.index ["source_type", "source_id"], name: "index_invoice_records_on_active_source", unique: true, where: "(superseded_at IS NULL)"
     t.index ["stripe_invoice_id"], name: "index_invoice_records_on_stripe_invoice_id", unique: true
     t.index ["stripe_status"], name: "index_invoice_records_on_stripe_status"
+    t.index ["superseded_at"], name: "index_invoice_records_on_superseded_at"
   end
 
   create_table "invoice_settings", force: :cascade do |t|

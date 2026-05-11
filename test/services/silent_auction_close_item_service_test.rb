@@ -119,6 +119,49 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "replaces winner by voiding old invoice and sending new invoice" do
+    item, replacement_bid, current_bid, old_invoice = build_closed_item_with_two_bids
+    customer = OpenStruct.new(id: "cus_replacement", email: replacement_bid.bidder_email, created: 30)
+    voided_invoice = stripe_invoice(
+      id: old_invoice.stripe_invoice_id,
+      status: "void",
+      voided_at: 1_700_000_200
+    )
+    voided_invoice_id = nil
+
+    Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
+      Stripe::Invoice.stub(:void_invoice, ->(invoice_id) { voided_invoice_id = invoice_id; voided_invoice }) do
+        with_invoice_stubs(invoice_id: "in_replacement_123") do
+          result = SilentAuction::CloseItemService.new(item, winning_bid: replacement_bid, replace_invoice: true).call
+
+          assert result.success?
+        end
+      end
+    end
+
+    assert_equal "in_old_123", voided_invoice_id
+    assert_equal replacement_bid, item.reload.winning_bid
+    assert_not_equal current_bid, item.winning_bid
+    assert old_invoice.reload.superseded?
+    assert_equal "void", old_invoice.stripe_status
+    assert_equal "in_replacement_123", item.invoice_record.stripe_invoice_id
+    assert_equal replacement_bid.bidder_email, item.invoice_record.customer_email
+    assert_equal 2, item.invoice_records.count
+  end
+
+  test "does not replace winner when current invoice is already paid" do
+    item, replacement_bid, current_bid, old_invoice = build_closed_item_with_two_bids
+    old_invoice.update!(stripe_status: "paid", paid_at: Time.current)
+
+    result = SilentAuction::CloseItemService.new(item, winning_bid: replacement_bid, replace_invoice: true).call
+
+    assert_not result.success?
+    assert_match "already paid", result.message
+    assert_equal current_bid, item.reload.winning_bid
+    assert_equal old_invoice, item.invoice_record
+    assert_not old_invoice.reload.superseded?
+  end
+
   private
 
   def build_item_with_bid(email:)
@@ -140,22 +183,58 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     item
   end
 
-  def with_invoice_stubs(expected_payment_method_types: InvoiceSetting.current.payment_method_types)
+  def build_closed_item_with_two_bids
+    item = @event.silent_auction_items.create!(
+      name: "Replacement Prize",
+      description: "Prize description.",
+      starting_bid_cents: 5000,
+      image_url: "https://example.com/replacement-prize.jpg",
+      status: "open"
+    )
+    replacement_bid = item.silent_auction_bids.create!(
+      bidder_name: "Replacement Winner",
+      bidder_phone: "585-555-0108",
+      bidder_email: "replacement@example.com",
+      amount_cents: 5000,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 5000
+    )
+    current_bid = item.silent_auction_bids.create!(
+      bidder_name: "Current Winner",
+      bidder_phone: "585-555-0109",
+      bidder_email: "current@example.com",
+      amount_cents: 7500,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 7500
+    )
+    item.update!(
+      status: "closed",
+      closed_at: Time.current,
+      winning_bid: current_bid
+    )
+    old_invoice = item.create_invoice_record!(
+      stripe_invoice_id: "in_old_123",
+      stripe_status: "open",
+      amount_cents: current_bid.amount_cents,
+      customer_name: current_bid.bidder_name,
+      customer_email: current_bid.bidder_email,
+      customer_phone: current_bid.bidder_phone,
+      due_at: 2.days.from_now
+    )
+
+    [item, replacement_bid, current_bid, old_invoice]
+  end
+
+  def with_invoice_stubs(invoice_id: "in_test_123", expected_payment_method_types: InvoiceSetting.current.payment_method_types)
     invoice_params = nil
     invoice_item_params = nil
-    invoice = OpenStruct.new(id: "in_test_123", status: "draft")
-    finalized_invoice = OpenStruct.new(id: "in_test_123", status: "open")
-    sent_invoice = OpenStruct.new(
-      id: "in_test_123",
+    invoice = OpenStruct.new(id: invoice_id, status: "draft")
+    finalized_invoice = OpenStruct.new(id: invoice_id, status: "open")
+    sent_invoice = stripe_invoice(
+      id: invoice_id,
       status: "open",
       hosted_invoice_url: "https://invoice.stripe.com/i/test",
-      invoice_pdf: "https://pay.stripe.com/invoice/test.pdf",
-      status_transitions: {
-        "finalized_at" => 1_700_000_000,
-        "paid_at" => nil,
-        "voided_at" => nil
-      },
-      attempt_count: 0
+      invoice_pdf: "https://pay.stripe.com/invoice/test.pdf"
     )
 
     Stripe::Invoice.stub(:create, ->(params) { invoice_params = params; invoice }) do
@@ -180,5 +259,21 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     end
     assert_equal 5000, invoice_item_params[:amount]
     assert_equal "usd", invoice_item_params[:currency]
+  end
+
+  def stripe_invoice(id:, status:, hosted_invoice_url: nil, invoice_pdf: nil, finalized_at: 1_700_000_000, paid_at: nil, voided_at: nil)
+    OpenStruct.new(
+      id: id,
+      status: status,
+      hosted_invoice_url: hosted_invoice_url,
+      invoice_pdf: invoice_pdf,
+      due_date: 1_700_604_800,
+      status_transitions: {
+        "finalized_at" => finalized_at,
+        "paid_at" => paid_at,
+        "voided_at" => voided_at
+      },
+      attempt_count: 0
+    )
   end
 end

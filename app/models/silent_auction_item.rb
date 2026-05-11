@@ -5,7 +5,8 @@ class SilentAuctionItem < ApplicationRecord
   belongs_to :event
   belongs_to :winning_bid, class_name: "SilentAuctionBid", optional: true
   has_many :silent_auction_bids, dependent: :destroy
-  has_one :invoice_record, as: :source, dependent: :destroy
+  has_many :invoice_records, as: :source, dependent: :destroy
+  has_one :invoice_record, -> { active.latest_first }, as: :source, class_name: "InvoiceRecord"
 
   before_validation :set_default_status
 
@@ -77,6 +78,10 @@ class SilentAuctionItem < ApplicationRecord
 
   def status_label
     status.to_s.titleize
+  end
+
+  def invoice_history
+    invoice_records.latest_first
   end
 
   def self.cents_from_amount(amount)
