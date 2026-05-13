@@ -32,6 +32,13 @@ forwarder. The Rackmount HTTP router also maps `raffle.test` to the web service
 on `127.0.0.1:18082`; configure local DNS for `raffle.test` if you want to use
 that host name.
 
+By default the Stripe webhook forwarder subscribes to the webhook types handled
+by `WebhooksController`: Terminal reader action success/failure events and the
+silent-auction invoice lifecycle events (`invoice.finalized`, `invoice.sent`,
+`invoice.paid`, `invoice.payment_failed`, `invoice.finalization_failed`, and
+`invoice.voided`). Override `STRIPE_WEBHOOK_EVENTS` only when you intentionally
+want a narrower or broader local event set.
+
 Create a local `.env` from `.env.example`. The Stripe webhook service uses
 `STRIPE_API_KEY` when present, otherwise `STRIPE_SECRET_KEY`, and passes that
 project-specific value to `stripe listen` with `--api-key`, so the CLI does not
