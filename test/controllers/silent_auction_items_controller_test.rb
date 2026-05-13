@@ -1,10 +1,17 @@
 require "test_helper"
 
 class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     @event = events(:one)
     @item = silent_auction_items(:paused_item)
     sign_in(users(:two))
+  end
+
+  teardown do
+    clear_enqueued_jobs
+    clear_performed_jobs
   end
 
   test "event lead can get index" do
@@ -174,6 +181,104 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action='#{retry_invoice_event_silent_auction_item_path(@event, item)}']"
   end
 
+  test "event lead queues item close work" do
+    item = @event.silent_auction_items.create!(
+      name: "Queued Close Item",
+      description: "No bid item.",
+      starting_bid_cents: 1000,
+      image_url: "https://example.com/queued-close.jpg",
+      status: "open"
+    )
+
+    assert_enqueued_with(job: SilentAuction::CloseItemJob, args: [item]) do
+      patch close_event_silent_auction_item_url(@event, item)
+    end
+
+    assert_redirected_to event_silent_auction_item_url(@event, item)
+    assert_equal "Silent auction item close was queued. Invoice delivery will continue in the background.", flash[:notice]
+    assert_equal "open", item.reload.status
+  end
+
+  test "event lead queues invoice retry work" do
+    item = @event.silent_auction_items.create!(
+      name: "Queued Retry Item",
+      description: "Closed item with a partial invoice.",
+      starting_bid_cents: 5000,
+      image_url: "https://example.com/queued-retry.jpg",
+      status: "open"
+    )
+    bid = item.silent_auction_bids.create!(
+      bidder_name: "Partial Bidder",
+      bidder_phone: "585-555-0182",
+      bidder_email: "partial-bidder@example.com",
+      amount_cents: 5000,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 5000
+    )
+    item.update!(status: "closed", closed_at: Time.current, winning_bid: bid)
+    item.create_invoice_record!(
+      stripe_invoice_id: "in_partial_retry_123",
+      stripe_status: "draft",
+      amount_cents: bid.amount_cents,
+      customer_name: bid.bidder_name,
+      customer_email: bid.bidder_email,
+      customer_phone: bid.bidder_phone,
+      last_error: "invoice item failure"
+    )
+
+    assert_enqueued_with(job: SilentAuction::CloseItemJob, args: [item]) do
+      post retry_invoice_event_silent_auction_item_url(@event, item)
+    end
+
+    assert_redirected_to event_silent_auction_item_url(@event, item)
+    assert_equal "Invoice retry was queued. Invoice delivery will continue in the background.", flash[:notice]
+  end
+
+  test "event lead queues winner promotion work" do
+    item = @event.silent_auction_items.create!(
+      name: "Queued Promotion Item",
+      description: "Closed item with replacement candidates.",
+      starting_bid_cents: 5000,
+      image_url: "https://example.com/queued-promotion.jpg",
+      status: "open"
+    )
+    replacement_bid = item.silent_auction_bids.create!(
+      bidder_name: "Replacement Bidder",
+      bidder_phone: "585-555-0180",
+      bidder_email: "replacement-bidder@example.com",
+      amount_cents: 5000,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 5000
+    )
+    current_bid = item.silent_auction_bids.create!(
+      bidder_name: "Current Bidder",
+      bidder_phone: "585-555-0181",
+      bidder_email: "current-bidder@example.com",
+      amount_cents: 7500,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 7500
+    )
+    item.update!(status: "closed", closed_at: Time.current, winning_bid: current_bid)
+    item.create_invoice_record!(
+      stripe_invoice_id: "in_current_queue_123",
+      stripe_status: "open",
+      amount_cents: current_bid.amount_cents,
+      customer_name: current_bid.bidder_name,
+      customer_email: current_bid.bidder_email,
+      due_at: 2.days.from_now
+    )
+
+    assert_enqueued_with(
+      job: SilentAuction::CloseItemJob,
+      args: [item, { winning_bid_id: replacement_bid.id, replace_invoice: true }]
+    ) do
+      patch promote_winner_event_silent_auction_item_url(@event, item, bid_id: replacement_bid.id)
+    end
+
+    assert_redirected_to event_silent_auction_item_url(@event, item)
+    assert_equal "Winner promotion was queued. Invoice replacement will continue in the background.", flash[:notice]
+  end
+
   test "event lead cannot update item with paid invoice" do
     item, _replacement_bid = paid_invoice_item
 
@@ -200,7 +305,7 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Paid invoices cannot be changed.", flash[:alert]
   end
 
-  test "event lead can close all no-bid items without invoices" do
+  test "event lead queues close all no-bid items without processing inline" do
     empty_event = events(:two)
     first = empty_event.silent_auction_items.create!(
       name: "No Bid One",
@@ -217,11 +322,14 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
       status: "paused"
     )
 
-    patch close_all_event_silent_auction_items_url(empty_event)
+    assert_enqueued_with(job: SilentAuction::CloseEventItemsJob, args: [empty_event]) do
+      patch close_all_event_silent_auction_items_url(empty_event)
+    end
 
     assert_redirected_to event_silent_auction_items_url(empty_event)
-    assert_equal "closed", first.reload.status
-    assert_equal "closed", second.reload.status
+    assert_equal "Silent auction close-all was queued. Invoice delivery will continue in the background.", flash[:notice]
+    assert_equal "open", first.reload.status
+    assert_equal "paused", second.reload.status
   end
 
   test "cashier cannot manage silent auction" do

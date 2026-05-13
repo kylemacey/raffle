@@ -1,8 +1,18 @@
 module SilentAuction
   class CloseItemService
-    Result = Struct.new(:success, :message, :invoice_record, keyword_init: true) do
+    RETRYABLE_STRIPE_ERRORS = [
+      Stripe::APIConnectionError,
+      Stripe::APIError,
+      Stripe::RateLimitError
+    ].freeze
+
+    Result = Struct.new(:success, :message, :invoice_record, :retryable, keyword_init: true) do
       def success?
         success
+      end
+
+      def retryable?
+        !!retryable
       end
     end
 
@@ -94,7 +104,12 @@ module SilentAuction
       create_stripe_invoice(build_replacement_invoice_record(winning_bid), winning_bid, replacement: true)
     rescue Stripe::StripeError => e
       current_invoice&.update!(last_error: "Could not replace winner: #{e.message}")
-      Result.new(success: false, message: "Could not replace winner: #{e.message}", invoice_record: current_invoice)
+      Result.new(
+        success: false,
+        message: "Could not replace winner: #{e.message}",
+        invoice_record: current_invoice,
+        retryable: retryable_stripe_error?(e)
+      )
     end
 
     def create_stripe_invoice(invoice_record, winning_bid, replacement: false)
@@ -118,7 +133,12 @@ module SilentAuction
       Result.new(success: true, message: message, invoice_record: invoice_record)
     rescue Stripe::StripeError => e
       invoice_record.update!(last_error: e.message)
-      Result.new(success: false, message: "Stripe invoice failed: #{e.message}", invoice_record: invoice_record)
+      Result.new(
+        success: false,
+        message: "Stripe invoice failed: #{e.message}",
+        invoice_record: invoice_record,
+        retryable: retryable_stripe_error?(e)
+      )
     end
 
     def invoice_complete?(invoice_record)
@@ -276,6 +296,10 @@ module SilentAuction
       elsif metadata.respond_to?(:[])
         metadata[key.to_s] || metadata[key]
       end
+    end
+
+    def retryable_stripe_error?(error)
+      RETRYABLE_STRIPE_ERRORS.any? { |error_class| error.is_a?(error_class) }
     end
   end
 end

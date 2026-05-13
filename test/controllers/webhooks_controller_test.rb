@@ -1,413 +1,48 @@
 require "test_helper"
 require "minitest/mock"
-require "ostruct"
 
 class WebhooksControllerTest < ActionDispatch::IntegrationTest
-  setup do
-    @event = events(:one)
-    @user = users(:one)
+  include ActiveJob::TestHelper
+
+  teardown do
+    clear_enqueued_jobs
+    clear_performed_jobs
   end
 
-  test "terminal reader payment intent success records payment" do
-    order = build_order_with_items([[pos_products(:one), 1]])
-    payment_intent = OpenStruct.new(
-      id: "pi_webhook_123",
-      metadata: { "order_id" => order.id.to_s },
-      amount: 100,
-      latest_charge: "ch_unused",
-      customer: "cus_unused"
-    )
+  test "valid Stripe webhook enqueues processing job without performing Stripe work inline" do
     event = terminal_event(
       "terminal.reader.action_succeeded",
       "process_payment_intent",
       "payment_intent",
-      payment_intent.id
+      "pi_webhook_123"
     )
 
-    with_sync_thread do
-      with_broadcast_stub do
-        Stripe::Webhook.stub(:construct_event, event) do
-          Stripe::PaymentIntent.stub(:retrieve, payment_intent) do
-            Stripe::PaymentIntent.stub(:capture, OpenStruct.new(id: payment_intent.id)) do
-              post "/webhooks/stripe", params: "{}"
-            end
-          end
-        end
-      end
-    end
-
-    assert_response :success
-    payment = order.reload.payment
-    assert_equal "card", payment.payment_method_type
-    assert_equal "100", payment.amount
-    assert_equal "pi_webhook_123", payment.payment_intent_id
-    assert_equal "succeeded", payment.status
-  end
-
-  test "terminal reader setup intent success creates subscription payment tracking" do
-    order = build_order_with_items([[pos_products(:two), 1]])
-    setup_intent = OpenStruct.new(
-      id: "seti_webhook_123",
-      metadata: { "order_id" => order.id.to_s },
-      customer: "cus_setup_123",
-      latest_attempt: OpenStruct.new(
-        payment_method_details: OpenStruct.new(
-          card_present: OpenStruct.new(generated_card: "pm_generated_123")
-        )
-      )
-    )
-    event = terminal_event(
-      "terminal.reader.action_succeeded",
-      "process_setup_intent",
-      "setup_intent",
-      setup_intent.id
-    )
-    subscription = OpenStruct.new(id: "sub_webhook_123", status: "active")
-    broadcasts = []
-    setup_retrieve_arg = nil
-
-    with_sync_thread do
-      with_broadcast_stub(broadcasts) do
-        Stripe::Webhook.stub(:construct_event, event) do
-          Stripe::SetupIntent.stub(:retrieve, ->(arg) { setup_retrieve_arg = arg; setup_intent }) do
-            Stripe::PaymentMethod.stub(:attach, OpenStruct.new(id: "pm_generated_123")) do
-              Stripe::Customer.stub(:update, OpenStruct.new(id: "cus_setup_123")) do
-                Stripe::Subscription.stub(:create, subscription) do
-                  post "/webhooks/stripe", params: "{}"
-                end
-              end
-            end
-          end
-        end
-      end
-    end
-
-    assert_response :success
-    assert_equal({ id: setup_intent.id, expand: ['latest_attempt'] }, setup_retrieve_arg)
-    payment = order.reload.payment
-    assert_equal "card", payment.payment_method_type
-    assert_equal "0", payment.amount
-    assert_equal "seti_webhook_123", payment.stripe_setup_intent_id
-    assert_equal "sub_webhook_123", payment.stripe_subscription_id
-    assert_equal "succeeded", payment.status
-    assert_equal "payment_status_seti_webhook_123", broadcasts.last.first.first
-    assert_includes broadcasts.last.last[:locals][:url], "/pos/success/#{order.id}"
-  end
-
-  test "terminal reader setup intent success without generated card records failure" do
-    order = build_order_with_items([[pos_products(:two), 1]])
-    setup_intent = OpenStruct.new(
-      id: "seti_missing_card",
-      metadata: { "order_id" => order.id.to_s },
-      customer: "cus_setup_123",
-      latest_attempt: OpenStruct.new(
-        payment_method_details: OpenStruct.new(
-          card_present: OpenStruct.new(generated_card: nil)
-        )
-      )
-    )
-    event = terminal_event(
-      "terminal.reader.action_succeeded",
-      "process_setup_intent",
-      "setup_intent",
-      setup_intent.id
-    )
-    broadcasts = []
-    setup_retrieve_arg = nil
-
-    with_sync_thread do
-      with_broadcast_stub(broadcasts) do
-        Stripe::Webhook.stub(:construct_event, event) do
-          Stripe::SetupIntent.stub(:retrieve, ->(arg) { setup_retrieve_arg = arg; setup_intent }) do
-            post "/webhooks/stripe", params: "{}"
-          end
-        end
-      end
-    end
-
-    assert_response :success
-    assert_equal({ id: setup_intent.id, expand: ['latest_attempt'] }, setup_retrieve_arg)
-    payment = order.reload.payment
-    assert_equal "seti_missing_card", payment.stripe_setup_intent_id
-    assert_equal "failed", payment.status
-    assert_nil payment.stripe_subscription_id
-    assert_equal "payment_status_seti_missing_card", broadcasts.last.first.first
-    assert_includes broadcasts.last.last[:locals][:url], "/pos/failure/#{order.id}"
-  end
-
-  test "terminal reader setup intent success with inactive subscription records failure" do
-    order = build_order_with_items([[pos_products(:two), 1]])
-    setup_intent = OpenStruct.new(
-      id: "seti_incomplete_subscription",
-      metadata: { "order_id" => order.id.to_s },
-      customer: "cus_setup_123",
-      latest_attempt: OpenStruct.new(
-        payment_method_details: OpenStruct.new(
-          card_present: OpenStruct.new(generated_card: "pm_generated_123")
-        )
-      )
-    )
-    event = terminal_event(
-      "terminal.reader.action_succeeded",
-      "process_setup_intent",
-      "setup_intent",
-      setup_intent.id
-    )
-    subscription = OpenStruct.new(id: "sub_incomplete_123", status: "incomplete")
-    broadcasts = []
-
-    with_sync_thread do
-      with_broadcast_stub(broadcasts) do
-        Stripe::Webhook.stub(:construct_event, event) do
-          Stripe::SetupIntent.stub(:retrieve, setup_intent) do
-            Stripe::PaymentMethod.stub(:attach, OpenStruct.new(id: "pm_generated_123")) do
-              Stripe::Customer.stub(:update, OpenStruct.new(id: "cus_setup_123")) do
-                Stripe::Subscription.stub(:create, subscription) do
-                  post "/webhooks/stripe", params: "{}"
-                end
-              end
-            end
-          end
-        end
-      end
-    end
-
-    assert_response :success
-    payment = order.reload.payment
-    assert_equal "failed", payment.status
-    assert_equal "seti_incomplete_subscription", payment.stripe_setup_intent_id
-    assert_equal "sub_incomplete_123", payment.stripe_subscription_id
-    assert_equal "payment_status_seti_incomplete_subscription", broadcasts.last.first.first
-    assert_includes broadcasts.last.last[:locals][:url], "/pos/failure/#{order.id}"
-  end
-
-  test "late terminal setup intent failure does not redirect succeeded order" do
-    order = build_order_with_items([[pos_products(:two), 1]])
-    order.create_payment!(
-      payment_method_type: "card",
-      amount: "0",
-      stripe_setup_intent_id: "seti_late_failure",
-      stripe_subscription_id: "sub_existing_123",
-      status: "succeeded"
-    )
-    setup_intent = OpenStruct.new(
-      id: "seti_late_failure",
-      metadata: { "order_id" => order.id.to_s }
-    )
-    event = terminal_event(
-      "terminal.reader.action_failed",
-      "process_setup_intent",
-      "setup_intent",
-      setup_intent.id
-    )
-    broadcasts = []
-
-    with_broadcast_stub(broadcasts) do
+    assert_enqueued_jobs 1, only: StripeWebhookEventJob do
       Stripe::Webhook.stub(:construct_event, event) do
-        Stripe::SetupIntent.stub(:retrieve, setup_intent) do
+        Stripe::PaymentIntent.stub(:retrieve, ->(*) { raise "should not retrieve payment intent inline" }) do
           post "/webhooks/stripe", params: "{}"
         end
       end
     end
 
     assert_response :success
-    payment = order.reload.payment
-    assert_equal "succeeded", payment.status
-    assert_equal "sub_existing_123", payment.stripe_subscription_id
-    assert_empty broadcasts
   end
 
-  test "late terminal payment intent failure does not redirect succeeded order" do
-    order = build_order_with_items([[pos_products(:one), 1]])
-    order.create_payment!(
-      payment_method_type: "card",
-      amount: "100",
-      payment_intent_id: "pi_late_failure",
-      status: "succeeded"
-    )
-    payment_intent = OpenStruct.new(
-      id: "pi_late_failure",
-      metadata: { "order_id" => order.id.to_s },
-      amount: 100
-    )
-    event = terminal_event(
-      "terminal.reader.action_failed",
-      "process_payment_intent",
-      "payment_intent",
-      payment_intent.id
-    )
-    broadcasts = []
-
-    with_broadcast_stub(broadcasts) do
-      Stripe::Webhook.stub(:construct_event, event) do
-        Stripe::PaymentIntent.stub(:retrieve, payment_intent) do
-          post "/webhooks/stripe", params: "{}"
-        end
+  test "invalid Stripe webhook signature returns bad request and does not enqueue job" do
+    assert_no_enqueued_jobs only: StripeWebhookEventJob do
+      Stripe::Webhook.stub(:construct_event, ->(*) { raise JSON::ParserError, "bad payload" }) do
+        post "/webhooks/stripe", params: "{"
       end
     end
 
-    assert_response :success
-    payment = order.reload.payment
-    assert_equal "succeeded", payment.status
-    assert_equal "pi_late_failure", payment.payment_intent_id
-    assert_empty broadcasts
-  end
-
-  test "invoice paid webhook syncs invoice record and creates order" do
-    invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
-      stripe_invoice_id: "in_paid_123",
-      stripe_status: "open",
-      amount_cents: 7500,
-      customer_name: "Winner",
-      customer_email: "winner@example.com",
-      customer_phone: "(585) 555-0124"
-    )
-    event = invoice_event(
-      "invoice.paid",
-      {
-        "id" => "in_paid_123",
-        "status" => "paid",
-        "hosted_invoice_url" => "https://invoice.stripe.com/i/paid",
-        "invoice_pdf" => "https://pay.stripe.com/invoice/paid.pdf",
-        "status_transitions" => {
-          "finalized_at" => 1_700_000_000,
-          "paid_at" => 1_700_000_100,
-          "voided_at" => nil
-        },
-        "payment_intent" => "pi_invoice_paid_123",
-        "attempt_count" => 1
-      }
-    )
-
-    assert_difference -> { Order.count }, 1 do
-      assert_difference -> { Payment.count }, 1 do
-        Stripe::Webhook.stub(:construct_event, event) do
-          post "/webhooks/stripe", params: "{}"
-        end
-      end
-    end
-
-    assert_response :success
-    invoice_record.reload
-    assert_equal "paid", invoice_record.stripe_status
-    assert_equal "https://invoice.stripe.com/i/paid", invoice_record.stripe_invoice_url
-    assert invoice_record.paid_at
-    assert_nil invoice_record.last_error
-
-    order = invoice_record.order
-    assert_equal silent_auction_items(:closed_item).event, order.event
-    assert_equal "Winner", order.customer_name
-    assert_equal "winner@example.com", order.customer_email
-    assert_equal "(585) 555-0124", order.customer_phone
-    assert_equal 7500, order.total_amount
-    assert_equal "stripe_invoice", order.payment_method_type
-    assert_equal "succeeded", order.payment.status
-    assert_equal "in_paid_123", order.payment.stripe_invoice_id
-    assert_equal "pi_invoice_paid_123", order.payment.payment_intent_id
-    assert_equal "Silent Auction: #{silent_auction_items(:closed_item).name}", order.order_items.sole.pos_product.name
-  end
-
-  test "duplicate invoice paid webhook does not duplicate order" do
-    invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
-      stripe_invoice_id: "in_paid_duplicate_123",
-      stripe_status: "paid",
-      amount_cents: 7500,
-      customer_name: "Winner",
-      customer_email: "winner@example.com",
-      paid_at: Time.current
-    )
-    event = invoice_event(
-      "invoice.paid",
-      {
-        "id" => "in_paid_duplicate_123",
-        "status" => "paid",
-        "status_transitions" => {
-          "finalized_at" => 1_700_000_000,
-          "paid_at" => 1_700_000_100,
-          "voided_at" => nil
-        },
-        "attempt_count" => 1
-      }
-    )
-
-    Stripe::Webhook.stub(:construct_event, event) do
-      post "/webhooks/stripe", params: "{}"
-    end
-    assert_response :success
-
-    assert_no_difference -> { Order.count } do
-      assert_no_difference -> { Payment.count } do
-        Stripe::Webhook.stub(:construct_event, event) do
-          post "/webhooks/stripe", params: "{}"
-        end
-      end
-    end
-
-    assert invoice_record.reload.order
-    assert invoice_record.order.payment
-  end
-
-  test "invoice payment failed webhook stores failure state" do
-    invoice_record = silent_auction_items(:closed_item).create_invoice_record!(
-      stripe_invoice_id: "in_failed_123",
-      stripe_status: "open",
-      amount_cents: 7500,
-      customer_name: "Winner",
-      customer_email: "winner@example.com"
-    )
-    event = invoice_event(
-      "invoice.payment_failed",
-      {
-        "id" => "in_failed_123",
-        "status" => "open",
-        "hosted_invoice_url" => "https://invoice.stripe.com/i/failed",
-        "invoice_pdf" => "https://pay.stripe.com/invoice/failed.pdf",
-        "status_transitions" => {
-          "finalized_at" => 1_700_000_000,
-          "paid_at" => nil,
-          "voided_at" => nil
-        },
-        "attempt_count" => 1,
-        "last_finalization_error" => { "message" => "Payment failed." }
-      }
-    )
-
-    Stripe::Webhook.stub(:construct_event, event) do
-      post "/webhooks/stripe", params: "{}"
-    end
-
-    assert_response :success
-    invoice_record.reload
-    assert_equal "open", invoice_record.stripe_status
-    assert invoice_record.failed_at
-    assert_equal "Payment failed.", invoice_record.last_error
+    assert_response :bad_request
   end
 
   private
 
-  def build_order_with_items(items)
-    total = items.sum { |product, quantity| product.price * quantity }
-    order = @event.orders.create!(
-      customer_name: "Webhook Customer",
-      customer_email: "webhook@example.com",
-      total_amount: total,
-      user: @user,
-      payment_method_type: "card"
-    )
-
-    items.each do |product, quantity|
-      order.order_items.create!(
-        pos_product: product,
-        quantity: quantity,
-        unit_price: product.price
-      )
-    end
-
-    order
-  end
-
   def terminal_event(event_type, action_type, intent_key, intent_id)
     {
+      "id" => "evt_test_123",
       "type" => event_type,
       "data" => {
         "object" => {
@@ -420,28 +55,5 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
         }
       }
     }
-  end
-
-  def invoice_event(event_type, invoice)
-    {
-      "type" => event_type,
-      "data" => {
-        "object" => invoice
-      }
-    }
-  end
-
-  def with_sync_thread(&block)
-    Thread.stub(:new, ->(*_args, &thread_block) { thread_block.call }, &block)
-  end
-
-  def with_broadcast_stub(broadcasts = [], &block)
-    Turbo::StreamsChannel.stub(
-      :broadcast_replace_to,
-      ->(*args, **kwargs) {
-        broadcasts << [args, kwargs]
-      },
-      &block
-    )
   end
 end

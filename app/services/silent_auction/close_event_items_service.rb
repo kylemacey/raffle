@@ -1,8 +1,12 @@
 module SilentAuction
   class CloseEventItemsService
-    Result = Struct.new(:success, :message, :results, keyword_init: true) do
+    Result = Struct.new(:success, :message, :results, :retryable, keyword_init: true) do
       def success?
         success
+      end
+
+      def retryable?
+        !!retryable
       end
     end
 
@@ -20,7 +24,8 @@ module SilentAuction
       Result.new(
         success: failures.empty?,
         message: message_for(results, failures),
-        results: results
+        results: results,
+        retryable: failures.any?(&:retryable?)
       )
     end
 
