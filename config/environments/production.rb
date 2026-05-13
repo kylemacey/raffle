@@ -58,9 +58,14 @@ Rails.application.configure do
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
 
-  # Use a real queuing backend for Active Job (and separate queues per environment).
-  # config.active_job.queue_adapter     = :resque
-  # config.active_job.queue_name_prefix = "raffle_production"
+  # Use a durable worker queue outside the web request lifecycle.
+  config.active_job.queue_adapter = :good_job
+  config.active_job.queue_name_prefix = "raffle_production"
+  config.good_job.execution_mode = :external
+  config.good_job.queues = ENV.fetch("GOOD_JOB_QUEUES", "*")
+  config.good_job.max_threads = ENV.fetch("GOOD_JOB_MAX_THREADS", 5).to_i
+  config.good_job.poll_interval = ENV.fetch("GOOD_JOB_POLL_INTERVAL", 10).to_i
+  config.good_job.shutdown_timeout = ENV.fetch("GOOD_JOB_SHUTDOWN_TIMEOUT", 30).to_i
 
   config.action_mailer.perform_caching = false
 

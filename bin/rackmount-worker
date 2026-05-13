@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+set -eu
+
+cd "$(dirname "$0")/.."
+
+if [ -x bin/rackmount-env ]; then
+  eval "$(bin/rackmount-env)"
+fi
+
+: "${RAILS_ENV:=development}"
+if [ -z "${DATABASE_URL:-}" ]; then
+  : "${POSTGRES_HOST:=${DB_HOST:-127.0.0.1}}"
+  : "${POSTGRES_PORT:=${DB_PORT:-55434}}"
+  : "${POSTGRES_USER:=postgres}"
+  : "${POSTGRES_PASSWORD:=password}"
+  : "${POSTGRES_DATABASE:=raffle_${RAILS_ENV}}"
+  DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}"
+  export POSTGRES_HOST POSTGRES_PORT POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DATABASE
+fi
+
+: "${GOOD_JOB_EXECUTION_MODE:=external}"
+: "${GOOD_JOB_QUEUES:=*}"
+: "${GOOD_JOB_MAX_THREADS:=5}"
+: "${GOOD_JOB_POLL_INTERVAL:=10}"
+: "${GOOD_JOB_SHUTDOWN_TIMEOUT:=30}"
+
+export RAILS_ENV DATABASE_URL
+export GOOD_JOB_EXECUTION_MODE GOOD_JOB_QUEUES GOOD_JOB_MAX_THREADS GOOD_JOB_POLL_INTERVAL GOOD_JOB_SHUTDOWN_TIMEOUT
+
+echo "Using DATABASE_URL for PostgreSQL"
+echo "Starting GoodJob worker for queues=${GOOD_JOB_QUEUES} max_threads=${GOOD_JOB_MAX_THREADS}"
+
+exec bundle exec good_job start

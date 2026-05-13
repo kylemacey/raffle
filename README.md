@@ -27,10 +27,10 @@ Rackmount is the default local process runner for this repo:
 bin/dev
 ```
 
-That starts the Rails web service on `127.0.0.1:3000` and a Stripe webhook
-forwarder. The Rackmount HTTP router also maps `raffle.test` to the web service
-on `127.0.0.1:18082`; configure local DNS for `raffle.test` if you want to use
-that host name.
+That starts the Rails web service on `127.0.0.1:3000`, the GoodJob worker, and a
+Stripe webhook forwarder. The Rackmount HTTP router also maps `raffle.test` to
+the web service on `127.0.0.1:18082`; configure local DNS for `raffle.test` if
+you want to use that host name.
 
 By default the Stripe webhook forwarder subscribes to the webhook types handled
 by `WebhooksController`: Terminal reader action success/failure events and the
@@ -60,3 +60,51 @@ which matches the Compose `db` service published port. Change that connection
 string if you want Rackmount Rails to use a different PostgreSQL server. Docker
 Compose remains available as an optional deployment/development path and also
 passes Rails a `DATABASE_URL`.
+
+## Background Jobs
+
+ActiveJob uses GoodJob in development, staging, and production. GoodJob stores
+jobs in PostgreSQL and runs them from a separate worker process, so async work
+does not depend on the Rails web request lifecycle. The test environment uses
+the Rails test adapter for predictable assertions.
+
+Run the GoodJob migration before deploying or starting a worker against a fresh
+database:
+
+```sh
+bin/rails db:migrate
+```
+
+Rackmount starts the worker from `Procfile`:
+
+```Procfile
+worker: bin/rackmount-worker
+```
+
+Useful local operations:
+
+```sh
+rackmount status
+rackmount logs
+rackmount restart
+rackmount stop
+```
+
+The worker entrypoint accepts GoodJob environment settings when you need to tune
+local, staging, or production throughput:
+
+```sh
+GOOD_JOB_QUEUES="*" GOOD_JOB_MAX_THREADS=5 GOOD_JOB_POLL_INTERVAL=10 bin/rackmount-worker
+```
+
+Inspect queued and recent jobs from Rails:
+
+```sh
+bin/rails runner 'puts GoodJob::Job.order(created_at: :desc).limit(20).pluck(:id, :queue_name, :job_class, :finished_at, :error).map { |row| row.join(" | ") }'
+```
+
+Clean preserved job history with:
+
+```sh
+bundle exec good_job cleanup_preserved_jobs
+```

@@ -36,6 +36,15 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
+  # Use the durable GoodJob queue locally; Rackmount starts the worker process.
+  config.active_job.queue_adapter = :good_job
+  config.active_job.queue_name_prefix = "raffle_development"
+  config.good_job.execution_mode = :external
+  config.good_job.queues = ENV.fetch("GOOD_JOB_QUEUES", "*")
+  config.good_job.max_threads = ENV.fetch("GOOD_JOB_MAX_THREADS", 5).to_i
+  config.good_job.poll_interval = ENV.fetch("GOOD_JOB_POLL_INTERVAL", 10).to_i
+  config.good_job.shutdown_timeout = ENV.fetch("GOOD_JOB_SHUTDOWN_TIMEOUT", 30).to_i
+
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
