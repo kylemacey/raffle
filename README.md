@@ -61,6 +61,25 @@ string if you want Rackmount Rails to use a different PostgreSQL server. Docker
 Compose remains available as an optional deployment/development path and also
 passes Rails a `DATABASE_URL`.
 
+## Staging
+
+Staging runs with `RAILS_ENV=staging` and inherits production Rails settings while
+keeping staging-specific infrastructure. Set `DATABASE_URL` to a staging-only
+PostgreSQL database, set `REDIS_URL` to staging Redis, and use the standard
+`SECRET_KEY_BASE` Rails secret.
+
+Stripe must use test-mode credentials in staging. Set `STRIPE_SECRET_KEY` or
+`STRIPE_API_KEY` to a secret or restricted test key (`sk_test_...` or
+`rk_test_...`). Rails and the Rackmount Stripe entrypoints fail on boot if
+staging is missing Stripe credentials or if either Stripe key is live mode.
+Set `STRIPE_ENDPOINT_SECRET` to the staging webhook signing secret unless
+Rackmount is allowed to resolve it automatically.
+
+Staging uses the `raffle_staging` GoodJob queue prefix and `raffle_staging`
+Action Cable channel prefix. Tune worker throughput with `GOOD_JOB_QUEUES`,
+`GOOD_JOB_MAX_THREADS`, `GOOD_JOB_POLL_INTERVAL`, and
+`GOOD_JOB_SHUTDOWN_TIMEOUT` when needed.
+
 ## Background Jobs
 
 ActiveJob uses GoodJob in development, staging, and production. GoodJob stores
