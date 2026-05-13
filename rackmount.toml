@@ -5,6 +5,9 @@ name = "raffle"
 port = "auto"
 color = "cyan"
 
+[services.worker]
+color = "green"
+
 [services.stripe-webhooks]
 color = "magenta"
 
