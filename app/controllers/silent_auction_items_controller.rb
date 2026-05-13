@@ -5,14 +5,18 @@ class SilentAuctionItemsController < ApplicationController
     show edit update open pause close close_confirmation retry_invoice
     promote_winner_confirmation promote_winner
   ]
+  before_action :ensure_invoice_mutable!, only: %i[
+    edit update open pause close close_confirmation retry_invoice
+    promote_winner_confirmation promote_winner
+  ]
 
   def index
     @items = @event.silent_auction_items
                    .includes(:invoice_record, :winning_bid, :silent_auction_bids)
                    .ordered_for_admin
-    @open_all_count = @event.silent_auction_items.where(status: %w[draft paused]).count
-    @pause_all_count = @event.silent_auction_items.where(status: "open").count
-    @close_all_count = @event.silent_auction_items.where(status: %w[open paused]).count
+    @open_all_count = mutable_items.where(status: %w[draft paused]).count
+    @pause_all_count = mutable_items.where(status: "open").count
+    @close_all_count = mutable_items.where(status: %w[open paused]).count
   end
 
   def show
@@ -59,12 +63,12 @@ class SilentAuctionItemsController < ApplicationController
   end
 
   def open_all
-    count = @event.silent_auction_items.where(status: %w[draft paused]).update_all(status: "open", updated_at: Time.current)
+    count = mutable_items.where(status: %w[draft paused]).update_all(status: "open", updated_at: Time.current)
     redirect_to event_silent_auction_items_path(@event), notice: "#{count} silent auction item#{'s' unless count == 1} opened."
   end
 
   def pause_all
-    count = @event.silent_auction_items.where(status: "open").update_all(status: "paused", updated_at: Time.current)
+    count = mutable_items.where(status: "open").update_all(status: "paused", updated_at: Time.current)
     redirect_to event_silent_auction_items_path(@event), notice: "#{count} silent auction item#{'s' unless count == 1} paused."
   end
 
@@ -78,6 +82,7 @@ class SilentAuctionItemsController < ApplicationController
                    .where(status: %w[open paused])
                    .includes(:silent_auction_bids, :invoice_record)
                    .ordered_for_admin
+                   .reject(&:paid_invoice?)
     @invoice_setting = InvoiceSetting.current
   end
 
@@ -125,6 +130,18 @@ class SilentAuctionItemsController < ApplicationController
       :formatted_starting_bid,
       :image_url
     )
+  end
+
+  def ensure_invoice_mutable!
+    return unless @item.paid_invoice?
+
+    redirect_to event_silent_auction_item_path(@event, @item), alert: "Paid invoices cannot be changed."
+  end
+
+  def mutable_items
+    @event.silent_auction_items
+          .left_outer_joins(:invoice_record)
+          .where("invoice_records.id IS NULL OR ((invoice_records.stripe_status IS NULL OR invoice_records.stripe_status != ?) AND invoice_records.paid_at IS NULL)", "paid")
   end
 
   def flash_for_result(result)

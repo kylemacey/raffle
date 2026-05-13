@@ -50,8 +50,8 @@
             </td>
             <td class="text-nowrap">
               <% if item.invoice_record %>
-                <span class="badge <%= item.invoice_record.last_error.present? ? 'text-bg-danger' : 'text-bg-info' %>">
-                  <%= item.invoice_record.last_error.present? ? "Error" : item.invoice_record.stripe_status.presence || "Pending" %>
+                <span class="badge <%= invoice_status_badge_class(item.invoice_record) %>">
+                  <%= invoice_status_label(item.invoice_record) %>
                 </span>
               <% else %>
                 <span class="text-muted">None</span>

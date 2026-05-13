@@ -11,7 +11,7 @@ module SilentAuction
     end
 
     def call
-      items = event.silent_auction_items.where(status: %w[open paused]).ordered_for_admin
+      items = event.silent_auction_items.where(status: %w[open paused]).includes(:invoice_record).ordered_for_admin.reject(&:paid_invoice?)
       return Result.new(success: true, message: "No open or paused silent auction items to close.", results: []) if items.none?
 
       results = items.map { |item| CloseItemService.new(item).call }

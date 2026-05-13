@@ -84,6 +84,10 @@ class SilentAuctionItem < ApplicationRecord
     invoice_records.latest_first
   end
 
+  def paid_invoice?
+    invoice_record&.paid?
+  end
+
   def self.cents_from_amount(amount)
     return if amount.blank?
 
