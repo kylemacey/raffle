@@ -38,7 +38,7 @@ module SilentAuction
           )
 
           invoice_record = build_invoice_record(winning_bid)
-          result = if invoice_record.stripe_invoice_id.present?
+          result = if invoice_complete?(invoice_record)
                      Result.new(success: true, message: "Invoice already created.", invoice_record: invoice_record)
                    else
                      create_stripe_invoice(invoice_record, winning_bid)
@@ -59,8 +59,7 @@ module SilentAuction
         amount_cents: winning_bid.amount_cents,
         customer_name: winning_bid.bidder_name,
         customer_email: winning_bid.bidder_email,
-        customer_phone: winning_bid.bidder_phone,
-        last_error: nil
+        customer_phone: winning_bid.bidder_phone
       )
       invoice_record.save!
       invoice_record
@@ -71,8 +70,7 @@ module SilentAuction
         amount_cents: winning_bid.amount_cents,
         customer_name: winning_bid.bidder_name,
         customer_email: winning_bid.bidder_email,
-        customer_phone: winning_bid.bidder_phone,
-        last_error: nil
+        customer_phone: winning_bid.bidder_phone
       ).tap(&:save!)
     end
 
@@ -104,28 +102,16 @@ module SilentAuction
       invoice_setting = InvoiceSetting.current
       invoice_record.update!(stripe_customer_id: customer.id)
 
-      invoice = Stripe::Invoice.create(invoice_params(customer, winning_bid, invoice_setting))
+      invoice = stripe_invoice_for_record(invoice_record, customer, winning_bid, invoice_setting)
+      ensure_invoice_item(invoice, customer, winning_bid)
 
-      invoice_record.update!(
-        stripe_invoice_id: invoice.id,
-        stripe_status: stripe_value(invoice, :status)
-      )
-
-      Stripe::InvoiceItem.create(
-        customer: customer.id,
-        invoice: invoice.id,
-        amount: winning_bid.amount_cents,
-        currency: "usd",
-        description: invoice_description,
-        metadata: invoice_metadata(winning_bid)
-      )
-
-      finalized_invoice = Stripe::Invoice.finalize_invoice(invoice.id)
-      sent_invoice = Stripe::Invoice.send_invoice(finalized_invoice.id)
+      finalized_invoice = finalize_invoice(invoice)
+      sent_invoice = send_invoice(invoice_record, finalized_invoice)
       invoice_record.sync_from_stripe_invoice!(sent_invoice)
       invoice_record.update!(
         sent_at: invoice_record.sent_at || Time.current,
-        due_at: invoice_record.due_at || InvoiceSetting.current.days_until_due.days.from_now
+        due_at: invoice_record.due_at || invoice_setting.days_until_due.days.from_now,
+        last_error: nil
       )
 
       message = replacement ? "New winner selected and invoice sent to #{winning_bid.bidder_email}." : "Invoice sent to #{winning_bid.bidder_email}."
@@ -133,6 +119,69 @@ module SilentAuction
     rescue Stripe::StripeError => e
       invoice_record.update!(last_error: e.message)
       Result.new(success: false, message: "Stripe invoice failed: #{e.message}", invoice_record: invoice_record)
+    end
+
+    def invoice_complete?(invoice_record)
+      invoice_record.stripe_invoice_id.present? &&
+        invoice_record.last_error.blank? &&
+        invoice_record.finalized_at.present? &&
+        invoice_record.sent_at.present?
+    end
+
+    def stripe_invoice_for_record(invoice_record, customer, winning_bid, invoice_setting)
+      if invoice_record.stripe_invoice_id.present?
+        Stripe::Invoice.retrieve(invoice_record.stripe_invoice_id)
+      else
+        Stripe::Invoice.create(invoice_params(customer, winning_bid, invoice_setting)).tap do |invoice|
+          invoice_record.update!(
+            stripe_invoice_id: stripe_value(invoice, :id),
+            stripe_status: stripe_value(invoice, :status)
+          )
+        end
+      end
+    end
+
+    def ensure_invoice_item(invoice, customer, winning_bid)
+      return if stripe_value(invoice, :status) != "draft"
+      return if invoice_item_present?(invoice, winning_bid)
+
+      Stripe::InvoiceItem.create(
+        customer: customer.id,
+        invoice: stripe_value(invoice, :id),
+        amount: winning_bid.amount_cents,
+        currency: "usd",
+        description: invoice_description,
+        metadata: invoice_metadata(winning_bid)
+      )
+    end
+
+    def invoice_item_present?(invoice, winning_bid)
+      invoice_line_items(invoice).any? do |line_item|
+        stripe_value(line_item, :amount).to_i == winning_bid.amount_cents &&
+          line_item_for_current_auction?(line_item)
+      end
+    end
+
+    def invoice_line_items(invoice)
+      stripe_collection_data(stripe_value(invoice, :lines))
+    end
+
+    def line_item_for_current_auction?(line_item)
+      metadata = stripe_value(line_item, :metadata)
+      stripe_metadata_value(metadata, :silent_auction_item_id).to_s == item.id.to_s ||
+        stripe_value(line_item, :description).to_s == invoice_description
+    end
+
+    def finalize_invoice(invoice)
+      return invoice unless stripe_value(invoice, :status) == "draft"
+
+      Stripe::Invoice.finalize_invoice(stripe_value(invoice, :id))
+    end
+
+    def send_invoice(invoice_record, invoice)
+      return invoice if invoice_record.sent_at.present?
+
+      Stripe::Invoice.send_invoice(stripe_value(invoice, :id))
     end
 
     def void_current_invoice(invoice_record)
@@ -218,6 +267,14 @@ module SilentAuction
         object.public_send(key)
       elsif object.respond_to?(:[])
         object[key.to_s] || object[key]
+      end
+    end
+
+    def stripe_metadata_value(metadata, key)
+      if metadata.respond_to?(key)
+        metadata.public_send(key)
+      elsif metadata.respond_to?(:[])
+        metadata[key.to_s] || metadata[key]
       end
     end
   end

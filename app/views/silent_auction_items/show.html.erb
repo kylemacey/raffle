@@ -86,7 +86,7 @@
               <dd class="col-sm-8 text-danger"><%= invoice.last_error %></dd>
             <% end %>
           </dl>
-          <% if invoice.last_error.present? && invoice.stripe_invoice_id.blank? %>
+          <% if invoice.last_error.present? && !invoice.paid? %>
             <%= button_to "Retry invoice", retry_invoice_event_silent_auction_item_path(@event, @item), method: :post, class: "btn btn-outline-primary" %>
           <% end %>
         <% else %>

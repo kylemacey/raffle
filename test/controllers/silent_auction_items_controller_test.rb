@@ -140,6 +140,40 @@ class SilentAuctionItemsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".badge.text-bg-success", text: "paid"
   end
 
+  test "event lead can retry partial invoice failures" do
+    item = @event.silent_auction_items.create!(
+      name: "Partial Invoice Item",
+      description: "Closed item with a partial invoice.",
+      starting_bid_cents: 5000,
+      image_url: "https://example.com/partial-invoice-item.jpg",
+      status: "open"
+    )
+    bid = item.silent_auction_bids.create!(
+      bidder_name: "Partial Bidder",
+      bidder_phone: "585-555-0182",
+      bidder_email: "partial-bidder@example.com",
+      amount_cents: 5000,
+      commitment_confirmation: "1",
+      minimum_bid_cents: 5000
+    )
+    item.update!(status: "closed", closed_at: Time.current, winning_bid: bid)
+    item.create_invoice_record!(
+      stripe_invoice_id: "in_partial_123",
+      stripe_status: "draft",
+      amount_cents: bid.amount_cents,
+      customer_name: bid.bidder_name,
+      customer_email: bid.bidder_email,
+      customer_phone: bid.bidder_phone,
+      last_error: "invoice item failure"
+    )
+
+    get event_silent_auction_item_url(@event, item)
+
+    assert_response :success
+    assert_select "dd.text-danger", text: "invoice item failure"
+    assert_select "form[action='#{retry_invoice_event_silent_auction_item_path(@event, item)}']"
+  end
+
   test "event lead cannot update item with paid invoice" do
     item, _replacement_bid = paid_invoice_item
 

@@ -91,6 +91,128 @@ class SilentAuctionCloseItemServiceTest < ActiveSupport::TestCase
     assert_nil item.invoice_record.last_error
   end
 
+  test "retries partially created draft invoice after invoice item failure" do
+    item = build_item_with_bid(email: "partial@example.com")
+    customer = OpenStruct.new(id: "cus_partial", email: "partial@example.com", created: 30)
+    created_invoice = OpenStruct.new(id: "in_partial_123", status: "draft")
+    retrieved_invoice = OpenStruct.new(
+      id: "in_partial_123",
+      status: "draft",
+      lines: OpenStruct.new(data: [])
+    )
+    finalized_invoice = OpenStruct.new(id: "in_partial_123", status: "open")
+    sent_invoice = stripe_invoice(
+      id: "in_partial_123",
+      status: "open",
+      hosted_invoice_url: "https://invoice.stripe.com/i/partial",
+      invoice_pdf: "https://pay.stripe.com/invoice/partial.pdf"
+    )
+    retrieved_invoice_id = nil
+    invoice_item_params = nil
+
+    Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
+      Stripe::Invoice.stub(:create, created_invoice) do
+        Stripe::InvoiceItem.stub(:create, ->(*) { raise Stripe::APIError.new("invoice item failure") }) do
+          result = SilentAuction::CloseItemService.new(item).call
+
+          assert_not result.success?
+        end
+      end
+    end
+
+    invoice_record = item.reload.invoice_record
+    assert_equal "in_partial_123", invoice_record.stripe_invoice_id
+    assert_equal "invoice item failure", invoice_record.last_error
+    assert_nil invoice_record.finalized_at
+    assert_nil invoice_record.sent_at
+
+    Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
+      Stripe::Invoice.stub(:create, ->(*) { raise "should not create duplicate invoice" }) do
+        Stripe::Invoice.stub(:retrieve, ->(invoice_id) {
+          retrieved_invoice_id = invoice_id
+          retrieved_invoice
+        }) do
+          Stripe::InvoiceItem.stub(:create, ->(params) {
+            invoice_item_params = params
+            OpenStruct.new(id: "ii_partial_123")
+          }) do
+            Stripe::Invoice.stub(:finalize_invoice, finalized_invoice) do
+              Stripe::Invoice.stub(:send_invoice, sent_invoice) do
+                result = SilentAuction::CloseItemService.new(item).call
+
+                assert result.success?
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal "in_partial_123", retrieved_invoice_id
+    assert_equal "in_partial_123", invoice_item_params[:invoice]
+    assert_equal 5000, invoice_item_params[:amount]
+    assert_nil invoice_record.reload.last_error
+    assert invoice_record.finalized_at
+    assert invoice_record.sent_at
+  end
+
+  test "does not duplicate invoice items when retrying existing draft invoice" do
+    item = build_item_with_bid(email: "existing-line@example.com")
+    winning_bid = item.current_bid
+    customer = OpenStruct.new(id: "cus_existing_line", email: "existing-line@example.com", created: 30)
+    item.update!(
+      status: "closed",
+      closed_at: Time.current,
+      winning_bid: winning_bid
+    )
+    invoice_record = item.create_invoice_record!(
+      stripe_invoice_id: "in_existing_line_123",
+      stripe_status: "draft",
+      amount_cents: winning_bid.amount_cents,
+      customer_name: winning_bid.bidder_name,
+      customer_email: winning_bid.bidder_email,
+      customer_phone: winning_bid.bidder_phone,
+      last_error: "finalize failure"
+    )
+    existing_line_item = OpenStruct.new(
+      amount: winning_bid.amount_cents,
+      description: "Silent Auction: #{item.name}",
+      metadata: { "silent_auction_item_id" => item.id.to_s }
+    )
+    retrieved_invoice = OpenStruct.new(
+      id: invoice_record.stripe_invoice_id,
+      status: "draft",
+      lines: OpenStruct.new(data: [existing_line_item])
+    )
+    finalized_invoice = OpenStruct.new(id: invoice_record.stripe_invoice_id, status: "open")
+    sent_invoice = stripe_invoice(
+      id: invoice_record.stripe_invoice_id,
+      status: "open",
+      hosted_invoice_url: "https://invoice.stripe.com/i/existing-line",
+      invoice_pdf: "https://pay.stripe.com/invoice/existing-line.pdf"
+    )
+
+    Stripe::Customer.stub(:search, OpenStruct.new(data: [customer])) do
+      Stripe::Invoice.stub(:retrieve, retrieved_invoice) do
+        Stripe::Invoice.stub(:create, ->(*) { raise "should not create duplicate invoice" }) do
+          Stripe::InvoiceItem.stub(:create, ->(*) { raise "should not create duplicate invoice item" }) do
+            Stripe::Invoice.stub(:finalize_invoice, finalized_invoice) do
+              Stripe::Invoice.stub(:send_invoice, sent_invoice) do
+                result = SilentAuction::CloseItemService.new(item).call
+
+                assert result.success?
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_nil invoice_record.reload.last_error
+    assert invoice_record.finalized_at
+    assert invoice_record.sent_at
+  end
+
   test "passes configured payment method types to stripe invoice create" do
     InvoiceSetting.current.update!(payment_method_types: %w[card us_bank_account])
     item = build_item_with_bid(email: "payment-types@example.com")
