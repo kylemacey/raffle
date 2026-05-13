@@ -1,0 +1,390 @@
+module StripeWebhooks
+  class EventProcessor
+    SUCCESSFUL_SUBSCRIPTION_STATUSES = %w[active trialing].freeze
+    INVOICE_EVENT_TYPES = %w[
+      invoice.finalized
+      invoice.sent
+      invoice.paid
+      invoice.payment_failed
+      invoice.finalization_failed
+      invoice.voided
+    ].freeze
+
+    include Rails.application.routes.url_helpers
+
+    def initialize(event)
+      @event = event
+    end
+
+    def call
+      case event_type
+      when "terminal.reader.action_succeeded"
+        handle_terminal_action_succeeded(event_object)
+      when "terminal.reader.action_failed"
+        handle_terminal_action_failed(event_object)
+      when *INVOICE_EVENT_TYPES
+        handle_invoice_event(event_object, event_type)
+      else
+        Rails.logger.info "Unhandled event type: #{event_type}"
+      end
+    end
+
+    private
+
+    attr_reader :event
+
+    def event_type
+      stripe_object_value(event, :type)
+    end
+
+    def event_object
+      data = stripe_object_value(event, :data)
+      stripe_object_value(data, :object) || {}
+    end
+
+    def handle_terminal_action_succeeded(reader)
+      action = stripe_object_value(reader, :action) || {}
+
+      case stripe_object_value(action, :type)
+      when "process_payment_intent"
+        payment_intent_id = stripe_object_value(stripe_object_value(action, :process_payment_intent), :payment_intent)
+        payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
+        handle_payment_success(payment_intent)
+      when "process_setup_intent"
+        setup_intent_id = stripe_object_value(stripe_object_value(action, :process_setup_intent), :setup_intent)
+        setup_intent = retrieve_setup_intent(setup_intent_id, expand_latest_attempt: true)
+        handle_setup_success(setup_intent)
+      else
+        Rails.logger.info "Unhandled terminal action type: #{stripe_object_value(action, :type)}"
+      end
+    end
+
+    def handle_terminal_action_failed(reader)
+      action = stripe_object_value(reader, :action) || {}
+
+      case stripe_object_value(action, :type)
+      when "process_payment_intent"
+        payment_intent_id = stripe_object_value(stripe_object_value(action, :process_payment_intent), :payment_intent)
+        payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
+        handle_payment_failure(payment_intent)
+      when "process_setup_intent"
+        setup_intent_id = stripe_object_value(stripe_object_value(action, :process_setup_intent), :setup_intent)
+        setup_intent = Stripe::SetupIntent.retrieve(setup_intent_id)
+        handle_setup_failure(setup_intent)
+      else
+        Rails.logger.info "Unhandled failed terminal action type: #{stripe_object_value(action, :type)}"
+      end
+    end
+
+    def handle_payment_success(payment_intent)
+      payment_intent_id = payment_intent.id
+      order_id = order_id_from_metadata(payment_intent)
+
+      unless order_id
+        Rails.logger.error "Webhook Error: No order_id present in metadata for PaymentIntent #{payment_intent_id}"
+        return
+      end
+
+      unless Order.exists?(order_id)
+        Rails.logger.error "Webhook Error: Could not find Order with ID #{order_id} for PaymentIntent #{payment_intent_id}"
+        return
+      end
+
+      Rails.logger.info "Webhook: Payment succeeded for Order ##{order_id}, preparing to broadcast and process."
+
+      broadcast_success_redirect(payment_intent_id, order_id)
+      process_payment_success(order_id, payment_intent)
+    end
+
+    def process_payment_success(order_id, payment_intent)
+      payment_intent_id = payment_intent.id
+      order = Order.find(order_id)
+
+      order.with_lock do
+        if order.payment&.succeeded?
+          Rails.logger.warn "Webhook (Job): Order ##{order_id} already has a successful payment. Skipping."
+          next
+        end
+
+        Stripe::PaymentIntent.capture(payment_intent_id)
+        payment = order.payment || order.build_payment
+        payment.update!(
+          payment_method_type: "card",
+          amount: payment_intent.amount,
+          payment_intent_id: payment_intent_id,
+          status: "succeeded"
+        )
+
+        result = OrderProcessingService.process_order(order)
+        log_order_processing_result(order, result)
+
+        subscription = create_subscription_from_payment_intent(order, payment_intent)
+        payment.update!(stripe_subscription_id: subscription.id) if subscription
+      end
+    end
+
+    def handle_setup_success(setup_intent)
+      setup_intent_id = setup_intent.id
+      order_id = order_id_from_metadata(setup_intent)
+
+      unless order_id
+        Rails.logger.error "Webhook Error: No order_id present in metadata for SetupIntent #{setup_intent_id}"
+        return
+      end
+
+      unless Order.exists?(order_id)
+        Rails.logger.error "Webhook Error: Could not find Order with ID #{order_id} for SetupIntent #{setup_intent_id}"
+        return
+      end
+
+      Rails.logger.info "Webhook: Setup succeeded for Order ##{order_id}, preparing to process subscription."
+
+      process_setup_success(order_id, setup_intent)
+    end
+
+    def process_setup_success(order_id, setup_intent)
+      setup_intent_id = setup_intent.id
+      order = Order.find(order_id)
+
+      order.with_lock do
+        if order.payment&.succeeded?
+          Rails.logger.warn "Webhook (Job): Order ##{order_id} already has a successful setup. Skipping."
+          next
+        end
+
+        payment = order.payment || order.build_payment
+        payment.update!(
+          payment_method_type: "card",
+          amount: 0,
+          stripe_setup_intent_id: setup_intent_id,
+          status: "processing"
+        )
+
+        generated_card_pm_id = generated_card_from_setup_intent(setup_intent)
+        unless generated_card_pm_id
+          Rails.logger.error "Webhook (Job): Could not find a generated card for SetupIntent #{setup_intent_id}."
+          payment.update!(status: "failed")
+          broadcast_failure_redirect(setup_intent_id, order.id)
+          next
+        end
+
+        subscription = create_subscription_for_order(order, setup_intent.customer, generated_card_pm_id)
+        unless successful_subscription?(subscription)
+          Rails.logger.error "Webhook (Job): Subscription #{subscription&.id || '(none)'} was not active for Order ##{order.id}."
+          payment.update!(status: "failed")
+          payment.update!(stripe_subscription_id: subscription.id) if subscription
+          broadcast_failure_redirect(setup_intent_id, order.id)
+          next
+        end
+
+        result = OrderProcessingService.process_order(order)
+        log_order_processing_result(order, result)
+
+        payment.update!(
+          status: "succeeded",
+          stripe_subscription_id: subscription.id
+        )
+
+        broadcast_success_redirect(setup_intent_id, order.id)
+      end
+    end
+
+    def log_order_processing_result(order, result)
+      if result[:success]
+        Rails.logger.info "Webhook (Job): Successfully processed Order ##{order.id} with #{result[:processed].count} items"
+      else
+        Rails.logger.error "Webhook (Job): Order ##{order.id} processing completed with #{result[:failed].count} failures"
+        result[:failed].each do |failure|
+          Rails.logger.error "  - Item #{failure[:item].id} (#{failure[:item].pos_product.name}): #{failure[:error].message}"
+        end
+      end
+    end
+
+    def create_subscription_from_payment_intent(order, payment_intent)
+      subscription_item = order.order_items.find { |item| item.pos_product.product_type == "subscription" }
+      return unless subscription_item
+
+      begin
+        charge = Stripe::Charge.retrieve(payment_intent.latest_charge)
+        generated_card_pm_id = charge.payment_method_details.card_present.generated_card
+        customer_id = payment_intent.customer
+
+        unless generated_card_pm_id
+          Rails.logger.error "Webhook (Job): Could not find a generated card for Order ##{order.id}."
+          return
+        end
+
+        create_subscription_for_order(order, customer_id, generated_card_pm_id)
+      rescue Stripe::StripeError => e
+        Rails.logger.error "Webhook (Job): Failed to create subscription for Order ##{order.id}. Error: #{e.message}"
+        nil
+      end
+    end
+
+    def create_subscription_for_order(order, customer_id, generated_card_pm_id)
+      subscription_item = order.order_items.find { |item| item.pos_product.product_type == "subscription" }
+      return unless subscription_item
+
+      unless customer_id && generated_card_pm_id
+        Rails.logger.error "Webhook (Job): Missing customer or generated card for Order ##{order.id}."
+        return
+      end
+
+      attach_payment_method_to_customer(generated_card_pm_id, customer_id)
+      Stripe::Customer.update(customer_id, { invoice_settings: { default_payment_method: generated_card_pm_id }})
+
+      subscription = Stripe::Subscription.create({
+        customer: customer_id,
+        default_payment_method: generated_card_pm_id,
+        items: [{ price: subscription_item.pos_product.stripe_price_id }],
+        payment_settings: { payment_method_types: ["card"] },
+        metadata: { order_id: order.id }
+      })
+
+      if successful_subscription?(subscription)
+        Rails.logger.info "Webhook (Job): Successfully created Subscription #{subscription.id} for Order ##{order.id}"
+      else
+        Rails.logger.error "Webhook (Job): Created Subscription #{subscription.id} for Order ##{order.id}, but status is #{subscription.status}."
+      end
+
+      subscription
+    rescue Stripe::StripeError => e
+      Rails.logger.error "Webhook (Job): Failed to create subscription for Order ##{order.id}. Error: #{e.message}"
+      nil
+    end
+
+    def successful_subscription?(subscription)
+      subscription && SUCCESSFUL_SUBSCRIPTION_STATUSES.include?(subscription.status)
+    end
+
+    def handle_invoice_event(invoice, event_type)
+      invoice_id = stripe_object_value(invoice, :id)
+      invoice_record = InvoiceRecord.find_by(stripe_invoice_id: invoice_id)
+
+      unless invoice_record
+        Rails.logger.info "Webhook: No local InvoiceRecord for Stripe invoice #{invoice_id}"
+        return
+      end
+
+      invoice_record.sync_from_stripe_invoice!(invoice)
+
+      case event_type
+      when "invoice.sent"
+        invoice_record.update!(sent_at: Time.current)
+      when "invoice.payment_failed"
+        invoice_record.update!(failed_at: Time.current, last_error: invoice_error_message(invoice) || "Invoice payment failed.")
+      when "invoice.finalization_failed"
+        invoice_record.update!(failed_at: Time.current, last_error: invoice_error_message(invoice) || "Invoice finalization failed.")
+      when "invoice.paid"
+        invoice_record.update!(last_error: nil)
+        InvoiceRecords::CreateOrderFromPaidInvoiceService.new(invoice_record, stripe_invoice: invoice).call
+      end
+    end
+
+    def attach_payment_method_to_customer(payment_method_id, customer_id)
+      Stripe::PaymentMethod.attach(payment_method_id, { customer: customer_id })
+    rescue Stripe::InvalidRequestError => e
+      raise unless e.message.match?(/already.*attach/i)
+    end
+
+    def retrieve_setup_intent(setup_intent_id, expand_latest_attempt: false)
+      return Stripe::SetupIntent.retrieve(setup_intent_id) unless expand_latest_attempt
+
+      Stripe::SetupIntent.retrieve({ id: setup_intent_id, expand: ["latest_attempt"] })
+    end
+
+    def generated_card_from_setup_intent(setup_intent)
+      setup_intent.latest_attempt&.payment_method_details&.card_present&.generated_card
+    end
+
+    def handle_setup_failure(setup_intent)
+      setup_intent_id = setup_intent.id
+      order_id = order_id_from_metadata(setup_intent)
+
+      Rails.logger.info "Setup failed for #{setup_intent_id}"
+      return unless order_id
+
+      if record_terminal_failure(
+        order_id,
+        stripe_setup_intent_id: setup_intent_id,
+        amount: 0
+      )
+        broadcast_failure_redirect(setup_intent_id, order_id)
+      end
+    end
+
+    def handle_payment_failure(payment_intent)
+      payment_intent_id = payment_intent.id
+      order_id = order_id_from_metadata(payment_intent)
+
+      Rails.logger.info "Payment failed for #{payment_intent_id}"
+      return unless order_id
+
+      if record_terminal_failure(
+        order_id,
+        payment_intent_id: payment_intent_id,
+        amount: payment_intent.amount
+      )
+        broadcast_failure_redirect(payment_intent_id, order_id)
+      end
+    end
+
+    def record_terminal_failure(order_id, attrs)
+      return false unless order_id
+
+      order = Order.find_by(id: order_id)
+      return false unless order
+
+      order.with_lock do
+        next false if order.payment&.succeeded?
+
+        payment = order.payment || order.build_payment
+        payment.update!(
+          {
+            payment_method_type: "card",
+            status: "failed"
+          }.merge(attrs)
+        )
+        true
+      end
+    end
+
+    def order_id_from_metadata(intent)
+      metadata = intent.metadata
+      metadata && (metadata["order_id"] || metadata[:order_id])
+    end
+
+    def invoice_error_message(invoice)
+      error = stripe_object_value(invoice, :last_finalization_error)
+      return if error.blank?
+
+      stripe_object_value(error, :message) || stripe_object_value(error, :code) || error.to_s
+    end
+
+    def stripe_object_value(object, key)
+      if object.respond_to?(key)
+        object.public_send(key)
+      elsif object.respond_to?(:[])
+        object[key.to_s] || object[key]
+      end
+    end
+
+    def broadcast_success_redirect(intent_id, order_id)
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "payment_status_#{intent_id}",
+        target: "redirect_target",
+        partial: "pos/redirect",
+        locals: { url: pos_success_path(order_id: order_id) }
+      )
+    end
+
+    def broadcast_failure_redirect(intent_id, order_id)
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "payment_status_#{intent_id}",
+        target: "redirect_target",
+        partial: "pos/redirect",
+        locals: { url: pos_failure_path(order_id: order_id) }
+      )
+    end
+  end
+end

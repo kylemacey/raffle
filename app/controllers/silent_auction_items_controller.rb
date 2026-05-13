@@ -87,18 +87,18 @@ class SilentAuctionItemsController < ApplicationController
   end
 
   def close
-    result = SilentAuction::CloseItemService.new(@item).call
-    redirect_to event_silent_auction_item_path(@event, @item), flash_for_result(result)
+    SilentAuction::CloseItemJob.perform_later(@item)
+    redirect_to event_silent_auction_item_path(@event, @item), notice: "Silent auction item close was queued. Invoice delivery will continue in the background."
   end
 
   def close_all
-    result = SilentAuction::CloseEventItemsService.new(@event).call
-    redirect_to event_silent_auction_items_path(@event), flash_for_result(result)
+    SilentAuction::CloseEventItemsJob.perform_later(@event)
+    redirect_to event_silent_auction_items_path(@event), notice: "Silent auction close-all was queued. Invoice delivery will continue in the background."
   end
 
   def retry_invoice
-    result = SilentAuction::CloseItemService.new(@item).call
-    redirect_to event_silent_auction_item_path(@event, @item), flash_for_result(result)
+    SilentAuction::CloseItemJob.perform_later(@item)
+    redirect_to event_silent_auction_item_path(@event, @item), notice: "Invoice retry was queued. Invoice delivery will continue in the background."
   end
 
   def promote_winner_confirmation
@@ -109,8 +109,8 @@ class SilentAuctionItemsController < ApplicationController
 
   def promote_winner
     bid = @item.silent_auction_bids.find(params[:bid_id])
-    result = SilentAuction::CloseItemService.new(@item, winning_bid: bid, replace_invoice: true).call
-    redirect_to event_silent_auction_item_path(@event, @item), flash_for_result(result)
+    SilentAuction::CloseItemJob.perform_later(@item, winning_bid_id: bid.id, replace_invoice: true)
+    redirect_to event_silent_auction_item_path(@event, @item), notice: "Winner promotion was queued. Invoice replacement will continue in the background."
   end
 
   private
@@ -144,7 +144,4 @@ class SilentAuctionItemsController < ApplicationController
           .where("invoice_records.id IS NULL OR ((invoice_records.stripe_status IS NULL OR invoice_records.stripe_status != ?) AND invoice_records.paid_at IS NULL)", "paid")
   end
 
-  def flash_for_result(result)
-    result.success? ? { notice: result.message } : { alert: result.message }
-  end
 end
