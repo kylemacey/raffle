@@ -1,0 +1,75 @@
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-4">
+  <div>
+    <h1 class="mb-0">Silent Auction</h1>
+    <p class="text-muted mb-0"><%= @event.name %></p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 justify-content-end">
+    <%= link_to "Public auction", event_public_silent_auction_path(@event), class: "btn btn-outline-light" %>
+    <% if @items.any? %>
+      <%= button_to "Open all (#{@open_all_count})", open_all_event_silent_auction_items_path(@event), method: :patch, class: "btn btn-success", disabled: @open_all_count.zero? %>
+      <%= button_to "Pause all (#{@pause_all_count})", pause_all_event_silent_auction_items_path(@event), method: :patch, class: "btn btn-warning", disabled: @pause_all_count.zero? %>
+      <% if @close_all_count.positive? %>
+        <%= link_to "Close all (#{@close_all_count})", close_all_confirmation_event_silent_auction_items_path(@event), class: "btn btn-danger" %>
+      <% else %>
+        <%= button_tag "Close all (0)", class: "btn btn-danger", disabled: true %>
+      <% end %>
+    <% end %>
+    <%= link_to "New item", new_event_silent_auction_item_path(@event), class: "btn btn-primary" %>
+  </div>
+</div>
+
+<% if @items.any? %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+      <thead>
+        <tr>
+          <th class="silent-auction-admin-item-col">Item</th>
+          <th class="text-nowrap">Status</th>
+          <th class="text-nowrap">Bids</th>
+          <th class="text-nowrap">Bid state</th>
+          <th class="text-nowrap">Invoice</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @items.each do |item| %>
+          <tr>
+            <td class="silent-auction-admin-item-col">
+              <div class="fw-semibold"><%= item.name %></div>
+              <small class="text-muted"><%= truncate(item.description, length: 90) %></small>
+            </td>
+            <td class="text-nowrap">
+              <span class="badge <%= item.open? ? 'text-bg-success' : item.paused? ? 'text-bg-warning' : item.closed? ? 'text-bg-secondary' : 'text-bg-dark' %>">
+                <%= item.status_label %>
+              </span>
+            </td>
+            <td class="text-nowrap"><%= item.bid_count %></td>
+            <td class="text-nowrap">
+              <div class="fw-semibold"><%= number_to_currency(item.current_bid_cents / 100.0) %></div>
+              <small class="text-muted"><%= item.current_bid_label %></small>
+            </td>
+            <td class="text-nowrap">
+              <% if item.invoice_record %>
+                <span class="badge <%= invoice_status_badge_class(item.invoice_record) %>">
+                  <%= invoice_status_label(item.invoice_record) %>
+                </span>
+              <% else %>
+                <span class="text-muted">None</span>
+              <% end %>
+            </td>
+            <td class="text-end">
+              <%= link_to "View", event_silent_auction_item_path(@event, item), class: "btn btn-sm btn-outline-primary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="text-center py-5">
+    <p class="text-muted">No silent auction items have been added.</p>
+    <%= link_to "New item", new_event_silent_auction_item_path(@event), class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<%= link_to "Back to event", event_path(@event) %>

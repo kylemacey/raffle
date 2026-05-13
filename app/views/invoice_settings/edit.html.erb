@@ -1,0 +1,57 @@
+<h1>Invoice Settings</h1>
+
+<div class="alert alert-info">
+  Select invoice payment method types to pass directly to Stripe.
+  Leave the list empty to use the Stripe invoice template default.
+  <%= link_to "Open Stripe invoice template settings", "https://dashboard.stripe.com/settings/billing/invoice", target: "_blank", rel: "noopener" %>
+</div>
+
+<%= form_with(model: @setting, url: invoice_setting_path, method: :patch, local: true) do |f| %>
+  <% if @setting.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% @setting.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :days_until_due, class: "form-label" %>
+    <%= f.number_field :days_until_due, class: "form-control", min: 1, max: 365, required: true %>
+  </div>
+
+  <div class="mb-4"
+       data-controller="payment-method-types"
+       data-payment-method-types-options-value="<%= InvoiceSetting::PAYMENT_METHOD_TYPE_LABELS.to_json %>">
+    <%= f.label :payment_method_types, "Payment Method Types", class: "form-label" %>
+
+    <input type="hidden" name="invoice_setting[payment_method_types][]" value="">
+
+    <div class="input-group">
+      <select class="form-select" data-payment-method-types-target="select" aria-label="Payment method type"></select>
+      <button type="button" class="btn btn-outline-primary" data-action="payment-method-types#add">Add</button>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-3" data-payment-method-types-target="list">
+      <% @setting.payment_method_types.each do |type| %>
+        <span class="badge rounded-pill text-bg-secondary d-inline-flex align-items-center gap-2 py-2 px-3" data-payment-method-type="<%= type %>">
+          <span><%= InvoiceSetting.payment_method_type_label(type) %></span>
+          <input type="hidden" name="invoice_setting[payment_method_types][]" value="<%= type %>">
+          <button type="button"
+                  class="btn-close btn-close-white"
+                  aria-label="Remove <%= InvoiceSetting.payment_method_type_label(type) %>"
+                  data-action="payment-method-types#remove"></button>
+        </span>
+      <% end %>
+    </div>
+
+    <div class="form-text">
+      Stripe validates availability by account, currency, location, and invoice state when the invoice is created.
+      <%= link_to "Review payment method settings", "https://dashboard.stripe.com/settings/payment_methods", target: "_blank", rel: "noopener" %>
+    </div>
+  </div>
+
+  <%= f.submit "Save settings", class: "btn btn-primary" %>
+<% end %>

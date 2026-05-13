@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html data-bs-theme="light">
+  <head>
+    <title><%= [@event&.name, "Silent Auction"].compact.join(" ") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= favicon_link_tag 'favicon.svg' %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Nunito+Sans:wght@400;700&display=swap">
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="silent-auction-body">
+    <header class="auction-site-header">
+      <div class="silent-auction-shell auction-site-header-inner">
+        <%= image_tag "farleys_friends_logo.png", alt: "Farley's Friends", class: "auction-site-logo" %>
+        <% if @event %>
+          <div class="auction-event-mark">
+            <span>Event</span>
+            <strong><%= @event.name %></strong>
+          </div>
+        <% end %>
+      </div>
+    </header>
+
+    <main class="silent-auction-shell">
+      <% if notice.present? %>
+        <div class="alert alert-success"><%= notice %></div>
+      <% end %>
+      <% if alert.present? %>
+        <div class="alert alert-danger"><%= alert %></div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="auction-site-footer">
+      <div class="silent-auction-shell">
+        <%= link_to "farleysfriends.org", "https://www.farleysfriends.org/" %>
+      </div>
+    </footer>
+  </body>
+</html>

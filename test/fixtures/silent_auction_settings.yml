@@ -1,0 +1,4 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+default:
+  bid_increment_cents: 2500

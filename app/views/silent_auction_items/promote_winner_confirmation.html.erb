@@ -1,0 +1,79 @@
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="mb-0">Select New Winner</h1>
+    <p class="text-muted mb-0"><%= @item.name %> · <%= @event.name %></p>
+  </div>
+  <%= link_to "Cancel", event_silent_auction_item_path(@event, @item), class: "btn btn-outline-secondary" %>
+</div>
+
+<% if @invoice&.unexpired? %>
+  <div class="alert alert-warning">
+    The current invoice has not expired yet. Selecting a new winner will void the current Stripe invoice, mark the local invoice record as superseded, and send a new Stripe invoice to the selected bidder.
+  </div>
+<% else %>
+  <div class="alert alert-warning">
+    Selecting a new winner will replace the current winner and send a new Stripe invoice to the selected bidder.
+  </div>
+<% end %>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Current Invoice</h2>
+      </div>
+      <div class="card-body">
+        <% if @invoice %>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Status</dt>
+            <dd class="col-sm-8"><%= @invoice.stripe_status.presence || "Pending" %></dd>
+            <dt class="col-sm-4">Customer</dt>
+            <dd class="col-sm-8"><%= @invoice.customer_name %> &lt;<%= @invoice.customer_email %>&gt;</dd>
+            <dt class="col-sm-4">Amount</dt>
+            <dd class="col-sm-8"><%= number_to_currency(@invoice.amount_cents / 100.0) %></dd>
+            <dt class="col-sm-4">Due</dt>
+            <dd class="col-sm-8"><%= @invoice.due_at ? l(@invoice.due_at, format: :short) : "Not recorded" %></dd>
+            <% if @invoice.stripe_invoice_id.present? %>
+              <dt class="col-sm-4">Stripe invoice</dt>
+              <dd class="col-sm-8"><%= stripe_invoice_url(@invoice.stripe_invoice_id, link_text: @invoice.stripe_invoice_id) %></dd>
+            <% end %>
+          </dl>
+        <% else %>
+          <p class="text-muted mb-0">No current invoice exists for this item.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h2 class="h5 mb-0">New Winner</h2>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Bidder</dt>
+          <dd class="col-sm-8"><%= @bid.bidder_name %> &lt;<%= @bid.bidder_email %>&gt;</dd>
+          <dt class="col-sm-4">Phone</dt>
+          <dd class="col-sm-8"><%= @bid.bidder_phone %></dd>
+          <dt class="col-sm-4">Bid amount</dt>
+          <dd class="col-sm-8"><%= number_to_currency(@bid.amount_cents / 100.0) %></dd>
+          <dt class="col-sm-4">Invoice due</dt>
+          <dd class="col-sm-8"><%= pluralize(@invoice_setting.days_until_due, "day") %> after invoice is sent</dd>
+          <dt class="col-sm-4">Payment methods</dt>
+          <dd class="col-sm-8"><%= @invoice_setting.payment_method_types_label %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+  <%= button_to "Confirm new winner and send invoice",
+                promote_winner_event_silent_auction_item_path(@event, @item),
+                method: :patch,
+                params: { bid_id: @bid.id },
+                class: "btn btn-warning btn-lg",
+                data: { turbo_confirm: "Select #{@bid.bidder_name} as the new winner and send a new Stripe invoice?" } %>
+  <%= link_to "Back to item", event_silent_auction_item_path(@event, @item), class: "btn btn-outline-secondary btn-lg" %>
+</div>

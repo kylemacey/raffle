@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_11_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,43 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "invoice_records", force: :cascade do |t|
+    t.string "source_type", null: false
+    t.bigint "source_id", null: false
+    t.string "stripe_invoice_id"
+    t.string "stripe_status"
+    t.string "stripe_invoice_url"
+    t.string "stripe_invoice_pdf"
+    t.string "stripe_customer_id"
+    t.integer "amount_cents", null: false
+    t.string "customer_name", null: false
+    t.string "customer_email", null: false
+    t.string "customer_phone"
+    t.text "last_error"
+    t.datetime "finalized_at"
+    t.datetime "sent_at"
+    t.datetime "paid_at"
+    t.datetime "failed_at"
+    t.datetime "voided_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "due_at"
+    t.datetime "superseded_at"
+    t.bigint "order_id"
+    t.index ["order_id"], name: "index_invoice_records_on_order_id", unique: true
+    t.index ["source_type", "source_id"], name: "index_invoice_records_on_active_source", unique: true, where: "(superseded_at IS NULL)"
+    t.index ["stripe_invoice_id"], name: "index_invoice_records_on_stripe_invoice_id", unique: true
+    t.index ["stripe_status"], name: "index_invoice_records_on_stripe_status"
+    t.index ["superseded_at"], name: "index_invoice_records_on_superseded_at"
+  end
+
+  create_table "invoice_settings", force: :cascade do |t|
+    t.integer "days_until_due", default: 7, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "payment_method_types", default: ["card", "us_bank_account"], null: false, array: true
+  end
+
   create_table "order_items", force: :cascade do |t|
     t.bigint "order_id", null: false
     t.bigint "pos_product_id", null: false
@@ -54,6 +91,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
   create_table "orders", force: :cascade do |t|
     t.string "customer_name"
     t.string "customer_email"
+    t.string "customer_phone"
     t.integer "total_amount"
     t.bigint "event_id", null: false
     t.bigint "user_id", null: false
@@ -75,10 +113,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
     t.string "stripe_setup_intent_id"
     t.string "stripe_subscription_id"
     t.string "status"
+    t.string "stripe_invoice_id"
     t.index ["entry_id"], name: "index_payments_on_entry_id"
     t.index ["order_id"], name: "index_payments_on_order_id"
     t.index ["payment_method_type"], name: "index_payments_on_payment_method_type"
     t.index ["status"], name: "index_payments_on_status"
+    t.index ["stripe_invoice_id"], name: "index_payments_on_stripe_invoice_id", unique: true
     t.index ["stripe_setup_intent_id"], name: "index_payments_on_stripe_setup_intent_id"
     t.index ["stripe_subscription_id"], name: "index_payments_on_stripe_subscription_id"
   end
@@ -140,6 +180,41 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
     t.index ["key"], name: "index_roles_on_key", unique: true
   end
 
+  create_table "silent_auction_bids", force: :cascade do |t|
+    t.bigint "silent_auction_item_id", null: false
+    t.string "bidder_name", null: false
+    t.string "bidder_phone", null: false
+    t.string "bidder_email", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bidder_email"], name: "index_silent_auction_bids_on_bidder_email"
+    t.index ["silent_auction_item_id", "amount_cents"], name: "index_silent_auction_bids_on_item_and_amount"
+    t.index ["silent_auction_item_id"], name: "index_silent_auction_bids_on_silent_auction_item_id"
+  end
+
+  create_table "silent_auction_items", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.integer "starting_bid_cents", default: 0, null: false
+    t.string "image_url", null: false
+    t.string "status", default: "draft", null: false
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "winning_bid_id"
+    t.index ["event_id", "status"], name: "index_silent_auction_items_on_event_id_and_status"
+    t.index ["event_id"], name: "index_silent_auction_items_on_event_id"
+    t.index ["winning_bid_id"], name: "index_silent_auction_items_on_winning_bid_id"
+  end
+
+  create_table "silent_auction_settings", force: :cascade do |t|
+    t.integer "bid_increment_cents", default: 2500, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "user_roles", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "role_id", null: false
@@ -174,6 +249,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
 
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
+  add_foreign_key "invoice_records", "orders"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "pos_products"
   add_foreign_key "orders", "events"
@@ -182,6 +258,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_210000) do
   add_foreign_key "payments", "orders"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"
+  add_foreign_key "silent_auction_bids", "silent_auction_items"
+  add_foreign_key "silent_auction_items", "events"
+  add_foreign_key "silent_auction_items", "silent_auction_bids", column: "winning_bid_id"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
   add_foreign_key "winners", "drawings"

@@ -1,0 +1,34 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+open_item:
+  event: one
+  name: Weekend Getaway
+  description: Two nights at a donated lake house.
+  starting_bid_cents: 5000
+  image_url: https://example.com/weekend.jpg
+  status: open
+
+paused_item:
+  event: one
+  name: Dinner Basket
+  description: Gift cards and local treats.
+  starting_bid_cents: 2500
+  image_url: https://example.com/basket.jpg
+  status: paused
+
+draft_item:
+  event: one
+  name: Draft Spa Package
+  description: Private staging item.
+  starting_bid_cents: 3000
+  image_url: https://example.com/spa.jpg
+  status: draft
+
+closed_item:
+  event: one
+  name: Signed Print
+  description: Framed and signed print.
+  starting_bid_cents: 7500
+  image_url: https://example.com/print.jpg
+  status: closed
+  closed_at: <%= 1.day.ago %>

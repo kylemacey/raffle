@@ -20,6 +20,10 @@ platform_admin_winners_manage:
   role: platform_admin
   permission: winners_manage
 
+platform_admin_silent_auction_manage:
+  role: platform_admin
+  permission: silent_auction_manage
+
 platform_admin_pos_sell:
   role: platform_admin
   permission: pos_sell
@@ -75,6 +79,10 @@ platform_admin_pos_products_manage:
 platform_admin_roc_star_prices_manage:
   role: platform_admin
   permission: roc_star_prices_manage
+
+platform_admin_invoice_settings_manage:
+  role: platform_admin
+  permission: invoice_settings_manage
 
 platform_admin_reports_view_fundraising:
   role: platform_admin
@@ -135,6 +143,10 @@ event_lead_drawings_manage:
 event_lead_winners_manage:
   role: event_lead
   permission: winners_manage
+
+event_lead_silent_auction_manage:
+  role: event_lead
+  permission: silent_auction_manage
 
 event_lead_pos_sell:
   role: event_lead
@@ -204,6 +216,10 @@ config_admin_winners_manage:
   role: config_admin
   permission: winners_manage
 
+config_admin_silent_auction_manage:
+  role: config_admin
+  permission: silent_auction_manage
+
 config_admin_pos_sell:
   role: config_admin
   permission: pos_sell
@@ -251,6 +267,10 @@ config_admin_pos_products_manage:
 config_admin_roc_star_prices_manage:
   role: config_admin
   permission: roc_star_prices_manage
+
+config_admin_invoice_settings_manage:
+  role: config_admin
+  permission: invoice_settings_manage
 
 config_admin_reports_view_fundraising:
   role: config_admin

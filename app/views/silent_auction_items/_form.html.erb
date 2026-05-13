@@ -1,0 +1,65 @@
+<%= form_with(model: [event, item], data: { controller: "image-preview" }, local: true) do |f| %>
+  <% if item.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% item.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% unless item.persisted? %>
+    <div class="alert alert-info">
+      New items are saved as drafts. Use Open or Open all when the auction is ready to launch.
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :name, class: "form-label" %>
+    <%= f.text_field :name, class: "form-control", required: true %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :description, class: "form-label" %>
+    <%= f.text_area :description, class: "form-control", rows: 5, required: true %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :formatted_starting_bid, "Starting bid", class: "form-label" %>
+    <div class="input-group">
+      <span class="input-group-text">$</span>
+      <%= f.number_field :formatted_starting_bid,
+                         class: "form-control",
+                         min: 0,
+                         step: "0.01",
+                         value: number_with_precision(item.formatted_starting_bid || 0, precision: 2),
+                         required: true %>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :image_url, "Image URL", class: "form-label" %>
+    <%= f.url_field :image_url,
+                    class: "form-control",
+                    required: true,
+                    data: {
+                      image_preview_target: "input",
+                      action: "input->image-preview#update change->image-preview#update"
+                    } %>
+    <div class="silent-auction-image-preview mt-3" data-image-preview-target="preview" hidden>
+      <%= tag.img alt: "Image preview",
+                  class: "silent-auction-image-preview-image",
+                  data: {
+                    image_preview_target: "image",
+                    action: "load->image-preview#loaded error->image-preview#failed"
+                  } %>
+      <div class="form-text text-warning" data-image-preview-target="message"></div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= f.submit(item.persisted? ? "Update item" : "Create item", class: "btn btn-success") %>
+    <%= link_to "Cancel", item.persisted? ? event_silent_auction_item_path(event, item) : event_silent_auction_items_path(event), class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>

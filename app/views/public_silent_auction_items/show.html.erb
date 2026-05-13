@@ -1,0 +1,121 @@
+<div class="auction-detail-nav">
+  <%= link_to "Back to auction", event_public_silent_auction_path(@event), class: "auction-back-link" %>
+</div>
+
+<article class="auction-detail">
+  <div class="auction-detail-image-wrap">
+    <%= image_tag @item.image_url, alt: @item.name, class: "auction-detail-image" %>
+  </div>
+
+  <div class="auction-detail-content">
+    <div class="auction-title-row">
+      <div>
+        <p class="auction-kicker"><%= @event.name %></p>
+        <h1><%= @item.name %></h1>
+      </div>
+      <span class="auction-status auction-status-<%= @item.status %>"><%= @item.status_label %></span>
+    </div>
+
+    <div class="auction-description"><%= simple_format(@item.description) %></div>
+
+    <div class="auction-bid-summary">
+      <div>
+        <span><%= @item.current_bid_label %></span>
+        <strong><%= number_to_currency(@item.current_bid_cents / 100.0) %></strong>
+      </div>
+      <div>
+        <span>Bids</span>
+        <strong><%= @item.bid_count %></strong>
+      </div>
+      <% if @item.open? %>
+        <div>
+          <span>Minimum next bid</span>
+          <strong><%= number_to_currency(@item.next_minimum_bid_cents / 100.0) %></strong>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @item.open? %>
+      <% initial_bid_amount = @bid.formatted_amount || (@item.next_minimum_bid_cents / 100.0) %>
+      <% initial_bid_label = number_to_currency(initial_bid_amount, precision: initial_bid_amount.to_f % 1 == 0 ? 0 : 2) %>
+      <%= form_with model: [@event, @item, @bid],
+                    url: event_public_silent_auction_item_bids_path(@event, @item),
+                    class: "auction-bid-form",
+                    data: { controller: "bid-amount-submit" },
+                    local: true do |f| %>
+        <% if @bid.errors.any? %>
+          <div class="alert alert-danger">
+            <ul class="mb-0">
+              <% @bid.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <%= f.label :bidder_name, "Name", class: "form-label" %>
+            <%= f.text_field :bidder_name, class: "form-control", required: true, autocomplete: "name" %>
+          </div>
+          <div class="col-md-6">
+            <%= f.label :bidder_phone, "Phone", class: "form-label" %>
+            <%= f.telephone_field :bidder_phone,
+                                  class: "form-control",
+                                  required: true,
+                                  autocomplete: "tel",
+                                  inputmode: "tel",
+                                  maxlength: 14,
+                                  pattern: "[0-9()\\-\\s]*",
+                                  title: "Enter a 10-digit phone number",
+                                  data: {
+                                    controller: "phone-format",
+                                    action: "beforeinput->phone-format#guard input->phone-format#format blur->phone-format#format"
+                                  } %>
+          </div>
+          <div class="col-md-6">
+            <%= f.label :bidder_email, "Email", class: "form-label" %>
+            <%= f.email_field :bidder_email, class: "form-control", required: true, autocomplete: "email" %>
+          </div>
+          <div class="col-md-6">
+            <%= f.label :formatted_amount, "Bid amount", class: "form-label" %>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <%= f.number_field :formatted_amount,
+                                 class: "form-control",
+                                 required: true,
+                                 min: (@item.next_minimum_bid_cents / 100.0),
+                                 step: "0.01",
+                                 value: number_with_precision(initial_bid_amount, precision: 2),
+                                 data: {
+                                   bid_amount_submit_target: "input",
+                                   action: "input->bid-amount-submit#sync change->bid-amount-submit#sync"
+                                 } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-check mt-3">
+          <%= f.check_box :commitment_confirmation, { class: "form-check-input", required: true }, "1", "0" %>
+          <%= f.label :commitment_confirmation, "I agree to pay this bid if I win.", class: "form-check-label" %>
+        </div>
+
+        <div class="auction-form-actions">
+          <%= f.submit "Place #{initial_bid_label} bid", class: "btn btn-primary btn-lg", data: { bid_amount_submit_target: "submit" } %>
+        </div>
+      <% end %>
+    <% elsif @item.paused? %>
+      <div class="auction-closed-panel">
+        <h2>Bidding is paused.</h2>
+        <p>This item is visible, but it is not accepting bids right now.</p>
+      </div>
+    <% else %>
+      <div class="auction-closed-panel">
+        <h2>This item is closed.</h2>
+        <% if @item.winning_bid %>
+          <p>Winning bid: <strong><%= number_to_currency(@item.winning_bid.amount_cents / 100.0) %></strong></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</article>

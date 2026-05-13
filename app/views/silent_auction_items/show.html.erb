@@ -1,0 +1,214 @@
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="mb-0"><%= @item.name %></h1>
+    <p class="text-muted mb-0"><%= @event.name %> Silent Auction</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 justify-content-end">
+    <%= link_to "Public view", event_public_silent_auction_item_path(@event, @item), class: "btn btn-outline-light" if @item.publicly_listed? %>
+    <% unless @item.paid_invoice? %>
+      <%= link_to "Edit", edit_event_silent_auction_item_path(@event, @item), class: "btn btn-outline-light" %>
+    <% end %>
+    <% if @item.paid_invoice? %>
+      <span class="badge text-bg-success align-self-center">Paid invoice locked</span>
+    <% elsif !@item.closed? %>
+      <% if @item.open? %>
+        <%= button_to "Pause", pause_event_silent_auction_item_path(@event, @item), method: :patch, class: "btn btn-warning" %>
+      <% else %>
+        <%= button_to "Open", open_event_silent_auction_item_path(@event, @item), method: :patch, class: "btn btn-success" %>
+      <% end %>
+      <% unless @item.draft? %>
+        <%= link_to "Close", close_confirmation_event_silent_auction_item_path(@event, @item), class: "btn btn-danger" %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card">
+      <%= image_tag @item.image_url, alt: @item.name, class: "card-img-top silent-auction-admin-image" %>
+      <div class="card-body">
+        <%= simple_format(@item.description) %>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Status</dt>
+          <dd class="col-sm-7"><%= @item.status_label %></dd>
+          <dt class="col-sm-5">Starting bid</dt>
+          <dd class="col-sm-7"><%= number_to_currency(@item.starting_bid_cents / 100.0) %></dd>
+          <% if @item.current_bid %>
+            <dt class="col-sm-5">Current bid</dt>
+            <dd class="col-sm-7"><%= number_to_currency(@item.current_bid_cents / 100.0) %></dd>
+          <% else %>
+            <dt class="col-sm-5">Bid status</dt>
+            <dd class="col-sm-7 text-muted">No bids yet</dd>
+          <% end %>
+          <% if @item.open? %>
+            <dt class="col-sm-5">Minimum next bid</dt>
+            <dd class="col-sm-7"><%= number_to_currency(@item.next_minimum_bid_cents / 100.0) %></dd>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Invoice</h2>
+      </div>
+      <div class="card-body">
+        <% if @item.invoice_record %>
+          <% invoice = @item.invoice_record %>
+          <dl class="row">
+            <dt class="col-sm-4">Status</dt>
+            <dd class="col-sm-8">
+              <span class="badge <%= invoice_status_badge_class(invoice) %>">
+                <%= invoice_status_label(invoice) %>
+              </span>
+            </dd>
+            <dt class="col-sm-4">Customer</dt>
+            <dd class="col-sm-8"><%= invoice.customer_name %> &lt;<%= invoice.customer_email %>&gt;</dd>
+            <dt class="col-sm-4">Amount</dt>
+            <dd class="col-sm-8"><%= number_to_currency(invoice.amount_cents / 100.0) %></dd>
+            <% if invoice.stripe_invoice_id.present? %>
+              <dt class="col-sm-4">Stripe invoice</dt>
+              <dd class="col-sm-8"><%= stripe_invoice_url(invoice.stripe_invoice_id, link_text: invoice.stripe_invoice_id) %></dd>
+            <% end %>
+            <% if invoice.stripe_invoice_url.present? %>
+              <dt class="col-sm-4">Hosted invoice</dt>
+              <dd class="col-sm-8"><%= link_to "Open hosted invoice", invoice.stripe_invoice_url, target: "_blank", rel: "noopener" %></dd>
+            <% end %>
+            <% if invoice.order.present? %>
+              <dt class="col-sm-4">Order</dt>
+              <dd class="col-sm-8"><%= link_to "Order ##{invoice.order.id}", order_path(invoice.order) %></dd>
+            <% end %>
+            <% if invoice.last_error.present? %>
+              <dt class="col-sm-4">Last error</dt>
+              <dd class="col-sm-8 text-danger"><%= invoice.last_error %></dd>
+            <% end %>
+          </dl>
+          <% if invoice.last_error.present? && !invoice.paid? %>
+            <%= button_to "Retry invoice", retry_invoice_event_silent_auction_item_path(@event, @item), method: :post, class: "btn btn-outline-primary" %>
+          <% end %>
+        <% else %>
+          <p class="text-muted mb-0">No invoice has been created.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <% invoice_history = @item.invoice_history.to_a %>
+    <% if invoice_history.many? %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h5 mb-0">Invoice History</h2>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Due</th>
+                  <th>Invoice</th>
+                  <th>Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% invoice_history.each do |invoice| %>
+                  <tr class="<%= 'table-secondary' if invoice.superseded? %>">
+                    <td>
+                      <span class="badge <%= invoice_status_badge_class(invoice) %>">
+                        <%= invoice_status_label(invoice) %>
+                      </span>
+                      <% if invoice.superseded? %>
+                        <span class="badge text-bg-secondary ms-1">Superseded</span>
+                      <% end %>
+                    </td>
+                    <td><%= invoice.customer_name %></td>
+                    <td><%= number_to_currency(invoice.amount_cents / 100.0) %></td>
+                    <td><%= invoice.due_at ? l(invoice.due_at, format: :short) : "Not recorded" %></td>
+                    <td>
+                      <% if invoice.stripe_invoice_id.present? %>
+                        <%= stripe_invoice_url(invoice.stripe_invoice_id, link_text: invoice.stripe_invoice_id) %>
+                      <% else %>
+                        <span class="text-muted">Pending</span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <% if invoice.order.present? %>
+                        <%= link_to "##{invoice.order.id}", order_path(invoice.order) %>
+                      <% else %>
+                        <span class="text-muted">None</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Bids</h2>
+      </div>
+      <div class="card-body">
+        <% if @bids.any? %>
+          <div class="silent-auction-admin-bid-list">
+            <% @bids.each do |bid| %>
+              <% current_winner = bid == @item.winning_bid %>
+              <div class="silent-auction-admin-bid-row <%= 'silent-auction-admin-bid-row-winner' if current_winner %>">
+                <div class="silent-auction-admin-bid-amount">
+                  <span>Bid</span>
+                  <strong><%= number_to_currency(bid.amount_cents / 100.0) %></strong>
+                </div>
+
+                <div class="silent-auction-admin-bid-person">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h3><%= bid.bidder_name %></h3>
+                    <% if current_winner %>
+                      <span class="badge text-bg-success">Current winner</span>
+                    <% end %>
+                  </div>
+                  <div class="silent-auction-admin-bid-placed">
+                    Placed <%= l bid.created_at, format: :short %>
+                  </div>
+                </div>
+
+                <div class="silent-auction-admin-bid-contact">
+                  <div>
+                    <span>Email</span>
+                    <%= mail_to bid.bidder_email %>
+                  </div>
+                  <div>
+                    <span>Phone</span>
+                    <%= bid.bidder_phone %>
+                  </div>
+                </div>
+
+                <% if @item.closed? && !@item.paid_invoice? %>
+                  <div class="silent-auction-admin-bid-action">
+                    <% unless current_winner %>
+                      <%= link_to "Select winner",
+                                  promote_winner_confirmation_event_silent_auction_item_path(@event, @item, bid_id: bid.id),
+                                  class: "btn btn-sm btn-outline-warning" %>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted mb-0">No bids have been placed.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4">
+  <%= link_to "Back to silent auction", event_silent_auction_items_path(@event) %>
+</div>

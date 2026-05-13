@@ -30,6 +30,12 @@ winners_manage:
   category: raffle
   description: Find winners and update claim status.
 
+silent_auction_manage:
+  key: silent_auction.manage
+  name: Manage silent auction
+  category: silent_auction
+  description: Create items, manage bidding state, and close auction items.
+
 pos_sell:
   key: pos.sell
   name: Sell through POS
@@ -113,6 +119,12 @@ roc_star_prices_manage:
   name: Manage RocStar prices
   category: configuration
   description: Manage recurring subscription price records.
+
+invoice_settings_manage:
+  key: invoice_settings.manage
+  name: Manage invoice settings
+  category: configuration
+  description: Manage shared invoice settings and Stripe invoice-template handoff.
 
 reports_view_fundraising:
   key: reports.view_fundraising

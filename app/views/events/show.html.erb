@@ -93,6 +93,10 @@
           <% if current_user_can?("drawings.manage") %>
             <%= link_to 'New Drawing', new_event_drawing_path(@event), class: 'btn btn-primary' %>
           <% end %>
+          <% if current_user_can?("silent_auction.manage") %>
+            <%= link_to 'Manage Silent Auction', event_silent_auction_items_path(@event), class: 'btn btn-outline-primary' %>
+          <% end %>
+          <%= link_to 'Public Silent Auction', event_public_silent_auction_path(@event), class: 'btn btn-outline-secondary' %>
           <% if current_user_can?("entries.manage") %>
             <%= link_to 'View Entries', event_entries_path(@event), class: 'btn btn-outline-secondary' %>
           <% end %>

@@ -28,10 +28,12 @@ if ! command -v stripe >/dev/null 2>&1; then
 fi
 
 forward_to="${STRIPE_WEBHOOK_FORWARD_TO:-http://127.0.0.1:${WEB_PORT}/webhooks/stripe}"
-events="${STRIPE_WEBHOOK_EVENTS:-terminal.reader.action_succeeded,terminal.reader.action_failed}"
+default_events="terminal.reader.action_succeeded,terminal.reader.action_failed,invoice.finalized,invoice.sent,invoice.paid,invoice.payment_failed,invoice.finalization_failed,invoice.voided"
+events="${STRIPE_WEBHOOK_EVENTS:-$default_events}"
 
 echo "Forwarding Stripe webhooks to ${forward_to}"
 echo "Using Stripe API key from ${stripe_api_key_source}"
+echo "Forwarding Stripe events: ${events}"
 
 exec stripe listen \
   --api-key "$stripe_api_key" \
