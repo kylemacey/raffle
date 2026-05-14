@@ -68,6 +68,9 @@ keeping staging-specific infrastructure. Set `DATABASE_URL` to a staging-only
 PostgreSQL database, set `REDIS_URL` to staging Redis, and use the standard
 `SECRET_KEY_BASE` Rails secret.
 
+The Coolify staging deployment runbook is in
+[Coolify Staging Deployment](docs/coolify-staging.md).
+
 Stripe must use test-mode credentials in staging. Set `STRIPE_SECRET_KEY` or
 `STRIPE_API_KEY` to a secret or restricted test key (`sk_test_...` or
 `rk_test_...`). Rails and the Rackmount Stripe entrypoints fail on boot if

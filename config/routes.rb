@@ -7,6 +7,9 @@ Rails.application.routes.draw do
   # Set the root path of the application.
   root to: "events#index"
 
+  # Lightweight deployment health check for Coolify and reverse proxy routing.
+  get "up", to: "health#show"
+
   # == AUTHENTICATION ==
   # Routes for signing in and out.
   get 'sign_in', to: 'authentication#new'
