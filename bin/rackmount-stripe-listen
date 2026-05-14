@@ -7,6 +7,7 @@ if [ -x bin/rackmount-env ]; then
   eval "$(bin/rackmount-env)"
 fi
 
+: "${RAILS_ENV:=development}"
 : "${WEB_PORT:=3000}"
 
 stripe_api_key="${STRIPE_API_KEY:-${STRIPE_SECRET_KEY:-}}"
@@ -14,6 +15,43 @@ if [ -n "${STRIPE_API_KEY:-}" ]; then
   stripe_api_key_source="STRIPE_API_KEY"
 else
   stripe_api_key_source="STRIPE_SECRET_KEY"
+fi
+
+validate_staging_stripe_key() {
+  key_name="$1"
+  key_value="$2"
+
+  case "$key_value" in
+    sk_test_*|rk_test_*)
+      ;;
+    sk_live_*|rk_live_*)
+      echo "RAILS_ENV=staging must use Stripe test-mode credentials; ${key_name} is a live-mode key." >&2
+      exit 78
+      ;;
+    *)
+      echo "RAILS_ENV=staging requires ${key_name} to be a Stripe test-mode secret key (sk_test_...) or restricted key (rk_test_...)." >&2
+      exit 78
+      ;;
+  esac
+}
+
+if [ "$RAILS_ENV" = "staging" ]; then
+  staging_stripe_key_count=0
+
+  if [ -n "${STRIPE_SECRET_KEY:-}" ]; then
+    staging_stripe_key_count=$((staging_stripe_key_count + 1))
+    validate_staging_stripe_key "STRIPE_SECRET_KEY" "$STRIPE_SECRET_KEY"
+  fi
+
+  if [ -n "${STRIPE_API_KEY:-}" ]; then
+    staging_stripe_key_count=$((staging_stripe_key_count + 1))
+    validate_staging_stripe_key "STRIPE_API_KEY" "$STRIPE_API_KEY"
+  fi
+
+  if [ "$staging_stripe_key_count" -eq 0 ]; then
+    echo "RAILS_ENV=staging requires STRIPE_SECRET_KEY or STRIPE_API_KEY set to a Stripe test-mode secret key (sk_test_...) or restricted key (rk_test_...)." >&2
+    exit 78
+  fi
 fi
 
 if [ -z "$stripe_api_key" ]; then

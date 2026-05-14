@@ -20,7 +20,6 @@ module StripeHelper
              "/#{object_type}/#{object_id}"
            end
 
-    # Add /test prefix if using test Stripe key
     path = "/test#{path}" if stripe_test_mode?
 
     url = "#{base_url}#{path}"
@@ -56,7 +55,6 @@ module StripeHelper
     if location_id.present?
       stripe_dashboard_url('terminal_location', location_id, options)
     else
-      # Link to the general terminal locations page
       base_url = "https://dashboard.stripe.com"
       path = "/terminal/locations"
       path = "/test#{path}" if stripe_test_mode?
@@ -77,9 +75,6 @@ module StripeHelper
   private
 
   def stripe_test_mode?
-    # Check if Stripe is configured and using a test key
-    return true unless defined?(Stripe) && Stripe.api_key.present?
-
-    Stripe.api_key.start_with?('sk_test_')
+    Raffle::StripeConfiguration.test_mode?
   end
 end
