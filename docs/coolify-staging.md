@@ -6,6 +6,21 @@ and is served through Cloudflare.
 
 The target application URL is `https://raffle-staging.ktm.dev`.
 
+## Coolify CLI
+
+The Coolify CLI is useful for repeatable setup and verification:
+
+```sh
+brew install coollabsio/coolify-cli/coolify
+coolify context add local https://deploy.ktm.dev
+coolify context use local
+coolify context verify
+```
+
+Create the API token in Coolify with the minimum duration needed for the
+deployment session. Revoke the token and disable API access again after setup if
+ongoing automation does not need it.
+
 ## Deployment Shape
 
 Use Coolify Nixpacks resources instead of the repo Dockerfile. The app requires
@@ -168,6 +183,47 @@ ticket, chat, or screen recording.
 7. Create `raffle-staging-worker`, copy the same environment variables, and
    deploy.
 8. Confirm the worker logs show GoodJob started.
+
+If a deploy adds database columns that a worker process uses, redeploy or
+restart the worker after the web migration completes. This refreshes Active
+Record's column cache before GoodJob processes new webhook or invoice jobs.
+
+## Tantive Cloudflare Tunnel
+
+`raffle-staging.ktm.dev` is published through the existing Cloudflare Tunnel on
+the Tantive VM. The tunnel route should send the hostname to Coolify's Traefik
+proxy:
+
+```text
+raffle-staging.ktm.dev -> https://localhost:443
+```
+
+Traefik still routes by the original `Host` header, so Coolify can serve the
+right application once the domain is configured on `raffle-staging-web`.
+
+On Tantive, this route needed a valid local TLS origin for `https://localhost`.
+The current infrastructure fix is a locally trusted `localhost` certificate set
+as Traefik's default certificate in:
+
+```text
+/data/coolify/proxy/dynamic/cloudflare-origin-certs.yaml
+```
+
+Before changing this file, make a dated backup. The deployment backup created
+during initial staging setup was:
+
+```text
+/data/coolify/proxy/dynamic/cloudflare-origin-certs.yaml.codex-backup-20260514
+```
+
+After certificate or tunnel changes, verify from Tantive and publicly:
+
+```sh
+curl -fsS -o /dev/null -w '%{http_code}\n' \
+  -H 'Host: raffle-staging.ktm.dev' https://localhost/up
+
+curl -fsS https://raffle-staging.ktm.dev/up
+```
 
 ## Smoke Test
 
