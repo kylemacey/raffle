@@ -38,8 +38,18 @@ Coolify settings:
 - Start command:
 
 ```sh
-bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0 -p ${PORT:-3000}
+bin/coolify-web
 ```
+
+`bin/coolify-web` wraps the intended startup behavior:
+
+```sh
+bundle exec rails db:migrate
+bundle exec rails server -b 0.0.0.0 -p "${PORT:-3000}"
+```
+
+This avoids Coolify UI validation that rejects shell operators and `$`
+expansion in application start commands.
 
 The `/up` endpoint checks Rails and PostgreSQL. Coolify should return traffic
 only after this endpoint is healthy.
