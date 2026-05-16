@@ -1,0 +1,41 @@
+<%= form_with model: feedback_report, url: feedback_reports_path, data: { turbo_frame: "feedback_report_form", feedback_report_target: "form" } do |form| %>
+  <div class="modal-body">
+    <% if feedback_report.errors.any? %>
+      <div class="alert alert-danger mt-0">
+        <p class="mb-2">Report could not be sent.</p>
+        <ul class="mb-0">
+          <% feedback_report.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form.hidden_field :current_path, value: feedback_report.current_path.presence || request.fullpath %>
+    <%= hidden_field_tag "feedback_report[browser_metadata][url]", "", data: { feedback_report_target: "url" } %>
+    <%= hidden_field_tag "feedback_report[browser_metadata][viewport_width]", "", data: { feedback_report_target: "viewportWidth" } %>
+    <%= hidden_field_tag "feedback_report[browser_metadata][viewport_height]", "", data: { feedback_report_target: "viewportHeight" } %>
+    <%= hidden_field_tag "feedback_report[browser_metadata][screen_width]", "", data: { feedback_report_target: "screenWidth" } %>
+    <%= hidden_field_tag "feedback_report[browser_metadata][screen_height]", "", data: { feedback_report_target: "screenHeight" } %>
+    <%= hidden_field_tag "feedback_report[browser_metadata][timezone]", "", data: { feedback_report_target: "timezone" } %>
+
+    <div class="mb-3">
+      <%= form.label :report_type, "Type", class: "form-label" %>
+      <%= form.select :report_type,
+                      FeedbackReport::REPORT_TYPES.map { |type| [type.titleize, type] },
+                      {},
+                      class: "form-select" %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :message, "What happened?", class: "form-label" %>
+      <%= form.text_area :message, rows: 5, class: "form-control", maxlength: 5000, required: true %>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <%= form.submit "Send", class: "btn btn-info" %>
+  </div>
+<% end %>

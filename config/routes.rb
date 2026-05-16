@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   post 'pos/create_order'
 
   resources :orders, only: [:index, :show, :destroy]
+  resources :feedback_reports, only: [:index, :show, :create]
 
   # == CARD READERS & TERMINAL ==
   # Routes for managing and interacting with Stripe Terminal readers.

@@ -102,6 +102,12 @@ roles_assign:
   category: admin
   description: Assign RBAC roles to users.
 
+feedback_reports_view:
+  key: feedback_reports.view
+  name: View feedback reports
+  category: admin
+  description: Review internal operator feedback and bug reports.
+
 super_admin_assign:
   key: super_admin.assign
   name: Assign SuperAdmin role
