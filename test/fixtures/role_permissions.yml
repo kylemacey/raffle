@@ -68,6 +68,10 @@ platform_admin_roles_assign:
   role: platform_admin
   permission: roles_assign
 
+platform_admin_feedback_reports_view:
+  role: platform_admin
+  permission: feedback_reports_view
+
 platform_admin_super_admin_assign:
   role: platform_admin
   permission: super_admin_assign
@@ -259,6 +263,10 @@ config_admin_users_manage:
 config_admin_roles_assign:
   role: config_admin
   permission: roles_assign
+
+config_admin_feedback_reports_view:
+  role: config_admin
+  permission: feedback_reports_view
 
 config_admin_pos_products_manage:
   role: config_admin

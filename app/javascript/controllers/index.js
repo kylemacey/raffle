@@ -32,3 +32,6 @@ application.register("match-height", MatchHeightController)
 
 import PaymentMethodTypesController from "controllers/payment_method_types_controller"
 application.register("payment-method-types", PaymentMethodTypesController)
+
+import FeedbackReportController from "controllers/feedback_report_controller"
+application.register("feedback-report", FeedbackReportController)

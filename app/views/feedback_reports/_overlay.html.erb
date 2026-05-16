@@ -1,0 +1,23 @@
+<div data-controller="feedback-report">
+  <div class="feedback-report-overlay">
+    <button type="button" class="feedback-report-trigger btn btn-info shadow" data-bs-toggle="modal" data-bs-target="#feedbackReportModal" aria-label="Send feedback">
+      <i class="fas fa-comment-dots" aria-hidden="true"></i>
+      <span>Feedback</span>
+    </button>
+  </div>
+
+  <div class="modal fade" id="feedbackReportModal" tabindex="-1" aria-labelledby="feedbackReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="feedbackReportModalLabel">Send feedback</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <%= turbo_frame_tag "feedback_report_form" do %>
+          <%= render "feedback_reports/form", feedback_report: FeedbackReport.new(report_type: "bug", current_path: request.fullpath) %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

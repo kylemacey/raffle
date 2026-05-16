@@ -20,6 +20,7 @@ class Permission < ApplicationRecord
     "card_readers.manage" => "Manage Card Reader Setup",
     "users.manage" => "Create Users",
     "roles.assign" => "Assign User Roles",
+    "feedback_reports.view" => "View Feedback",
     "pos_products.manage" => "Manage Products",
     "roc_star_prices.manage" => "Manage RocStar Prices",
     "invoice_settings.manage" => "Manage Invoice Settings",

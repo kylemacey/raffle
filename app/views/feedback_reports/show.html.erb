@@ -1,0 +1,75 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Feedback #<%= @feedback_report.id %></h1>
+  <%= link_to "Back to Feedback", feedback_reports_path, class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Message</h5>
+      </div>
+      <div class="card-body">
+        <%= simple_format(@feedback_report.message, class: "mb-0") %>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Context</h5>
+      </div>
+      <div class="card-body">
+        <p><strong>Current path:</strong> <code><%= @feedback_report.current_path %></code></p>
+        <% if @feedback_report.referrer.present? %>
+          <p><strong>Referrer:</strong> <code><%= @feedback_report.referrer %></code></p>
+        <% end %>
+        <% if @feedback_report.user_agent.present? %>
+          <p><strong>User agent:</strong> <code><%= @feedback_report.user_agent %></code></p>
+        <% end %>
+        <% if @feedback_report.remote_ip.present? %>
+          <p><strong>Remote IP:</strong> <code><%= @feedback_report.remote_ip %></code></p>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @feedback_report.browser_metadata.present? %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Browser Metadata</h5>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <% @feedback_report.browser_metadata.each do |key, value| %>
+              <dt class="col-sm-4"><%= key.to_s.humanize %></dt>
+              <dd class="col-sm-8"><code><%= value %></code></dd>
+            <% end %>
+          </dl>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Report Details</h5>
+      </div>
+      <div class="card-body">
+        <p><strong>Type:</strong> <span class="badge text-bg-info"><%= @feedback_report.report_type.titleize %></span></p>
+        <p><strong>Submitted:</strong> <%= @feedback_report.created_at.strftime("%B %-d, %Y at %-l:%M %p") %></p>
+        <p><strong>User:</strong> <%= @feedback_report.user_name %></p>
+        <% if @feedback_report.user %>
+          <p><strong>Current user record:</strong> <%= link_to @feedback_report.user.name, user_path(@feedback_report.user) %></p>
+        <% end %>
+        <% if @feedback_report.role_keys.any? %>
+          <p>
+            <strong>Role snapshot:</strong>
+            <% @feedback_report.role_keys.each do |role_key| %>
+              <span class="badge text-bg-secondary"><%= role_key.titleize %></span>
+            <% end %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
