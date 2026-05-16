@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_14_163000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_16_173000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -38,6 +38,26 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_14_163000) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "feedback_reports", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "user_name", null: false
+    t.jsonb "role_keys", default: [], null: false
+    t.string "report_type", null: false
+    t.text "message", null: false
+    t.string "current_path", null: false
+    t.string "referrer"
+    t.string "user_agent"
+    t.string "remote_ip"
+    t.jsonb "browser_metadata", default: {}, null: false
+    t.string "contact_name"
+    t.string "contact_email"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_feedback_reports_on_created_at"
+    t.index ["report_type"], name: "index_feedback_reports_on_report_type"
+    t.index ["user_id"], name: "index_feedback_reports_on_user_id"
   end
 
   create_table "good_job_batches", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -337,6 +357,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_14_163000) do
 
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
+  add_foreign_key "feedback_reports", "users"
   add_foreign_key "invoice_records", "orders"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "pos_products"

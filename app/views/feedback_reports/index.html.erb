@@ -1,0 +1,40 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Feedback</h1>
+</div>
+
+<% if @feedback_reports.any? %>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Submitted</th>
+          <th>Type</th>
+          <th>User</th>
+          <th>Path</th>
+          <th>Message</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @feedback_reports.each do |feedback_report| %>
+          <tr>
+            <td><%= feedback_report.created_at.strftime("%b %-d, %Y %-l:%M %p") %></td>
+            <td><span class="badge text-bg-info"><%= feedback_report.report_type.titleize %></span></td>
+            <td>
+              <strong><%= feedback_report.user_name %></strong>
+              <% if feedback_report.role_keys.any? %>
+                <br>
+                <small class="text-muted"><%= feedback_report.role_keys.map(&:titleize).join(", ") %></small>
+              <% end %>
+            </td>
+            <td><code><%= feedback_report.current_path %></code></td>
+            <td><%= truncate(feedback_report.message, length: 100) %></td>
+            <td class="text-end"><%= link_to "View", feedback_report_path(feedback_report), class: "btn btn-sm btn-outline-info" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="alert alert-info">No feedback has been submitted yet.</div>
+<% end %>
