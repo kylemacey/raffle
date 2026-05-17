@@ -1,0 +1,29 @@
+<h1>New API Token</h1>
+
+<%= form_with(model: @api_token, local: true) do |form| %>
+  <% if @api_token.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% @api_token.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :name, class: "form-label" %>
+    <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :expiration_option, "Expiration", class: "form-label" %>
+    <%= form.select :expiration_option,
+                    options_for_select(ApiToken.expiration_options.map { |value, label| [label, value] }, @expiration_option),
+                    {},
+                    class: "form-select" %>
+  </div>
+
+  <%= form.submit "Create API token", class: "btn btn-primary" %>
+  <%= link_to "Back", api_tokens_path, class: "btn btn-secondary" %>
+<% end %>

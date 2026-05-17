@@ -1,0 +1,7 @@
+ops:
+  name: Ops automation
+  token_digest: <%= ApiToken.digest_token("raffle_fixture_ops_token") %>
+  token_prefix: raffle_fixtu
+  token_last_four: oken
+  expires_at: <%= 30.days.from_now %>
+  created_by: admin

@@ -96,6 +96,12 @@ users_manage:
   category: admin
   description: Create and edit users and PINs.
 
+api_tokens_manage:
+  key: api_tokens.manage
+  name: Manage API tokens
+  category: admin
+  description: Create and revoke no-op API tokens.
+
 roles_assign:
   key: roles.assign
   name: Assign roles

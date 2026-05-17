@@ -64,6 +64,10 @@ platform_admin_users_manage:
   role: platform_admin
   permission: users_manage
 
+platform_admin_api_tokens_manage:
+  role: platform_admin
+  permission: api_tokens_manage
+
 platform_admin_roles_assign:
   role: platform_admin
   permission: roles_assign
@@ -255,6 +259,10 @@ config_admin_card_readers_manage:
 config_admin_users_manage:
   role: config_admin
   permission: users_manage
+
+config_admin_api_tokens_manage:
+  role: config_admin
+  permission: api_tokens_manage
 
 config_admin_roles_assign:
   role: config_admin
