@@ -1,0 +1,48 @@
+<p style="color: green"><%= notice %></p>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1>API Tokens</h1>
+  <%= link_to "New API token", new_api_token_path, class: "btn btn-primary" %>
+</div>
+
+<% if @api_tokens.any? %>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Token</th>
+        <th>Status</th>
+        <th>Expires</th>
+        <th>Created by</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @api_tokens.each do |api_token| %>
+        <tr>
+          <td class="align-middle"><%= api_token.name %></td>
+          <td class="align-middle"><code><%= api_token.masked_token %></code></td>
+          <td class="align-middle">
+            <% if api_token.active? %>
+              <span class="badge text-bg-success">Active</span>
+            <% else %>
+              <span class="badge text-bg-secondary">Expired</span>
+            <% end %>
+          </td>
+          <td class="align-middle">
+            <%= api_token.expires_at ? l(api_token.expires_at, format: :long) : "Never" %>
+          </td>
+          <td class="align-middle"><%= api_token.created_by.name %></td>
+          <td class="align-middle"><%= l(api_token.created_at, format: :long) %></td>
+          <td class="align-middle">
+            <%= link_to "Show", api_token_path(api_token), class: "btn btn-sm btn-info" %>
+            <%= button_to "Delete", api_token_path(api_token), method: :delete, data: { turbo_confirm: "Delete this API token?" }, class: "btn btn-sm btn-danger d-inline-block" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="alert alert-info">No API tokens have been created.</div>
+<% end %>

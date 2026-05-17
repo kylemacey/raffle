@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_14_163000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_16_201000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "api_tokens", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "token_digest", null: false
+    t.string "token_prefix", null: false
+    t.string "token_last_four", null: false
+    t.datetime "expires_at"
+    t.bigint "created_by_user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_user_id"], name: "index_api_tokens_on_created_by_user_id"
+    t.index ["expires_at"], name: "index_api_tokens_on_expires_at"
+    t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+  end
 
   create_table "drawings", force: :cascade do |t|
     t.string "slug"
@@ -335,6 +349,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_14_163000) do
     t.index ["entry_id"], name: "index_winners_on_entry_id"
   end
 
+  add_foreign_key "api_tokens", "users", column: "created_by_user_id"
   add_foreign_key "drawings", "events"
   add_foreign_key "entries", "events"
   add_foreign_key "invoice_records", "orders"

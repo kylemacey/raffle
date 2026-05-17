@@ -89,6 +89,7 @@ Rails.application.routes.draw do
   # == ADMIN RESOURCES ==
   # User management.
   resources :users
+  resources :api_tokens, only: [:index, :new, :create, :show, :destroy]
 
   resource :silent_auction_setting, only: [:edit, :update]
   resource :invoice_setting, only: [:edit, :update]

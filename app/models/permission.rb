@@ -19,6 +19,7 @@ class Permission < ApplicationRecord
     "orders.view_all" => "View All Orders",
     "card_readers.manage" => "Manage Card Reader Setup",
     "users.manage" => "Create Users",
+    "api_tokens.manage" => "Manage API Tokens",
     "roles.assign" => "Assign User Roles",
     "pos_products.manage" => "Manage Products",
     "roc_star_prices.manage" => "Manage RocStar Prices",
